@@ -1,0 +1,65 @@
+{
+  "product": {
+    "name": "{{PROJECT_NAME}}",
+    "tagline": "{{Short tagline}}",
+    "description": "{{2-3 sentence description}}"
+  },
+  "users": {
+    "primary": "{{Primary user type}}",
+    "personas": [
+      {
+        "name": "{{Persona 1}}",
+        "needs": "{{What they need from this product}}"
+      },
+      {
+        "name": "{{Persona 2}}",
+        "needs": "{{What they need from this product}}"
+      }
+    ]
+  },
+  "features": {
+    "core": [
+      {
+        "id": "F1",
+        "name": "{{Feature name}}",
+        "description": "{{What it does}}"
+      },
+      {
+        "id": "F2",
+        "name": "{{Feature name}}",
+        "description": "{{What it does}}"
+      },
+      {
+        "id": "F3",
+        "name": "{{Feature name}}",
+        "description": "{{What it does}}"
+      }
+    ],
+    "future": [
+      {
+        "id": "F10",
+        "name": "{{Future feature}}",
+        "description": "{{For later}}"
+      }
+    ]
+  },
+  "techStack": {
+    "frontend": [],
+    "backend": [],
+    "database": [],
+    "auth": [],
+    "other": []
+  },
+  "dataModels": {
+    "example_model": {
+      "fields": ["id", "name", "created_at"],
+      "relationships": ["belongs_to: other_model"]
+    }
+  },
+  "constraints": {
+    "maxFileSize": "{{if applicable}}",
+    "supportedFormats": [],
+    "compliance": "{{GDPR, SOC2, etc if applicable}}",
+    "other": []
+  }
+}
