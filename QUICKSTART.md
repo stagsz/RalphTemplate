@@ -1,150 +1,142 @@
 # Ralph Template - Quick Start
 
-## The Easy Way (Automated Loop)
+## Usage
 
-```powershell
-# Windows PowerShell
-.\loop.ps1
+```bash
+# 1. Generate the implementation plan
+./loop.sh plan
 
-# Windows CMD
-loop.bat
+# 2. Build autonomously
+./loop.sh build
 
-# Mac/Linux
-./loop.sh
+# Or limit iterations
+./loop.sh build 20
+./loop.sh 20
 ```
 
-The loop script handles everything - generates the plan on first run, then continuously executes tasks until you stop it (Ctrl+C).
+**Windows:**
+```powershell
+.\loop.ps1 plan
+.\loop.ps1 build
+.\loop.ps1 20
+```
 
 ---
-
-## The Manual Way
 
 ## Step 1: Copy This Template
 
 ```bash
-cp -r D:/RalphTemplate D:/YourProjectName
-cd D:/YourProjectName
+cp -r D:/RalphTemplate D:/MyNewProject
+cd D:/MyNewProject
+git init
 ```
 
-## Step 2: Fill In Your Project Details
+## Step 2: Define Your Project
 
-Edit these two files:
-
-### PROMPT.md
-Describe what you're building in plain language.
-
-### PRD.json
-Structure your requirements:
-- Product info
+Edit `PRD.json` - structure your requirements:
+- Product name and description
 - User personas
 - Features list
 - Tech stack
 - Data models
 
-## Step 3: Configure Permissions (One-Time)
-
-Edit `~/.claude/settings.json`:
-
-```json
-{
-  "permissions": {
-    "allow": [
-      "Bash(npm *)",
-      "Bash(npx *)",
-      "Bash(pip *)",
-      "Bash(python *)",
-      "Bash(pytest *)",
-      "Bash(mypy *)",
-      "Bash(ruff *)",
-      "Bash(git add *)",
-      "Bash(git commit *)",
-      "Bash(git status)",
-      "Bash(git diff *)",
-      "Bash(git log *)",
-      "Bash(mkdir *)",
-      "Bash(alembic *)",
-      "Read",
-      "Write",
-      "Edit",
-      "Glob",
-      "Grep"
-    ]
-  }
-}
-```
-
-## Step 4: Start Claude Code
+## Step 3: Run Planning Mode
 
 ```bash
-cd D:/YourProjectName
-claude
+./loop.sh plan
 ```
 
-## Step 5: Generate the Plan & Start Building
+This will:
+1. Read `PRD.json`
+2. Generate `IMPLEMENTATION_PLAN.md` with all tasks
+3. Update `CLAUDE.md` with project context
+4. Stop (does not start building)
 
-Paste this prompt:
+Review the generated plan. Edit if needed.
 
-```
-Read PROMPT.md and PRD.json.
+## Step 4: Run Build Mode
 
-1. Generate a complete IMPLEMENTATION_PLAN.md with:
-   - Tasks broken into logical phases
-   - Each task completable in 1-2 hours max
-   - Task IDs with prefixes (SETUP-, DB-, API-, UI-, AUTH-, etc)
-   - Update the Current Status section
-
-2. Update CLAUDE.md with:
-   - Project overview filled in
-   - Tech stack table completed
-   - Domain knowledge section populated
-
-3. Begin Ralph workflow - implement tasks autonomously:
-   - Complete each task
-   - Run tests
-   - Commit
-   - Update plan
-   - Continue immediately to next task
-   - Only stop if blocked
-
-Start now.
+```bash
+./loop.sh build
 ```
 
-## Step 6: Walk Away
+This will:
+1. Find next unchecked task in `IMPLEMENTATION_PLAN.md`
+2. Implement it
+3. Run tests
+4. Commit
+5. Update plan
+6. Repeat until all tasks done or you press Ctrl+C
 
-Claude will:
-- Generate the full implementation plan
-- Start building task by task
-- Commit after each task
-- Track progress in IMPLEMENTATION_PLAN.md
+## Step 5: Monitor Progress
 
-Check back periodically. If stopped, just say: `Continue.`
+Check `IMPLEMENTATION_PLAN.md` for:
+- Current status
+- Completed tasks with commit hashes
+- Any blockers
+
+Check `ralph_log_YYYYMMDD.txt` for detailed logs.
 
 ---
 
-## Template Files
+## File Structure
 
 | File | Purpose | You Edit? |
 |------|---------|-----------|
-| `PROMPT.md` | Your project description | **YES** |
-| `PRD.json` | Structured requirements | **YES** |
+| `PRD.json` | Product requirements | **YES** |
+| `PROMPT_Plan.md` | Planning mode prompt | No |
+| `PROMPT_Build.md` | Build mode prompt | No |
 | `CLAUDE.md` | AI instructions | Auto-filled |
 | `IMPLEMENTATION_PLAN.md` | Task queue | Auto-generated |
 | `AGENTS.md` | Quick reference | No |
-| `QUICKSTART.md` | This guide | No |
-| `.gitignore` | Git ignores | No |
-| `docker-compose.yml` | Local databases | Modify if needed |
-| `.env.example` | Env template | Copy to .env |
+| `loop.sh` | Main loop (Mac/Linux) | No |
+| `loop.ps1` | Main loop (PowerShell) | No |
+| `loop.bat` | Main loop (CMD) | No |
+
+---
+
+## Modes
+
+### Planning Mode (`./loop.sh plan`)
+- Reads `PRD.json`
+- Generates/updates `IMPLEMENTATION_PLAN.md`
+- Updates `CLAUDE.md` with project context
+- Does NOT implement anything
+- Runs once then stops
+
+### Build Mode (`./loop.sh build`)
+- Reads `IMPLEMENTATION_PLAN.md`
+- Implements one task per iteration
+- Commits after each task
+- Loops until all tasks done or Ctrl+C
+
+---
+
+## Options
+
+```bash
+./loop.sh                 # Build mode, unlimited iterations
+./loop.sh plan            # Planning mode
+./loop.sh build           # Build mode, unlimited
+./loop.sh build 20        # Build mode, max 20 iterations
+./loop.sh 20              # Build mode, max 20 iterations (shorthand)
+```
 
 ---
 
 ## Tips
 
-### Be Specific in PROMPT.md
-Bad: "Build a todo app"
-Good: "Build a task manager with projects, due dates, priority levels, and team sharing"
+### Be Specific in PRD.json
+The more detailed your requirements, the better the generated plan.
 
-### Define Data Models in PRD.json
-The more specific your data models, the better the database design.
+### Review the Plan First
+Always run `plan` mode first and review `IMPLEMENTATION_PLAN.md` before building.
 
-### Start Simple
-Don't over-specify. Let Claude make reasonable decisions. You can always adjust.
+### Limit Iterations Initially
+Start with `./loop.sh 5` to see how it works before running unlimited.
+
+### Check Logs
+All output is logged to `ralph_log_YYYYMMDD.txt`.
+
+### Resume Anytime
+The plan tracks progress. Just run `./loop.sh build` again to continue.

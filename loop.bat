@@ -1,79 +1,113 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: Ralph Autonomous Loop (Windows)
-:: Runs Claude Code continuously until manually stopped (Ctrl+C)
+:: Ralph Loop Script (Windows Batch)
+:: Autonomous AI coding loop
+:: Based on Geoff Huntley's Ralph methodology
 
 cd /d "%~dp0"
 
-echo ========================================
-echo    Ralph Autonomous Build Loop
-echo ========================================
-echo.
-echo Project: %CD%
-echo Press Ctrl+C to stop
-echo.
+:: Configuration
+set DEFAULT_MODEL=opus
+set MAX_ITERATIONS=0
+set ITERATION=0
 
-:: Count commits to check if first run
-for /f %%i in ('git rev-list --count HEAD 2^>nul') do set COMMIT_COUNT=%%i
-if "%COMMIT_COUNT%"=="" set COMMIT_COUNT=0
+:: Mode selection
+set MODE=%1
+if "%MODE%"=="" set MODE=build
 
-if %COMMIT_COUNT% LEQ 1 (
-    echo First run detected - generating implementation plan...
-    echo.
+if /i "%MODE%"=="plan" goto :plan_mode
+if /i "%MODE%"=="planning" goto :plan_mode
+if /i "%MODE%"=="build" goto :build_mode
+if /i "%MODE%"=="building" goto :build_mode
 
-    :: First run - generate plan and start
-    (
-        echo Read PROMPT.md and PRD.json.
-        echo.
-        echo 1. Generate a complete IMPLEMENTATION_PLAN.md with:
-        echo    - Tasks broken into logical phases
-        echo    - Each task completable in 1-2 hours max
-        echo    - Task IDs with prefixes ^(SETUP-, DB-, API-, UI-, AUTH-, etc^)
-        echo    - Update the Current Status section
-        echo.
-        echo 2. Update CLAUDE.md with:
-        echo    - Project overview filled in
-        echo    - Tech stack table completed
-        echo    - Domain knowledge section populated
-        echo.
-        echo 3. Begin Ralph workflow - implement tasks autonomously:
-        echo    - Complete each task
-        echo    - Run tests
-        echo    - Commit
-        echo    - Update plan
-        echo    - Continue immediately to next task
-        echo    - Only stop if blocked
-        echo.
-        echo Start now.
-    ) | claude --print
+:: Check if first arg is a number (max iterations)
+echo %MODE%| findstr /r "^[0-9]*$" >nul
+if %errorlevel%==0 (
+    set MAX_ITERATIONS=%MODE%
+    set PROMPT_FILE=PROMPT_Build.md
+    echo [32m🔨 BUILDING MODE[0m - Max %MODE% iterations
+    goto :check_files
+)
 
-) else (
-    echo Resuming Ralph workflow...
-    echo.
+echo [31mUnknown mode: %MODE%[0m
+echo Usage: loop.bat [plan^|build] [max_iterations]
+echo   loop.bat           # Build mode, unlimited
+echo   loop.bat plan      # Planning mode
+echo   loop.bat build 20  # Build mode, max 20 iterations
+echo   loop.bat 20        # Build mode, max 20 iterations
+exit /b 1
+
+:plan_mode
+set PROMPT_FILE=PROMPT_Plan.md
+echo [34m🗺️  PLANNING MODE[0m - Generating/updating implementation plan
+if not "%2"=="" set MAX_ITERATIONS=%2
+goto :check_files
+
+:build_mode
+set PROMPT_FILE=PROMPT_Build.md
+echo [32m🔨 BUILDING MODE[0m - Implementing from plan
+if not "%2"=="" set MAX_ITERATIONS=%2
+goto :check_files
+
+:check_files
+if not exist "%PROMPT_FILE%" (
+    echo [31mError: %PROMPT_FILE% not found[0m
+    exit /b 1
+)
+
+if not exist "AGENTS.md" (
+    echo [31mError: AGENTS.md not found[0m
+    exit /b 1
 )
 
 :: Main loop
-set ITERATION=1
+echo [33mStarting Ralph loop...[0m
+echo Press Ctrl+C to stop
+echo ---
 
 :loop
-echo.
-echo --- Iteration %ITERATION% ---
-echo.
+set /a ITERATION+=1
 
-:: Run Claude with continue prompt
-echo Continue Ralph workflow. Complete the next task, commit, update plan, then continue to the next task. Only stop if blocked. | claude --print
-
-:: Check for errors
-if errorlevel 1 (
-    echo.
-    echo Claude exited with an error
-    echo Waiting 10 seconds before retry...
-    timeout /t 10 /nobreak >nul
+:: Check max iterations
+if %MAX_ITERATIONS% gtr 0 (
+    if %ITERATION% gtr %MAX_ITERATIONS% (
+        echo [33mMax iterations ^(%MAX_ITERATIONS%^) reached. Stopping.[0m
+        goto :done
+    )
 )
+
+echo [34m═══════════════════════════════════════════════════════════[0m
+echo [32mIteration %ITERATION%[0m %date% %time%
+echo [34m═══════════════════════════════════════════════════════════[0m
+
+set LOG_FILE=ralph_log_%date:~-4%%date:~4,2%%date:~7,2%.txt
+
+echo Starting Claude at %time%... >> "%LOG_FILE%"
+echo Starting Claude at %time%...
+
+:: Run Claude with the prompt
+type "%PROMPT_FILE%" | claude -p --dangerously-skip-permissions --model %DEFAULT_MODEL% --verbose 2>&1 | tee -a "%LOG_FILE%"
+set EXIT_CODE=%errorlevel%
+
+echo Claude finished at %time% with exit code %EXIT_CODE% >> "%LOG_FILE%"
+echo Claude finished at %time% with exit code %EXIT_CODE%
+
+if %EXIT_CODE% neq 0 (
+    echo [31mClaude exited with code %EXIT_CODE%[0m
+    echo Check %LOG_FILE% for details
+    echo Continuing to next iteration in 5 seconds...
+    timeout /t 5 /nobreak >nul
+)
+
+echo.
+echo [32mIteration %ITERATION% complete. Starting fresh context...[0m
+echo.
 
 :: Small delay between iterations
 timeout /t 2 /nobreak >nul
 
-set /a ITERATION+=1
-goto loop
+goto :loop
+
+:done
+echo [32mRalph loop completed after %ITERATION% iterations.[0m

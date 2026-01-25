@@ -47,6 +47,7 @@ coverage/
 # Logs
 *.log
 logs/
+ralph_log_*.txt
 
 # Database
 *.db

@@ -1,81 +1,109 @@
-# Ralph Autonomous Loop (PowerShell)
-# Runs Claude Code continuously until manually stopped (Ctrl+C)
+# Ralph Loop Script (PowerShell)
+# Autonomous AI coding loop
+# Based on Geoff Huntley's Ralph methodology
+
+param(
+    [Parameter(Position=0)]
+    [string]$Mode = "build",
+
+    [Parameter(Position=1)]
+    [int]$MaxIterations = 0  # 0 = unlimited
+)
 
 $ErrorActionPreference = "Continue"
 Set-Location $PSScriptRoot
 
-Write-Host "========================================" -ForegroundColor Green
-Write-Host "   Ralph Autonomous Build Loop" -ForegroundColor Green
-Write-Host "========================================" -ForegroundColor Green
-Write-Host ""
-Write-Host "Project: $PWD" -ForegroundColor Yellow
-Write-Host "Press Ctrl+C to stop" -ForegroundColor Red
-Write-Host ""
+# Configuration
+$DEFAULT_MODEL = "opus"
+$Iteration = 0
 
-# Check if first run
-$commitCount = 0
-try {
-    $commitCount = [int](git rev-list --count HEAD 2>$null)
-} catch {
-    $commitCount = 0
+# Mode selection
+switch -Regex ($Mode) {
+    "^(plan|planning)$" {
+        $PROMPT_FILE = "PROMPT_Plan.md"
+        Write-Host "🗺️  PLANNING MODE - Generating/updating implementation plan" -ForegroundColor Blue
+    }
+    "^(build|building|)$" {
+        $PROMPT_FILE = "PROMPT_Build.md"
+        Write-Host "🔨 BUILDING MODE - Implementing from plan" -ForegroundColor Green
+    }
+    "^\d+$" {
+        # If first arg is a number, treat as max iterations for build mode
+        $MaxIterations = [int]$Mode
+        $PROMPT_FILE = "PROMPT_Build.md"
+        Write-Host "🔨 BUILDING MODE - Max $MaxIterations iterations" -ForegroundColor Green
+    }
+    default {
+        Write-Host "Unknown mode: $Mode" -ForegroundColor Red
+        Write-Host "Usage: .\loop.ps1 [plan|build] [max_iterations]"
+        Write-Host "  .\loop.ps1           # Build mode, unlimited"
+        Write-Host "  .\loop.ps1 plan      # Planning mode"
+        Write-Host "  .\loop.ps1 build 20  # Build mode, max 20 iterations"
+        Write-Host "  .\loop.ps1 20        # Build mode, max 20 iterations"
+        exit 1
+    }
 }
 
-if ($commitCount -le 1) {
-    Write-Host "First run detected - generating implementation plan..." -ForegroundColor Yellow
-    Write-Host ""
+# Check required files exist
+if (-not (Test-Path $PROMPT_FILE)) {
+    Write-Host "Error: $PROMPT_FILE not found" -ForegroundColor Red
+    exit 1
+}
 
-    $initialPrompt = @"
-Read PROMPT.md and PRD.json.
-
-1. Generate a complete IMPLEMENTATION_PLAN.md with:
-   - Tasks broken into logical phases
-   - Each task completable in 1-2 hours max
-   - Task IDs with prefixes (SETUP-, DB-, API-, UI-, AUTH-, etc)
-   - Update the Current Status section
-
-2. Update CLAUDE.md with:
-   - Project overview filled in
-   - Tech stack table completed
-   - Domain knowledge section populated
-
-3. Begin Ralph workflow - implement tasks autonomously:
-   - Complete each task
-   - Run tests
-   - Commit
-   - Update plan
-   - Continue immediately to next task
-   - Only stop if blocked
-
-Start now.
-"@
-
-    $initialPrompt | claude --print
-} else {
-    Write-Host "Resuming Ralph workflow..." -ForegroundColor Green
-    Write-Host ""
+if (-not (Test-Path "AGENTS.md")) {
+    Write-Host "Error: AGENTS.md not found" -ForegroundColor Red
+    exit 1
 }
 
 # Main loop
-$iteration = 1
+Write-Host "Starting Ralph loop..." -ForegroundColor Yellow
+Write-Host "Press Ctrl+C to stop"
+Write-Host "---"
 
 while ($true) {
-    Write-Host ""
-    Write-Host "--- Iteration $iteration ---" -ForegroundColor Green
-    Write-Host ""
+    $Iteration++
 
-    $continuePrompt = "Continue Ralph workflow. Complete the next task, commit, update plan, then continue to the next task. Only stop if blocked."
-
-    try {
-        $continuePrompt | claude --print
-    } catch {
-        Write-Host ""
-        Write-Host "Claude encountered an error" -ForegroundColor Red
-        Write-Host "Waiting 10 seconds before retry..." -ForegroundColor Yellow
-        Start-Sleep -Seconds 10
+    # Check max iterations
+    if ($MaxIterations -gt 0 -and $Iteration -gt $MaxIterations) {
+        Write-Host "Max iterations ($MaxIterations) reached. Stopping." -ForegroundColor Yellow
+        break
     }
+
+    Write-Host "═══════════════════════════════════════════════════════════" -ForegroundColor Blue
+    Write-Host "Iteration $Iteration $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor Green
+    Write-Host "═══════════════════════════════════════════════════════════" -ForegroundColor Blue
+
+    $LOG_FILE = "ralph_log_$(Get-Date -Format 'yyyyMMdd').txt"
+    $timestamp = Get-Date -Format 'HH:mm:ss'
+
+    "Starting Claude at $timestamp..." | Tee-Object -FilePath $LOG_FILE -Append
+
+    # Run Claude with the prompt
+    try {
+        $promptContent = Get-Content $PROMPT_FILE -Raw
+        $promptContent | claude -p --dangerously-skip-permissions --model $DEFAULT_MODEL --verbose 2>&1 | Tee-Object -FilePath $LOG_FILE -Append
+        $EXIT_CODE = $LASTEXITCODE
+    } catch {
+        $EXIT_CODE = 1
+        Write-Host "Error running Claude: $_" -ForegroundColor Red
+    }
+
+    $timestamp = Get-Date -Format 'HH:mm:ss'
+    "Claude finished at $timestamp with exit code $EXIT_CODE" | Tee-Object -FilePath $LOG_FILE -Append
+
+    if ($EXIT_CODE -ne 0) {
+        Write-Host "Claude exited with code $EXIT_CODE" -ForegroundColor Red
+        Write-Host "Check $LOG_FILE for details"
+        Write-Host "Continuing to next iteration in 5 seconds..."
+        Start-Sleep -Seconds 5
+    }
+
+    Write-Host ""
+    Write-Host "Iteration $Iteration complete. Starting fresh context..." -ForegroundColor Green
+    Write-Host ""
 
     # Small delay between iterations
     Start-Sleep -Seconds 2
-
-    $iteration++
 }
+
+Write-Host "Ralph loop completed after $Iteration iterations." -ForegroundColor Green

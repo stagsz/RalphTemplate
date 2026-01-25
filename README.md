@@ -1,57 +1,57 @@
 # Ralph Build Template
 
-A reusable template for autonomous AI-driven development using the Ralph workflow.
-
-## What is Ralph?
-
-Ralph is an autonomous AI development methodology:
-- One task at a time
-- Tests must pass before commit
-- Progress tracked in IMPLEMENTATION_PLAN.md
-- AI continues automatically until blocked
+Autonomous AI-driven development using the Ralph workflow.
+Based on [Geoff Huntley's Ralph methodology](https://ghuntley.com/ralph/).
 
 ## Quick Start
 
-1. **Copy this template**
-   ```bash
-   cp -r D:/RalphTemplate D:/MyNewProject
-   cd D:/MyNewProject
-   ```
+```bash
+# 1. Copy template
+cp -r D:/RalphTemplate D:/MyProject
+cd D:/MyProject
 
-2. **Fill in your project details**
-   - Edit `PROMPT.md` - describe what you're building
-   - Edit `PRD.json` - structure your requirements
+# 2. Edit PRD.json with your requirements
 
-3. **Run the loop**
-   ```powershell
-   # Windows PowerShell
-   .\loop.ps1
+# 3. Generate plan
+./loop.sh plan          # or .\loop.ps1 plan on Windows
 
-   # Windows CMD
-   loop.bat
+# 4. Build
+./loop.sh build         # or .\loop.ps1 build on Windows
+```
 
-   # Mac/Linux
-   ./loop.sh
-   ```
+## What is Ralph?
 
-4. **Walk away** - the loop handles everything
+Ralph is an autonomous AI development loop:
+1. **Plan** - Generate implementation tasks from requirements
+2. **Build** - Execute one task at a time, commit, repeat
+3. **Track** - Progress tracked in `IMPLEMENTATION_PLAN.md`
+
+## Files
+
+| Edit | File | Purpose |
+|:----:|------|---------|
+| ✏️ | `PRD.json` | Your product requirements |
+| | `PROMPT_Plan.md` | Planning mode instructions |
+| | `PROMPT_Build.md` | Build mode instructions |
+| | `CLAUDE.md` | Project context (auto-filled) |
+| | `IMPLEMENTATION_PLAN.md` | Task queue (auto-generated) |
+| | `loop.sh` / `loop.ps1` | The autonomous loop |
+
+## Commands
+
+```bash
+./loop.sh plan          # Generate implementation plan
+./loop.sh build         # Build autonomously (unlimited)
+./loop.sh build 20      # Build max 20 iterations
+./loop.sh 20            # Shorthand for above
+```
 
 Press `Ctrl+C` to stop.
 
-## Files to Edit
+## Logs
 
-| File | What to do |
-|------|------------|
-| `PROMPT.md` | Describe your project |
-| `PRD.json` | Define requirements |
+Output is logged to `ralph_log_YYYYMMDD.txt`.
 
-## Files Auto-Generated
-
-| File | Purpose |
-|------|---------|
-| `CLAUDE.md` | AI instructions (auto-filled) |
-| `IMPLEMENTATION_PLAN.md` | Task queue (auto-generated) |
-
-## Read More
+## Documentation
 
 See `QUICKSTART.md` for detailed instructions.
