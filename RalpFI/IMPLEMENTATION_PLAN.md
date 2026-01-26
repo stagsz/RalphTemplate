@@ -5,8 +5,8 @@
 ## Current Status
 
 **Phase**: 0 - Discovery & Setup
-**Progress**: 0 / 32 tasks
-**Last Completed**: None
+**Progress**: 1 / 32 tasks
+**Last Completed**: DISC-01 (fe8f156)
 **Ready to Start**: Yes - codebase analysis complete
 
 ---
@@ -50,7 +50,7 @@
 
 ### Codebase Analysis
 
-- [ ] DISC-01: Document existing UI component patterns from ui_components.py
+- [x] DISC-01: Document existing UI component patterns from ui_components.py (fe8f156)
   - **File**: `D:\f1-race-replay\src\ui_components.py` (1547 lines)
   - **Output**: Create `D:\f1-race-replay\src\predictions\PATTERNS.md` documenting:
     - BaseComponent class: `on_resize(window)`, `draw(window)`, `on_mouse_press(window, x, y, button, modifiers) -> bool`
@@ -446,7 +446,7 @@
 
 | Task | Commit | Date |
 |------|--------|------|
-| - | - | - |
+| DISC-01 | fe8f156 | 2026-01-26 |
 
 ---
 
@@ -477,25 +477,25 @@
 
 ```
 main.py
-  └── run_arcade_replay()
-        └── F1RaceReplayWindow.__init__()
-              ├── Load frames from get_race_telemetry()
-              ├── Initialize UI components
-              └── Initialize PredictionEngine (NEW)
+  |-- run_arcade_replay()
+        |-- F1RaceReplayWindow.__init__()
+              |-- Load frames from get_race_telemetry()
+              |-- Initialize UI components
+              |-- Initialize PredictionEngine (NEW)
 
 on_update() [called 60 FPS]
-  └── Every 25 frames:
-        └── PredictionEngine.update(current_frame, total_laps)
-              ├── Extract pace data
-              ├── Calculate win probabilities
-              ├── Detect danger zones
-              └── Return PredictionState for each driver
+  |-- Every 25 frames:
+        |-- PredictionEngine.update(current_frame, total_laps)
+              |-- Extract pace data
+              |-- Calculate win probabilities
+              |-- Detect danger zones
+              |-- Return PredictionState for each driver
 
 on_draw() [called 60 FPS]
-  └── PredictionPanelComponent.draw()
-        ├── Draw win probability bars
-        ├── Draw pit window (if driver selected)
-        └── Draw danger alerts
+  |-- PredictionPanelComponent.draw()
+        |-- Draw win probability bars
+        |-- Draw pit window (if driver selected)
+        |-- Draw danger alerts
 ```
 
 ### Key Files to Modify (Summary)
