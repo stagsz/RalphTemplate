@@ -83,13 +83,12 @@ D:\RalphTemplate\RalpFI\
 ```powershell
 # Run build loop (finish remaining tests)
 cd D:\RalphTemplate\RalpFI
-.\loop.ps1 build
+.\scripts\loop.ps1 build
 
 # Check logs
-Get-Content ralph_log_20260126.txt -Tail 50
+Get-Content logs\ralph_log_20260126.txt -Tail 50
 
 # Test the app
-cd D:\RalphTemplate\RalpFI
 python main.py --year 2024 --round 1
 # Press 'P' to toggle prediction panel
 ```
