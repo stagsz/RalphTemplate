@@ -49,6 +49,10 @@ coverage/
 logs/
 ralph_log_*.txt
 
+# Evaluation reports
+evaluation_protocol_*.md
+prompt_injection_report.md
+
 # Database
 *.db
 *.sqlite3

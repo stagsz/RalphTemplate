@@ -92,6 +92,8 @@ Check `ralph_log_YYYYMMDD.txt` for detailed logs.
 | `loop.sh` | Main loop (Mac/Linux) | No |
 | `loop.ps1` | Main loop (PowerShell) | No |
 | `loop.bat` | Main loop (CMD) | No |
+| `evaluate_loop.ps1` | Evaluation loop | No |
+| `check_prompt_injection.ps1` | Security scanner | No |
 
 ---
 
@@ -140,3 +142,54 @@ All output is logged to `ralph_log_YYYYMMDD.txt`.
 
 ### Resume Anytime
 The plan tracks progress. Just run `./loop.sh build` again to continue.
+
+---
+
+## Evaluation Tools (Optional)
+
+Run quality and security evaluations alongside Ralph to catch issues early.
+
+### Evaluation Loop
+
+```powershell
+# Start evaluation loop (runs every 10 minutes)
+.\evaluate_loop.ps1
+
+# Custom interval and max runs
+.\evaluate_loop.ps1 -IntervalMinutes 5 -MaxRuns 10
+```
+
+This runs in parallel with Ralph and checks:
+- **Backend**: MyPy, Ruff, Pytest (if `backend/` exists)
+- **Frontend**: TypeScript, ESLint, Tests (if `frontend/` exists)
+- **Security**: Hardcoded secrets, Prompt injection
+- **Git**: Working tree status
+
+Results are logged to `evaluation_protocol_YYYYMMDD.md`.
+
+### Prompt Injection Scanner
+
+Scan for prompt injection vulnerabilities in AI-powered code:
+
+```powershell
+.\check_prompt_injection.ps1
+```
+
+This scans for:
+- Direct user input in prompts
+- Missing input validation
+- Unsafe message construction
+- System prompt manipulation
+
+Report saved to `prompt_injection_report.md`.
+
+### Running Both Loops
+
+Open two terminals:
+```powershell
+# Terminal 1: Ralph build loop
+.\loop.ps1 build
+
+# Terminal 2: Evaluation loop
+.\evaluate_loop.ps1
+```

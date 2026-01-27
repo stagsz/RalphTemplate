@@ -36,6 +36,8 @@ Ralph is an autonomous AI development loop:
 | | `CLAUDE.md` | Project context (auto-filled) |
 | | `IMPLEMENTATION_PLAN.md` | Task queue (auto-generated) |
 | | `loop.sh` / `loop.ps1` | The autonomous loop |
+| | `evaluate_loop.ps1` | Quality/security evaluation loop |
+| | `check_prompt_injection.ps1` | Prompt injection scanner |
 
 ## Commands
 
@@ -47,6 +49,29 @@ Ralph is an autonomous AI development loop:
 ```
 
 Press `Ctrl+C` to stop.
+
+## Evaluation Tools (Optional)
+
+Run quality and security checks alongside Ralph:
+
+```powershell
+# Run evaluation loop (checks every 10 minutes)
+.\evaluate_loop.ps1
+
+# Custom interval (every 5 minutes, max 10 runs)
+.\evaluate_loop.ps1 -IntervalMinutes 5 -MaxRuns 10
+
+# Run prompt injection scan only
+.\check_prompt_injection.ps1
+```
+
+Checks performed:
+- **Code Quality**: MyPy, Ruff, ESLint, TypeScript
+- **Testing**: Pytest, Vitest
+- **Security**: Hardcoded secrets, Prompt injection vulnerabilities
+- **Git**: Working tree status
+
+Reports are saved to `evaluation_protocol_YYYYMMDD.md`.
 
 ## Logs
 
