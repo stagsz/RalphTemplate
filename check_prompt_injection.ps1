@@ -49,10 +49,10 @@ $directPatterns = @(
 )
 
 foreach ($pattern in $directPatterns) {
-    $matches = Get-CodeFiles -Path $ScanPath |
+    $matchedFiles = Get-CodeFiles -Path $ScanPath |
         Select-String -Pattern $pattern -ErrorAction SilentlyContinue
 
-    foreach ($match in $matches) {
+    foreach ($match in $matchedFiles) {
         $findings += [PSCustomObject]@{
             Category = "Direct Input"
             Risk = "HIGH"
@@ -114,10 +114,10 @@ $msgPatterns = @(
 )
 
 foreach ($pattern in $msgPatterns) {
-    $matches = Get-CodeFiles -Path $ScanPath |
+    $matchedFiles = Get-CodeFiles -Path $ScanPath |
         Select-String -Pattern $pattern -ErrorAction SilentlyContinue
 
-    foreach ($match in $matches) {
+    foreach ($match in $matchedFiles) {
         $findings += [PSCustomObject]@{
             Category = "Unsafe Messages"
             Risk = "HIGH"
@@ -141,10 +141,10 @@ $sysPatterns = @(
 )
 
 foreach ($pattern in $sysPatterns) {
-    $matches = Get-CodeFiles -Path $ScanPath |
+    $matchedFiles = Get-CodeFiles -Path $ScanPath |
         Select-String -Pattern $pattern -ErrorAction SilentlyContinue
 
-    foreach ($match in $matches) {
+    foreach ($match in $matchedFiles) {
         $findings += [PSCustomObject]@{
             Category = "System Prompt"
             Risk = "CRITICAL"

@@ -62,11 +62,6 @@ $runCount = 0
 while ($true) {
     $runCount++
 
-    if (($MaxRuns -gt 0) -and ($runCount -gt $MaxRuns)) {
-        Write-Host "Max runs ($MaxRuns) reached. Stopping." -ForegroundColor Yellow
-        break
-    }
-
     Write-Host "===============================================================" -ForegroundColor Cyan
     Write-Host "Evaluation Run #$runCount - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor Green
     Write-Host "===============================================================" -ForegroundColor Cyan
@@ -262,6 +257,13 @@ while ($true) {
 
     Write-Host ""
     Write-Host "Report appended to: $PROTOCOL_FILE" -ForegroundColor Gray
+
+    # Check if we should stop before sleeping
+    if (($MaxRuns -gt 0) -and ($runCount -ge $MaxRuns)) {
+        Write-Host "Max runs ($MaxRuns) reached. Stopping." -ForegroundColor Yellow
+        break
+    }
+
     Write-Host "Next evaluation in $IntervalMinutes minutes..." -ForegroundColor Gray
     Write-Host ""
 
