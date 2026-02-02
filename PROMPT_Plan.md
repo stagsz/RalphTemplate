@@ -6,13 +6,23 @@ You are generating/updating the implementation plan for this project.
 
 1. Read `PRD.json` for product requirements
 2. Read `CLAUDE.md` for project context and tech stack
-3. If `IMPLEMENTATION_PLAN.md` exists, review current progress
-4. Generate or update the implementation plan with:
+3. If `specs/` directory exists, read all specification files for detailed topic breakdowns
+4. If `IMPLEMENTATION_PLAN.md` exists, review current progress
+5. Perform gap analysis: compare specifications against existing source code
+6. Generate or update the implementation plan with:
    - Tasks broken into logical phases
    - Each task completable in 1-2 hours max
    - Task IDs with prefixes (SETUP-, DB-, API-, UI-, AUTH-, TEST-, etc)
    - Clear, actionable task descriptions
    - Update the "Current Status" section
+
+## About Specifications (Optional)
+
+For complex projects, you can break requirements into **specs/** directory:
+- One file per "topic of concern" (passes the "one sentence without 'and'" test)
+- Example: `specs/user-authentication.md`, `specs/payment-processing.md`
+- These provide focused context for specific domains
+- If specs exist, use them for detailed planning; otherwise use `PRD.json`
 
 ## Task Sizing Guidelines
 
