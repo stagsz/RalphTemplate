@@ -1,46 +1,103 @@
 # Ralph Template - Quick Start
 
-## Usage
+## Visual Workflow
 
-```bash
-# 1. Generate the implementation plan
-./loop.sh plan
-
-# 2. Build autonomously
-./loop.sh build
-
-# Or limit iterations
-./loop.sh build 20
-./loop.sh 20
 ```
-
-**Windows:**
-```powershell
-.\loop.ps1 plan
-.\loop.ps1 build
-.\loop.ps1 20
+┌─────────────────────────────────────────────────────────────┐
+│ 1. Copy template to new folder                             │
+└─────────────────┬───────────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 2. Run setup_project.ps1 (interactive wizard)              │
+│    • Asks about project type, tech stack, features         │
+│    • Generates PRD.json and CLAUDE.md                       │
+└─────────────────┬───────────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 3. Review/edit PRD.json (optional)                          │
+└─────────────────┬───────────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 4. Run: loop.ps1 plan                                       │
+│    • Reads PRD.json                                         │
+│    • Generates IMPLEMENTATION_PLAN.md with all tasks        │
+└─────────────────┬───────────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 5. Review IMPLEMENTATION_PLAN.md                            │
+└─────────────────┬───────────────────────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 6. Run: loop.ps1 build                                      │
+│    • Autonomous building starts                             │
+│    • One task at a time                                     │
+│    • Tests, commit, repeat                                  │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Step 1: Copy This Template
+## New Project Workflow
 
-```bash
-cp -r D:/RalphTemplate D:/MyNewProject
-cd D:/MyNewProject
-git init
+### Step 1: Copy This Template
+
+```powershell
+cp -r C:\Users\staff\RalphTemplate C:\Users\staff\MyNewProject
+cd C:\Users\staff\MyNewProject
 ```
 
-## Step 2: Define Your Project
+### Step 2: Run Interactive Setup Wizard
 
-Edit `PRD.json` - structure your requirements:
-- Product name and description
-- User personas
-- Features list
-- Tech stack
-- Data models
+```powershell
+.\setup_project.ps1
+```
 
-## Step 3: Run Planning Mode
+**The wizard will ask you step-by-step:**
+
+1. **Project Basics**
+   - What is your project name?
+   - Brief description?
+
+2. **Project Type**
+   - Full-stack web app?
+   - Backend API only?
+   - Frontend only?
+   - CLI tool?
+   - Desktop app?
+
+3. **Tech Stack**
+   - Frontend: React, Next.js, Vue, Svelte?
+   - Backend: Python (FastAPI/Django), Node.js (Express/NestJS)?
+   - Database: PostgreSQL, MongoDB, SQLite, MySQL?
+
+4. **Key Features**
+   - List main features (one per line)
+
+5. **Additional Details**
+   - Authentication needed?
+   - External API integrations?
+
+**The wizard will generate:**
+- ✅ `PRD.json` with your requirements
+- ✅ `CLAUDE.md` with project context and tech stack
+- ✅ Renamed workspace file
+
+---
+
+### Step 3: Review PRD.json (Optional)
+
+```powershell
+code PRD.json   # or notepad PRD.json
+```
+
+Add more details if needed before planning.
+
+### Step 4: Run Planning Mode
 
 ```bash
 ./loop.sh plan
@@ -54,7 +111,7 @@ This will:
 
 Review the generated plan. Edit if needed.
 
-## Step 4: Run Build Mode
+### Step 5: Run Build Mode
 
 ```bash
 ./loop.sh build
@@ -68,7 +125,7 @@ This will:
 5. Update plan
 6. Repeat until all tasks done or you press Ctrl+C
 
-## Step 5: Monitor Progress
+### Step 6: Monitor Progress
 
 Check `IMPLEMENTATION_PLAN.md` for:
 - Current status

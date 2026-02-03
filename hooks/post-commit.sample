@@ -1,0 +1,18 @@
+#!/bin/sh
+# Ralph Template - Post-Commit Hook (Optional)
+# Copy this to .git/hooks/post-commit and make executable
+# On Windows: copy hooks\post-commit.sample .git\hooks\post-commit
+#
+# This runs quality and security checks after each commit
+# Alternative to the timed evaluate_loop.ps1
+
+# Detect PowerShell or bash
+if command -v pwsh > /dev/null 2>&1; then
+    # PowerShell available
+    pwsh -File "$(git rev-parse --show-toplevel)/evaluate_loop.ps1" -MaxRuns 1
+elif command -v powershell > /dev/null 2>&1; then
+    # Windows PowerShell
+    powershell -File "$(git rev-parse --show-toplevel)/evaluate_loop.ps1" -MaxRuns 1
+else
+    echo "PowerShell not found. Skipping evaluation."
+fi

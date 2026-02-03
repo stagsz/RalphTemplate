@@ -13,19 +13,24 @@ Update CLAUDE.md with project details. Then begin Ralph workflow.
 Continue.
 ```
 
-## The Loop
+## The Loop (Eight Steps)
 
 ```
 ┌──────────────────────────────────┐
-│ 1. Read IMPLEMENTATION_PLAN.md   │
-│ 2. Find next [ ] task            │
-│ 3. Implement ONLY that task      │
-│ 4. Run tests + linters           │
-│ 5. Commit if passing             │
-│ 6. Mark [x] with commit hash     │
-│ 7. Continue immediately          │
+│ 1. Orient: study specs           │
+│ 2. Read: review plan              │
+│ 3. Select: choose next task      │
+│ 4. Investigate: search code      │
+│    (500 parallel subagents)      │
+│ 5. Implement: make changes       │
+│ 6. Validate: run tests           │
+│    (1 subagent for builds)       │
+│ 7. Update: mark [x] + log        │
+│ 8. Commit: save with "why"       │
 └──────────────────────────────────┘
 ```
+
+**Critical**: Step 4 - Don't assume not implemented. Search first.
 
 ## Task Prefixes
 
