@@ -5,8 +5,8 @@
 ## Current Status
 
 **Phase**: 5 - Time Tracking (In Progress)
-**Progress**: Edit restriction enforced for approved/submitted time entries
-**Last Completed**: TIME-22 - Prevent users from editing approved time entries
+**Progress**: Rejected entry handling complete with resubmit workflow
+**Last Completed**: TIME-23 - Handle rejected time entries (return to draft with notes)
 
 ---
 
@@ -153,7 +153,7 @@ The CRM application has been substantially built with the following features:
 - [x] TIME-20: Create pending approvals view for admins - `55be7cf`
 - [x] TIME-21: Add approve/reject actions with optional notes - `0800101`
 - [x] TIME-22: Prevent users from editing approved time entries - `3789829`
-- [ ] TIME-23: Handle rejected time entries (return to draft with notes)
+- [x] TIME-23: Handle rejected time entries (return to draft with notes) - `e410e9f`
 
 ### Admin Dashboard
 - [ ] TIME-24: Create admin time tracking dashboard page
@@ -312,3 +312,4 @@ The CRM application has been substantially built with the following features:
 | TIME-20: Pending approvals view for admins | `55be7cf` | 2026-02-04 |
 | TIME-21: Add approve/reject time entry actions | `0800101` | 2026-02-04 |
 | TIME-22: Prevent editing approved time entries | `3789829` | 2026-02-04 |
+| TIME-23: Handle rejected time entries with resubmit | `e410e9f` | 2026-02-04 |
