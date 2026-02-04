@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install --save-dev typescript @types/react @types/node tailwindcss postcss autoprefixer)",
+      "Bash(npm install @supabase/supabase-js @supabase/ssr)",
+      "Bash(npx tailwindcss init -p)",
+      "Bash(npm run dev)",
+      "Bash(npm install --save-dev @tailwindcss/postcss)",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__supabase__get_project_url",
+      "mcp__supabase__get_anon_key",
+      "mcp__playwright__browser_snapshot",
+      "mcp__supabase__apply_migration",
+      "mcp__playwright__browser_type",
+      "Bash(npm install --save-dev vitest @vitejs/plugin-react @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom)",
+      "Bash(npm install --save-dev @playwright/test)",
+      "Bash(npm install --save-dev tsx)",
+      "Bash(npm install --save-dev dotenv)",
+      "mcp__archon__find_tasks",
+      "mcp__archon__find_projects",
+      "mcp__archon__manage_task",
+      "Bash(cat:*)",
+      "Bash(npm run build:*)",
+      "Bash(curl:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_close",
+      "Bash(supabase db reset:*)",
+      "Bash(node -e:*)",
+      "Bash(rm:*)",
+      "Read(//c/Users/staff/OneDrive - SPIG-GMAB/Bilder/Skärmbilder/**)",
+      "Bash(npm install:*)",
+      "Bash(dir:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

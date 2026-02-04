@@ -1,0 +1,16 @@
+id,firstName,lastName,email,phone,company,position,status,createdDate,lastContacted,notes
+1,John,Smith,john.smith@email.com,555-0101,Acme Corp,Sales Manager,Active,2025-01-15,2025-11-20,Interested in premium plan
+2,Sarah,Johnson,sarah.j@email.com,555-0102,Tech Solutions,CEO,Active,2025-02-03,2025-11-15,Quarterly meeting scheduled
+3,Michael,Brown,m.brown@company.com,555-0103,Global Industries,Operations Lead,Active,2025-03-10,2025-11-10,Follow up on proposal
+4,Emily,Davis,emily.davis@email.com,555-0104,StartUp Inc,Marketing Director,Prospect,2025-04-22,2025-11-05,Initial consultation completed
+5,Robert,Wilson,r.wilson@business.com,555-0105,Enterprise Corp,CFO,Active,2025-05-18,2025-11-18,Contract renewal coming up
+6,Jessica,Martinez,j.martinez@email.com,555-0106,Creative Agency,Project Manager,Prospect,2025-06-30,2025-10-25,Waiting for budget approval
+7,David,Garcia,david.garcia@company.com,555-0107,Finance Plus,Analyst,Inactive,2025-07-12,2025-08-10,No recent activity
+8,Amanda,Rodriguez,a.rodriguez@email.com,555-0108,Digital Media,VP Marketing,Active,2025-08-25,2025-11-22,Expansion opportunity
+9,Christopher,Lee,c.lee@business.com,555-0109,Consulting Group,Partner,Active,2025-09-05,2025-11-17,Strategic partnership discussion
+10,Michelle,Taylor,michelle.t@email.com,555-0110,Distribution Co,Supply Chain Manager,Prospect,2025-10-14,2025-11-01,Initial contact made
+11,James,Anderson,j.anderson@company.com,555-0111,Retail Network,District Manager,Active,2025-10-20,2025-11-19,Training session scheduled
+12,Lisa,Thomas,lisa.thomas@email.com,555-0112,Manufacturing,Production Lead,Prospect,2025-11-01,2025-11-16,Needs product demo
+13,William,Jackson,w.jackson@business.com,555-0113,Supply Solutions,Procurement Officer,Active,2025-11-05,2025-11-21,Contract negotiation phase
+14,Karen,White,karen.white@email.com,555-0114,Education Plus,Director,Prospect,2025-11-08,2025-11-12,Budget cycle next quarter
+15,Richard,Harris,r.harris@company.com,555-0115,Healthcare Services,Administrator,Active,2025-11-10,2025-11-23,Implementation starting soon

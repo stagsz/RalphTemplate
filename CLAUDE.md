@@ -56,27 +56,57 @@ Types: feat, fix, test, refactor, docs, chore
 
 ## Project Overview
 
-<!-- FILL THIS IN: 2-3 sentences describing what you're building -->
-
-**{{PROJECT_NAME}}** - {{PROJECT_DESCRIPTION}}
+**Simple CRM** - A fast, lightweight CRM for small sales teams. Features contact management, deal pipeline tracking, activity logging, and task management with a clean, modern UI.
 
 ---
 
 ## Tech Stack
 
-<!-- FILL THIS IN: Your chosen technologies -->
-
 | Layer | Technology |
 |-------|------------|
-| Frontend | |
-| Backend | |
-| Database | |
-| Auth | |
-| Other | |
+| Frontend | Next.js 15, React 19, Tailwind CSS 4, Recharts |
+| Backend | Next.js Server Actions, Supabase |
+| Database | PostgreSQL (via Supabase) with Row Level Security |
+| Auth | Supabase Auth with role-based access (admin/user) |
+| Testing | Vitest (unit), Playwright (e2e), Testing Library |
 
 ---
 
 ## Domain Knowledge
 
-<!-- FILL THIS IN: Domain-specific terms, conventions, data formats -->
+### CRM Entities
+- **Contact**: A person in the CRM (lead or customer). Has first_name, last_name, email, phone, company, title, status, custom_fields
+- **Deal**: A sales opportunity linked to a contact. Has title, amount, stage (lead → proposal → negotiation → closed-won/lost), probability, expected_close_date
+- **Activity**: An interaction or task. Types: call, meeting, email, note, task. Linked to a contact and/or deal
+- **User**: Application user with role (admin or user). Admins can see all data; users see only their own
+
+### Deal Stages
+1. `lead` - Initial qualification
+2. `proposal` - Proposal sent
+3. `negotiation` - In negotiation
+4. `closed-won` - Deal won
+5. `closed-lost` - Deal lost
+
+### Activity Statuses
+- `todo` - Not started
+- `in_progress` - Currently working
+- `completed` - Done
+- `cancelled` - Cancelled
+
+### Project Structure
+```
+CRM/
+├── app/                    # Next.js App Router pages
+│   ├── (auth)/            # Auth pages (login, signup, reset)
+│   ├── activities/        # Activity actions
+│   ├── contacts/          # Contact pages & actions
+│   ├── dashboard/         # Dashboard page
+│   ├── deals/             # Deal pages & actions
+│   ├── profile/           # User profile
+│   └── tasks/             # Task Kanban board
+├── components/            # React components
+├── lib/                   # Utilities & Supabase clients
+├── supabase/migrations/   # Database migrations
+└── __tests__/             # Unit tests
+```
 
