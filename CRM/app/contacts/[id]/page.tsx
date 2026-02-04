@@ -4,6 +4,7 @@ import Link from 'next/link'
 import DeleteContactButton from '@/components/contacts/DeleteContactButton'
 import ActivityTimeline from '@/components/activities/ActivityTimeline'
 import Timer from '@/components/timer/Timer'
+import LogTimeEntryButton from '@/components/timer/LogTimeEntryButton'
 import { getActivitiesForContact } from '@/app/activities/actions'
 
 export default async function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -50,6 +51,10 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
 
         {/* Time Tracking */}
         <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Time Tracking</h2>
+            <LogTimeEntryButton contactId={contact.id} />
+          </div>
           <Timer
             label="Session Timer"
             contactId={contact.id}
