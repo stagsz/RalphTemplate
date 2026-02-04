@@ -4,9 +4,9 @@
 
 ## Current Status
 
-**Phase**: 3 - Core Features (In Progress)
-**Progress**: Dashboard date range filter complete
-**Last Completed**: UI-24 - Date range filter for dashboard metrics
+**Phase**: 4 - Admin Features (In Progress)
+**Progress**: User management table with search/filters complete
+**Last Completed**: ADMIN-02 - Add user management (list all users)
 
 ---
 
@@ -114,7 +114,7 @@ The CRM application has been substantially built with the following features:
 ## Phase 4: Admin Features
 
 - [x] ADMIN-01: Create admin page route (existing)
-- [ ] ADMIN-02: Add user management (list all users)
+- [x] ADMIN-02: Add user management (list all users) - `4c1506d`
 - [ ] ADMIN-03: Add ability to change user roles
 - [ ] ADMIN-04: Add system-wide statistics for admins
 
@@ -292,3 +292,4 @@ The CRM application has been substantially built with the following features:
 | UI-12: Deal pipeline Kanban view | `93f6902` | 2026-02-04 |
 | UI-18: Task Kanban drag-and-drop | `642cc11` | 2026-02-04 |
 | UI-24: Dashboard date range filter | `b5ada36` | 2026-02-04 |
+| ADMIN-02: User management with search/filters | `4c1506d` | 2026-02-04 |
