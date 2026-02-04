@@ -107,9 +107,19 @@ export async function updateTimeEntry(id: string, formData: FormData) {
     return { error: 'Time entry not found' }
   }
 
-  // Users can only edit their own draft or submitted entries
-  if (existing.user_id !== user.id && existing.status === 'approved') {
+  // Verify ownership - users can only edit their own entries
+  if (existing.user_id !== user.id) {
+    return { error: 'You can only edit your own time entries' }
+  }
+
+  // Prevent editing approved or submitted entries
+  // Only draft and rejected entries can be edited
+  if (existing.status === 'approved') {
     return { error: 'Cannot edit approved time entries' }
+  }
+
+  if (existing.status === 'submitted') {
+    return { error: 'Cannot edit time entries pending approval. Please wait for admin review or ask to have it rejected.' }
   }
 
   const duration_minutes = formData.get('duration_minutes') as string
