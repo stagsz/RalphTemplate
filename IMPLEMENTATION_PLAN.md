@@ -5,8 +5,8 @@
 ## Current Status
 
 **Phase**: 5 - Time Tracking (In Progress)
-**Progress**: Time entries linked to activities via activity_id foreign key
-**Last Completed**: TIME-17 - Link time entries to activities (activity_id foreign key)
+**Progress**: Users can view and edit auto-created time entries
+**Last Completed**: TIME-18 - Allow editing auto-created time entries
 
 ---
 
@@ -146,7 +146,7 @@ The CRM application has been substantially built with the following features:
 - [x] TIME-15: Update activity form to include "Track time" checkbox - `302e924`
 - [x] TIME-16: Auto-create time entry when activity with duration is logged - `85f8b5f`
 - [x] TIME-17: Link time entries to activities (activity_id foreign key) - `c37af74` (schema), `85f8b5f` (implementation)
-- [ ] TIME-18: Allow editing auto-created time entries
+- [x] TIME-18: Allow editing auto-created time entries - `6dd2b86`
 
 ### Approval Workflow
 - [ ] TIME-19: Add submit time entry action (changes status to 'submitted')
@@ -307,3 +307,4 @@ The CRM application has been substantially built with the following features:
 | TIME-15: Track time checkbox in activity form | `302e924` | 2026-02-04 |
 | TIME-16: Auto-create time entry on activity save | `85f8b5f` | 2026-02-04 |
 | TIME-17: Link time entries to activities | `c37af74`, `85f8b5f` | 2026-02-04 |
+| TIME-18: Allow editing auto-created time entries | `6dd2b86` | 2026-02-04 |
