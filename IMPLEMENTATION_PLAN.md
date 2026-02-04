@@ -5,8 +5,8 @@
 ## Current Status
 
 **Phase**: 5 - Time Tracking (In Progress)
-**Progress**: Single timer constraint enforced
-**Last Completed**: TIME-08 - Implement "only one timer at a time" constraint
+**Progress**: Timer notifications implemented
+**Last Completed**: TIME-09 - Add notification for timer running >8 hours
 
 ---
 
@@ -133,7 +133,7 @@ The CRM application has been substantially built with the following features:
 - [x] TIME-06: Add timer to contact detail page - `40fee9a`
 - [x] TIME-07: Add timer to deal detail page - `d51928e`
 - [x] TIME-08: Implement "only one timer at a time" constraint - `38abc6f`
-- [ ] TIME-09: Add notification for timer running >8 hours
+- [x] TIME-09: Add notification for timer running >8 hours - `65e2257`
 
 ### Manual Time Entry
 - [ ] TIME-10: Create manual time entry form component
@@ -300,3 +300,4 @@ The CRM application has been substantially built with the following features:
 | TIME-06: Timer on contact detail page | `40fee9a` | 2026-02-04 |
 | TIME-07: Timer on deal detail page | `d51928e` | 2026-02-04 |
 | TIME-08: Single timer constraint | `38abc6f` | 2026-02-04 |
+| TIME-09: Timer 8+ hour notification | `65e2257` | 2026-02-04 |
