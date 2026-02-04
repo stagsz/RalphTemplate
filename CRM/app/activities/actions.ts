@@ -42,6 +42,8 @@ export async function createActivity(formData: FormData) {
   const priority = formData.get('priority') as Activity['priority']
   const due_date = formData.get('due_date') as string
   const duration_minutes = formData.get('duration_minutes') as string
+  const track_time = formData.get('track_time') === 'true'
+  const is_billable = formData.get('is_billable') === 'true'
 
   if (!type || !subject) {
     return { error: 'Type and subject are required' }
@@ -76,6 +78,32 @@ export async function createActivity(formData: FormData) {
     return { error: error.message }
   }
 
+  // Auto-create time entry if track_time is enabled and duration is set
+  const parsedDuration = duration_minutes ? parseInt(duration_minutes) : 0
+  if (track_time && parsedDuration > 0) {
+    const timeEntryData = {
+      user_id: user.id,
+      contact_id: contact_id || null,
+      deal_id: deal_id || null,
+      activity_id: data.id,
+      duration_minutes: parsedDuration,
+      entry_date: new Date().toISOString().split('T')[0],
+      notes: `Auto-tracked from activity: ${subject}`,
+      is_billable,
+      status: 'draft' as const
+    }
+
+    const { error: timeEntryError } = await supabase
+      .from('time_entries')
+      .insert(timeEntryData)
+
+    if (timeEntryError) {
+      console.error('Error creating auto time entry:', timeEntryError)
+      // Don't fail the whole operation if time entry creation fails
+      // The activity was already created successfully
+    }
+  }
+
   // Revalidate relevant pages
   if (contact_id) {
     revalidatePath(`/contacts/${contact_id}`)
@@ -84,6 +112,7 @@ export async function createActivity(formData: FormData) {
     revalidatePath(`/deals/${deal_id}`)
   }
   revalidatePath('/activities')
+  revalidatePath('/time-entries')
 
   return { data, error: null }
 }
