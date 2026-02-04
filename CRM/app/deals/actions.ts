@@ -124,6 +124,42 @@ export async function deleteDeal(id: string): Promise<ActionResult> {
   }
 }
 
+export async function updateDealStage(
+  id: string,
+  stage: 'lead' | 'proposal' | 'negotiation' | 'closed-won' | 'closed-lost'
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+
+    if (userError || !user) {
+      return { error: 'You must be logged in to update a deal' }
+    }
+
+    const { data, error } = await supabase
+      .from('deals')
+      .update({
+        stage,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating deal stage:', error)
+      return { error: 'Failed to update deal stage. Please try again.' }
+    }
+
+    revalidatePath('/deals')
+    revalidatePath(`/deals/${id}`)
+    return { data }
+  } catch (error) {
+    console.error('Unexpected error in updateDealStage:', error)
+    return { error: 'An unexpected error occurred. Please try again.' }
+  }
+}
+
 export async function getDealById(id: string): Promise<ActionResult> {
   try {
     const supabase = await createClient()
