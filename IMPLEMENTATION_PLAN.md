@@ -4,9 +4,9 @@
 
 ## Current Status
 
-**Phase**: 1 - Foundation (Complete)
-**Progress**: Core CRM built with full seed data
-**Last Completed**: DB-05 - Database seeding script enhanced
+**Phase**: 3 - Core Features (In Progress)
+**Progress**: Deal pipeline Kanban with drag-and-drop complete
+**Last Completed**: UI-12 - Deal pipeline Kanban view with drag-and-drop
 
 ---
 
@@ -86,7 +86,7 @@ The CRM application has been substantially built with the following features:
 - [x] UI-09: Create deal detail page (existing)
 - [x] UI-10: Create deal form (new/edit) (existing)
 - [x] UI-11: Add deal delete functionality (existing)
-- [ ] UI-12: Add deal pipeline Kanban view (drag-and-drop stages)
+- [x] UI-12: Add deal pipeline Kanban view (drag-and-drop stages) - `93f6902`
 
 ### Activities & Tasks
 - [x] UI-13: Create activity form component (existing)
@@ -289,3 +289,4 @@ The CRM application has been substantially built with the following features:
 | SETUP-07: ESLint configuration | pending commit | 2026-02-04 |
 | SETUP-08: Verify dependencies | `b1c0793` | 2026-02-04 |
 | DB-05: Database seeding script | `4ad854d` | 2026-02-04 |
+| UI-12: Deal pipeline Kanban view | `93f6902` | 2026-02-04 |
