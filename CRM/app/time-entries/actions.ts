@@ -256,6 +256,66 @@ export async function getTimeEntriesForDeal(dealId: string) {
 }
 
 /**
+ * Submit a time entry for approval (changes status from 'draft' to 'submitted')
+ */
+export async function submitTimeEntry(id: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Get the existing time entry
+  const { data: existing } = await supabase
+    .from('time_entries')
+    .select('status, user_id, contact_id, deal_id')
+    .eq('id', id)
+    .single()
+
+  if (!existing) {
+    return { error: 'Time entry not found' }
+  }
+
+  // Only the owner can submit their time entry
+  if (existing.user_id !== user.id) {
+    return { error: 'You can only submit your own time entries' }
+  }
+
+  // Only draft entries can be submitted
+  if (existing.status !== 'draft') {
+    return { error: 'Only draft time entries can be submitted for approval' }
+  }
+
+  const { data, error } = await supabase
+    .from('time_entries')
+    .update({
+      status: 'submitted',
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error submitting time entry:', error)
+    return { error: error.message }
+  }
+
+  // Revalidate relevant pages
+  if (existing.contact_id) {
+    revalidatePath(`/contacts/${existing.contact_id}`)
+  }
+  if (existing.deal_id) {
+    revalidatePath(`/deals/${existing.deal_id}`)
+  }
+  revalidatePath('/time-entries')
+  revalidatePath(`/time-entries/${id}`)
+
+  return { data, error: null }
+}
+
+/**
  * Get time entries for the current user
  */
 export async function getUserTimeEntries(filters?: {
