@@ -5,8 +5,8 @@
 ## Current Status
 
 **Phase**: 5 - Time Tracking (In Progress)
-**Progress**: Rejected entry handling complete with resubmit workflow
-**Last Completed**: TIME-23 - Handle rejected time entries (return to draft with notes)
+**Progress**: Admin time tracking dashboard created
+**Last Completed**: TIME-24 - Create admin time tracking dashboard page
 
 ---
 
@@ -156,7 +156,7 @@ The CRM application has been substantially built with the following features:
 - [x] TIME-23: Handle rejected time entries (return to draft with notes) - `e410e9f`
 
 ### Admin Dashboard
-- [ ] TIME-24: Create admin time tracking dashboard page
+- [x] TIME-24: Create admin time tracking dashboard page - `4d0e2cc`
 - [ ] TIME-25: Add total hours summary (today, this week, this month)
 - [ ] TIME-26: Add hours by user table (sortable)
 - [ ] TIME-27: Add hours by contact/deal breakdown (top 10)
@@ -313,3 +313,4 @@ The CRM application has been substantially built with the following features:
 | TIME-21: Add approve/reject time entry actions | `0800101` | 2026-02-04 |
 | TIME-22: Prevent editing approved time entries | `3789829` | 2026-02-04 |
 | TIME-23: Handle rejected time entries with resubmit | `e410e9f` | 2026-02-04 |
+| TIME-24: Create admin time tracking dashboard | `4d0e2cc` | 2026-02-04 |
