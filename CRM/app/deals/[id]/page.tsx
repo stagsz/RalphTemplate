@@ -4,7 +4,9 @@ import Link from 'next/link'
 import ActivityTimeline from '@/components/activities/ActivityTimeline'
 import Timer from '@/components/timer/Timer'
 import LogTimeEntryButton from '@/components/timer/LogTimeEntryButton'
+import TimeEntriesList from '@/components/timer/TimeEntriesList'
 import { getActivitiesForDeal } from '@/app/activities/actions'
+import { getTimeEntriesForDeal } from '@/app/time-entries/actions'
 
 const STAGES = {
   lead: { label: 'Lead', color: 'bg-blue-100', textColor: 'text-blue-800' },
@@ -35,8 +37,9 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
 
   const stage = STAGES[deal.stage as keyof typeof STAGES]
 
-  // Fetch activities for this deal
+  // Fetch activities and time entries for this deal
   const activities = await getActivitiesForDeal(id)
+  const timeEntries = await getTimeEntriesForDeal(id)
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
@@ -60,9 +63,11 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
         </div>
 
         {/* Time Tracking */}
-        <div className="mb-6">
+        <div className="mb-6 bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Time Tracking</h2>
+            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+              Time Tracking ({timeEntries.length})
+            </h2>
             <LogTimeEntryButton dealId={deal.id} contactId={deal.contact?.id} />
           </div>
           <Timer
@@ -70,6 +75,11 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
             dealId={deal.id}
             contactId={deal.contact?.id}
           />
+          {timeEntries.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <TimeEntriesList entries={timeEntries} showActivity={true} />
+            </div>
+          )}
         </div>
 
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg">

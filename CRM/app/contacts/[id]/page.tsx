@@ -5,7 +5,9 @@ import DeleteContactButton from '@/components/contacts/DeleteContactButton'
 import ActivityTimeline from '@/components/activities/ActivityTimeline'
 import Timer from '@/components/timer/Timer'
 import LogTimeEntryButton from '@/components/timer/LogTimeEntryButton'
+import TimeEntriesList from '@/components/timer/TimeEntriesList'
 import { getActivitiesForContact } from '@/app/activities/actions'
+import { getTimeEntriesForContact } from '@/app/time-entries/actions'
 
 export default async function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
   // No need to check auth here - middleware already handles it
@@ -27,8 +29,9 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
     notFound()
   }
 
-  // Fetch activities for this contact
+  // Fetch activities and time entries for this contact
   const activities = await getActivitiesForContact(id)
+  const timeEntries = await getTimeEntriesForContact(id)
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
@@ -50,15 +53,22 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
         </div>
 
         {/* Time Tracking */}
-        <div className="mb-6">
+        <div className="mb-6 bg-white dark:bg-gray-800 shadow rounded-lg p-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Time Tracking</h2>
+            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+              Time Tracking ({timeEntries.length})
+            </h2>
             <LogTimeEntryButton contactId={contact.id} />
           </div>
           <Timer
             label="Session Timer"
             contactId={contact.id}
           />
+          {timeEntries.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <TimeEntriesList entries={timeEntries} showActivity={true} />
+            </div>
+          )}
         </div>
 
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
