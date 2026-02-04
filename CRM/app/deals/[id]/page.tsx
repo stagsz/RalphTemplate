@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import ActivityTimeline from '@/components/activities/ActivityTimeline'
+import Timer from '@/components/timer/Timer'
 import { getActivitiesForDeal } from '@/app/activities/actions'
 
 const STAGES = {
@@ -55,6 +56,15 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
               {stage.label}
             </span>
           </div>
+        </div>
+
+        {/* Time Tracking */}
+        <div className="mb-6">
+          <Timer
+            label="Session Timer"
+            dealId={deal.id}
+            contactId={deal.contact?.id}
+          />
         </div>
 
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
