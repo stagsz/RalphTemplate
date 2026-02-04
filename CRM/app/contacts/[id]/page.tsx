@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import DeleteContactButton from '@/components/contacts/DeleteContactButton'
 import ActivityTimeline from '@/components/activities/ActivityTimeline'
+import Timer from '@/components/timer/Timer'
 import { getActivitiesForContact } from '@/app/activities/actions'
 
 export default async function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -45,6 +46,14 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
             {contact.company && `${contact.company} • `}
             {contact.title || 'Contact'}
           </p>
+        </div>
+
+        {/* Time Tracking */}
+        <div className="mb-6">
+          <Timer
+            label="Session Timer"
+            contactId={contact.id}
+          />
         </div>
 
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
