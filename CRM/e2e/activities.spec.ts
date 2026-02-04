@@ -85,7 +85,7 @@ test.describe('Epic 4: Activity Logging', () => {
       await page.fill('[name="subject"]', 'Client preferences noted')
       await page.fill('[name="description"]', 'Client prefers morning meetings and email communication')
 
-      await page.click('button[type="submit")
+      await page.click('button[type="submit"]')
 
       await expect(page.locator('text=Activity created successfully')).toBeVisible()
     })
@@ -169,7 +169,9 @@ test.describe('Epic 4: Activity Logging', () => {
       const boundingBox = await timeline.boundingBox()
       expect(boundingBox?.width).toBeLessThanOrEqual(375)
     })
-  })  test.describe('Story 4.3: Keyboard shortcuts', () => {
+  })
+
+  test.describe('Story 4.3: Keyboard shortcuts', () => {
     test('should open call modal with C key', async ({ page }) => {
       await page.goto('/')
       

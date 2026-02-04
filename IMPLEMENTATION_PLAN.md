@@ -227,6 +227,31 @@ The CRM application has been substantially built with the following features:
 
 ## Blockers
 
+### NOTE: Dependency Update Summary (SETUP-08)
+
+**Status:** ✅ COMPLETED
+
+**Actions Taken:**
+- Updated all dependencies to latest compatible versions within semver ranges
+- Fixed critical Next.js vulnerability (15.5.6 → 15.5.11)
+- Fixed syntax errors in `e2e/activities.spec.ts` (lines 88, 172)
+- Updated package-lock.json
+
+**Remaining Issues (Pre-existing, not caused by update):**
+- 1 moderate Next.js vulnerability (requires breaking upgrade to v16)
+- TypeScript errors in test files and components (23 errors)
+- ESLint errors in codebase (27 errors)
+- 3 failing unit tests (test assertions don't match component output)
+
+**Major Version Updates Available (Breaking Changes - Not Applied):**
+- Next.js: 15.5.11 → 16.1.6
+- Vitest: 3.2.4 → 4.0.18
+- @types/node: 24.x → 25.x
+- jsdom: 27.x → 28.x
+- @supabase/ssr: 0.7.0 → 0.8.0
+
+---
+
 ### BLOCKER #2: CRM directory not tracked in git (2026-02-04)
 
 **Status:** 🟡 BLOCKING SETUP-07 COMMIT
@@ -262,3 +287,4 @@ The CRM application has been substantially built with the following features:
 | Initial CRM implementation | (pre-existing) | Before planning |
 | SETUP-06: TypeScript strict mode | (already configured) | 2026-02-04 |
 | SETUP-07: ESLint configuration | pending commit | 2026-02-04 |
+| SETUP-08: Verify dependencies | `b1c0793` | 2026-02-04 |
