@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import Navigation from '@/components/layout/Navigation'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
+import { TimerProvider } from '@/components/providers/TimerContext'
 
 export const metadata: Metadata = {
   title: 'CRM - Simple & Fast',
@@ -16,10 +17,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-        <ThemeProvider>
-          <Navigation />
-          {children}
-        </ThemeProvider>
+        <TimerProvider>
+          <ThemeProvider>
+            <Navigation />
+            {children}
+          </ThemeProvider>
+        </TimerProvider>
       </body>
     </html>
   )
