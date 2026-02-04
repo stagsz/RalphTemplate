@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { approveTimeEntry, rejectTimeEntry } from '@/app/time-entries/actions'
 
 interface TimeEntry {
   id: string
@@ -67,6 +68,13 @@ export default function TimeApprovalsTable({ timeEntries, searchParams }: TimeAp
   const [search, setSearch] = useState(searchParams.search || '')
   const [statusFilter, setStatusFilter] = useState(searchParams.status || 'submitted')
 
+  // Approval action state
+  const [isActionPending, setIsActionPending] = useState(false)
+  const [rejectModalOpen, setRejectModalOpen] = useState(false)
+  const [rejectingEntryId, setRejectingEntryId] = useState<string | null>(null)
+  const [rejectNotes, setRejectNotes] = useState('')
+  const [actionError, setActionError] = useState<string | null>(null)
+
   const updateURL = (updates: Record<string, string>) => {
     const newParams = new URLSearchParams(params.toString())
 
@@ -119,6 +127,56 @@ export default function TimeApprovalsTable({ timeEntries, searchParams }: TimeAp
         {order === 'asc' ? '\u2191' : '\u2193'}
       </span>
     )
+  }
+
+  const handleApprove = async (id: string) => {
+    setActionError(null)
+    setIsActionPending(true)
+    try {
+      const result = await approveTimeEntry(id)
+      if (result.error) {
+        setActionError(result.error)
+      } else {
+        router.refresh()
+      }
+    } catch {
+      setActionError('Failed to approve time entry')
+    } finally {
+      setIsActionPending(false)
+    }
+  }
+
+  const openRejectModal = (id: string) => {
+    setRejectingEntryId(id)
+    setRejectNotes('')
+    setRejectModalOpen(true)
+    setActionError(null)
+  }
+
+  const closeRejectModal = () => {
+    setRejectModalOpen(false)
+    setRejectingEntryId(null)
+    setRejectNotes('')
+  }
+
+  const handleReject = async () => {
+    if (!rejectingEntryId) return
+
+    setActionError(null)
+    setIsActionPending(true)
+    try {
+      const result = await rejectTimeEntry(rejectingEntryId, rejectNotes || undefined)
+      if (result.error) {
+        setActionError(result.error)
+      } else {
+        closeRejectModal()
+        router.refresh()
+      }
+    } catch {
+      setActionError('Failed to reject time entry')
+    } finally {
+      setIsActionPending(false)
+    }
   }
 
   return (
@@ -197,19 +255,22 @@ export default function TimeApprovalsTable({ timeEntries, searchParams }: TimeAp
               >
                 Status <SortIcon column="status" />
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {isPending && (
               <tr>
-                <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                <td colSpan={8} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                   Loading...
                 </td>
               </tr>
             )}
             {!isPending && timeEntries.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                <td colSpan={8} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                   No time entries found. Try adjusting your search or filters.
                 </td>
               </tr>
@@ -284,11 +345,113 @@ export default function TimeApprovalsTable({ timeEntries, searchParams }: TimeAp
                     </div>
                   )}
                 </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  {entry.status === 'submitted' && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleApprove(entry.id)}
+                        disabled={isActionPending}
+                        className="px-3 py-1 text-xs font-medium rounded bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => openRejectModal(entry.id)}
+                        disabled={isActionPending}
+                        className="px-3 py-1 text-xs font-medium rounded bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  )}
+                  {entry.status !== 'submitted' && (
+                    <span className="text-gray-400 dark:text-gray-500">-</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Error Alert */}
+      {actionError && (
+        <div className="px-6 py-4 bg-red-50 dark:bg-red-900/20 border-t border-red-200 dark:border-red-800">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-red-700 dark:text-red-300">{actionError}</p>
+            <button
+              onClick={() => setActionError(null)}
+              className="text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Modal */}
+      {rejectModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div
+              className="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 transition-opacity"
+              onClick={closeRejectModal}
+            />
+            <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+              <div className="bg-white dark:bg-gray-800 px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 sm:mx-0 sm:h-10 sm:w-10">
+                    <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                  </div>
+                  <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left flex-1">
+                    <h3 className="text-base font-semibold leading-6 text-gray-900 dark:text-gray-100">
+                      Reject Time Entry
+                    </h3>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Are you sure you want to reject this time entry? The user will be notified and can revise it.
+                      </p>
+                      <div className="mt-4">
+                        <label htmlFor="reject-notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Rejection Notes (optional)
+                        </label>
+                        <textarea
+                          id="reject-notes"
+                          rows={3}
+                          value={rejectNotes}
+                          onChange={(e) => setRejectNotes(e.target.value)}
+                          placeholder="Provide feedback on why the entry is being rejected..."
+                          className="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm px-3 py-2"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                <button
+                  type="button"
+                  onClick={handleReject}
+                  disabled={isActionPending}
+                  className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed sm:ml-3 sm:w-auto"
+                >
+                  {isActionPending ? 'Rejecting...' : 'Reject'}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeRejectModal}
+                  disabled={isActionPending}
+                  className="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-gray-600 px-3 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-500 hover:bg-gray-50 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed sm:mt-0 sm:w-auto"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

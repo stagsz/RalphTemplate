@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { isAdmin } from '@/lib/auth/permissions'
 
 export interface TimeEntry {
   id: string
@@ -362,4 +363,134 @@ export async function getUserTimeEntries(filters?: {
   }
 
   return data || []
+}
+
+/**
+ * Approve a time entry (admin only)
+ * Changes status from 'submitted' to 'approved'
+ */
+export async function approveTimeEntry(id: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Only admins can approve time entries
+  const adminCheck = await isAdmin()
+  if (!adminCheck) {
+    return { error: 'Only admins can approve time entries' }
+  }
+
+  // Get the existing time entry
+  const { data: existing } = await supabase
+    .from('time_entries')
+    .select('status, contact_id, deal_id')
+    .eq('id', id)
+    .single()
+
+  if (!existing) {
+    return { error: 'Time entry not found' }
+  }
+
+  // Only submitted entries can be approved
+  if (existing.status !== 'submitted') {
+    return { error: 'Only submitted time entries can be approved' }
+  }
+
+  const { data, error } = await supabase
+    .from('time_entries')
+    .update({
+      status: 'approved',
+      approved_by: user.id,
+      approved_at: new Date().toISOString(),
+      approval_notes: null,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error approving time entry:', error)
+    return { error: error.message }
+  }
+
+  // Revalidate relevant pages
+  if (existing.contact_id) {
+    revalidatePath(`/contacts/${existing.contact_id}`)
+  }
+  if (existing.deal_id) {
+    revalidatePath(`/deals/${existing.deal_id}`)
+  }
+  revalidatePath('/time-entries')
+  revalidatePath('/admin/time-approvals')
+
+  return { data, error: null }
+}
+
+/**
+ * Reject a time entry (admin only)
+ * Changes status from 'submitted' to 'rejected' with optional notes
+ */
+export async function rejectTimeEntry(id: string, notes?: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: 'Unauthorized' }
+  }
+
+  // Only admins can reject time entries
+  const adminCheck = await isAdmin()
+  if (!adminCheck) {
+    return { error: 'Only admins can reject time entries' }
+  }
+
+  // Get the existing time entry
+  const { data: existing } = await supabase
+    .from('time_entries')
+    .select('status, contact_id, deal_id')
+    .eq('id', id)
+    .single()
+
+  if (!existing) {
+    return { error: 'Time entry not found' }
+  }
+
+  // Only submitted entries can be rejected
+  if (existing.status !== 'submitted') {
+    return { error: 'Only submitted time entries can be rejected' }
+  }
+
+  const { data, error } = await supabase
+    .from('time_entries')
+    .update({
+      status: 'rejected',
+      approved_by: user.id,
+      approved_at: new Date().toISOString(),
+      approval_notes: notes || null,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error rejecting time entry:', error)
+    return { error: error.message }
+  }
+
+  // Revalidate relevant pages
+  if (existing.contact_id) {
+    revalidatePath(`/contacts/${existing.contact_id}`)
+  }
+  if (existing.deal_id) {
+    revalidatePath(`/deals/${existing.deal_id}`)
+  }
+  revalidatePath('/time-entries')
+  revalidatePath('/admin/time-approvals')
+
+  return { data, error: null }
 }
