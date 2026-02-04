@@ -13,7 +13,7 @@ interface AdminDashboardProps {
 
 export default async function AdminDashboard({ searchParams }: AdminDashboardProps) {
   // Require admin role - will redirect if not admin
-  await requireAdmin()
+  const currentUser = await requireAdmin()
 
   const params = await searchParams
   const supabase = await createClient()
@@ -122,6 +122,7 @@ export default async function AdminDashboard({ searchParams }: AdminDashboardPro
         </div>
         <UsersTable
           users={users || []}
+          currentUserId={currentUser.id}
           searchParams={params}
         />
       </div>

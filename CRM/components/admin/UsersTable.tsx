@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { updateUserRole, type UserRole } from '@/app/admin/actions'
 
 interface User {
   id: string
@@ -13,6 +14,7 @@ interface User {
 
 interface UsersTableProps {
   users: User[]
+  currentUserId: string
   searchParams: {
     search?: string
     role?: string
@@ -21,10 +23,12 @@ interface UsersTableProps {
   }
 }
 
-export default function UsersTable({ users, searchParams }: UsersTableProps) {
+export default function UsersTable({ users, currentUserId, searchParams }: UsersTableProps) {
   const router = useRouter()
   const params = useSearchParams()
   const [isPending, startTransition] = useTransition()
+  const [isUpdatingRole, setIsUpdatingRole] = useState<string | null>(null)
+  const [roleError, setRoleError] = useState<string | null>(null)
 
   const [search, setSearch] = useState(searchParams.search || '')
   const [roleFilter, setRoleFilter] = useState(searchParams.role || 'all')
@@ -68,6 +72,23 @@ export default function UsersTable({ users, searchParams }: UsersTableProps) {
     updateURL({ sort: column, order: newOrder })
   }
 
+  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+    setRoleError(null)
+    setIsUpdatingRole(userId)
+
+    try {
+      const result = await updateUserRole(userId, newRole)
+
+      if (!result.success) {
+        setRoleError(result.error || 'Failed to update role')
+      }
+    } catch {
+      setRoleError('An unexpected error occurred')
+    } finally {
+      setIsUpdatingRole(null)
+    }
+  }
+
   const SortIcon = ({ column }: { column: string }) => {
     const isActive = searchParams.sort === column
     const order = searchParams.order || 'desc'
@@ -85,6 +106,22 @@ export default function UsersTable({ users, searchParams }: UsersTableProps) {
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+      {/* Error Banner */}
+      {roleError && (
+        <div className="px-6 py-3 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-red-700 dark:text-red-300">{roleError}</p>
+            <button
+              onClick={() => setRoleError(null)}
+              className="text-red-700 dark:text-red-300 hover:text-red-900 dark:hover:text-red-100"
+            >
+              <span className="sr-only">Dismiss</span>
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Filters and Search */}
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row gap-4">
@@ -186,13 +223,30 @@ export default function UsersTable({ users, searchParams }: UsersTableProps) {
                   <div className="text-sm text-gray-900 dark:text-gray-100">{user.email}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs font-semibold rounded ${
-                    user.role === 'admin'
-                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300'
-                      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
-                  }`}>
-                    {user.role}
-                  </span>
+                  {user.id === currentUserId ? (
+                    <span className={`px-2 py-1 text-xs font-semibold rounded ${
+                      user.role === 'admin'
+                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300'
+                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                    }`}>
+                      {user.role}
+                      <span className="ml-1 text-gray-400">(you)</span>
+                    </span>
+                  ) : (
+                    <select
+                      value={user.role}
+                      onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
+                      disabled={isUpdatingRole === user.id}
+                      className={`px-2 py-1 text-xs font-semibold rounded border-0 cursor-pointer focus:ring-2 focus:ring-blue-500 ${
+                        user.role === 'admin'
+                          ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300'
+                          : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                      } ${isUpdatingRole === user.id ? 'opacity-50 cursor-wait' : ''}`}
+                    >
+                      <option value="user">user</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                   {new Date(user.created_at).toLocaleDateString()}
