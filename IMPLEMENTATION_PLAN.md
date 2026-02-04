@@ -5,8 +5,8 @@
 ## Current Status
 
 **Phase**: 3 - Core Features (In Progress)
-**Progress**: Deal pipeline Kanban with drag-and-drop complete
-**Last Completed**: UI-12 - Deal pipeline Kanban view with drag-and-drop
+**Progress**: Task Kanban with drag-and-drop complete
+**Last Completed**: UI-18 - Drag-and-drop task status updates
 
 ---
 
@@ -94,7 +94,7 @@ The CRM application has been substantially built with the following features:
 - [x] UI-15: Add activities to contact detail (existing)
 - [x] UI-16: Add activities to deal detail (existing)
 - [x] UI-17: Create tasks Kanban board page (existing)
-- [ ] UI-18: Add drag-and-drop task status updates
+- [x] UI-18: Add drag-and-drop task status updates - `642cc11`
 
 ### Dashboard
 - [x] UI-19: Create dashboard page with metrics (existing)
@@ -290,3 +290,4 @@ The CRM application has been substantially built with the following features:
 | SETUP-08: Verify dependencies | `b1c0793` | 2026-02-04 |
 | DB-05: Database seeding script | `4ad854d` | 2026-02-04 |
 | UI-12: Deal pipeline Kanban view | `93f6902` | 2026-02-04 |
+| UI-18: Task Kanban drag-and-drop | `642cc11` | 2026-02-04 |
