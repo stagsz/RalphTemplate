@@ -5,8 +5,8 @@
 ## Current Status
 
 **Phase**: 3 - Core Features (In Progress)
-**Progress**: Task Kanban with drag-and-drop complete
-**Last Completed**: UI-18 - Drag-and-drop task status updates
+**Progress**: Dashboard date range filter complete
+**Last Completed**: UI-24 - Date range filter for dashboard metrics
 
 ---
 
@@ -102,7 +102,7 @@ The CRM application has been substantially built with the following features:
 - [x] UI-21: Add deals donut chart (existing)
 - [x] UI-22: Show recent deals list (existing)
 - [x] UI-23: Show upcoming tasks list (existing)
-- [ ] UI-24: Add date range filter for dashboard metrics
+- [x] UI-24: Add date range filter for dashboard metrics - `b5ada36`
 
 ### Navigation & Layout
 - [x] UI-25: Create main navigation component (existing)
@@ -291,3 +291,4 @@ The CRM application has been substantially built with the following features:
 | DB-05: Database seeding script | `4ad854d` | 2026-02-04 |
 | UI-12: Deal pipeline Kanban view | `93f6902` | 2026-02-04 |
 | UI-18: Task Kanban drag-and-drop | `642cc11` | 2026-02-04 |
+| UI-24: Dashboard date range filter | `b5ada36` | 2026-02-04 |
