@@ -1,20 +1,48 @@
 import { requireAdmin } from '@/lib/auth/permissions'
 import { createClient } from '@/lib/supabase/server'
+import UsersTable from '@/components/admin/UsersTable'
 
-export default async function AdminDashboard() {
+interface AdminDashboardProps {
+  searchParams: Promise<{
+    search?: string
+    role?: string
+    sort?: string
+    order?: 'asc' | 'desc'
+  }>
+}
+
+export default async function AdminDashboard({ searchParams }: AdminDashboardProps) {
   // Require admin role - will redirect if not admin
-  const admin = await requireAdmin()
+  await requireAdmin()
 
+  const params = await searchParams
   const supabase = await createClient()
 
-  // Fetch all users (admin can see all)
-  const { data: users, count } = await supabase
-    .from('users')
-    .select('*', { count: 'exact' })
-    .order('created_at', { ascending: false })
+  // Build query with filters
+  let query = supabase.from('users').select('*', { count: 'exact' })
 
-  const adminCount = users?.filter(u => u.role === 'admin').length || 0
-  const userCount = users?.filter(u => u.role === 'user').length || 0
+  // Apply search filter
+  if (params.search) {
+    query = query.or(`full_name.ilike.%${params.search}%,email.ilike.%${params.search}%`)
+  }
+
+  // Apply role filter
+  if (params.role && params.role !== 'all') {
+    query = query.eq('role', params.role)
+  }
+
+  // Apply sorting
+  const sortColumn = params.sort || 'created_at'
+  const sortOrder = params.order || 'desc'
+  query = query.order(sortColumn, { ascending: sortOrder === 'asc' })
+
+  const { data: users, count } = await query
+
+  // Get total counts (unfiltered) for stats
+  const { data: allUsers } = await supabase.from('users').select('role')
+  const adminCount = allUsers?.filter(u => u.role === 'admin').length || 0
+  const userCount = allUsers?.filter(u => u.role === 'user').length || 0
+  const totalCount = allUsers?.length || 0
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -43,7 +71,7 @@ export default async function AdminDashboard() {
             <div className="flex items-center">
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Users</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{count || 0}</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{totalCount}</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
                 <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -82,65 +110,20 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        {/* Users Table */}
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">All Users</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Created
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {users?.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                          {user.full_name?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {user.full_name || 'No name'}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-gray-100">{user.email}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-semibold rounded ${
-                        user.role === 'admin'
-                          ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300'
-                          : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
-                      }`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        {/* Users Table Section */}
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">All Users</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {count !== totalCount
+              ? `Showing ${count} of ${totalCount} users`
+              : `${totalCount} total users`
+            }
+          </p>
         </div>
+        <UsersTable
+          users={users || []}
+          searchParams={params}
+        />
       </div>
     </div>
   )
