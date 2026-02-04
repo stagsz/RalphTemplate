@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import ActivityTimeline from '@/components/activities/ActivityTimeline'
 import Timer from '@/components/timer/Timer'
+import LogTimeEntryButton from '@/components/timer/LogTimeEntryButton'
 import { getActivitiesForDeal } from '@/app/activities/actions'
 
 const STAGES = {
@@ -60,6 +61,10 @@ export default async function DealDetailPage({ params }: { params: Promise<{ id:
 
         {/* Time Tracking */}
         <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">Time Tracking</h2>
+            <LogTimeEntryButton dealId={deal.id} contactId={deal.contact?.id} />
+          </div>
           <Timer
             label="Session Timer"
             dealId={deal.id}
