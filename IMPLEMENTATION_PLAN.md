@@ -5,8 +5,8 @@
 ## Current Status
 
 **Phase**: 5 - Time Tracking (In Progress)
-**Progress**: Reporting & Export - Billable breakdown added
-**Last Completed**: TIME-34 - Add billable vs non-billable breakdown
+**Progress**: Reporting & Export - Approval status breakdown added
+**Last Completed**: TIME-35 - Add approval status breakdown
 
 ---
 
@@ -169,7 +169,7 @@ The CRM application has been substantially built with the following features:
 - [x] TIME-32: Create time tracking report page - `2bb4fab`
 - [x] TIME-33: Add CSV export with all time entry fields - `a292e74`
 - [x] TIME-34: Add billable vs non-billable breakdown - `b3ba93e`
-- [ ] TIME-35: Add approval status breakdown
+- [x] TIME-35: Add approval status breakdown - `f1052be`
 
 ### Testing
 - [ ] TIME-36: Add unit tests for Timer component
@@ -324,3 +324,4 @@ The CRM application has been substantially built with the following features:
 | TIME-32: Create time tracking report page | `2bb4fab` | 2026-02-05 |
 | TIME-33: Add CSV export with all time entry fields | `a292e74` | 2026-02-05 |
 | TIME-34: Add billable vs non-billable breakdown | `b3ba93e` | 2026-02-05 |
+| TIME-35: Add approval status breakdown | `f1052be` | 2026-02-05 |
