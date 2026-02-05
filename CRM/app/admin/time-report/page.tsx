@@ -8,6 +8,7 @@ import TimeReportTable from '@/components/admin/TimeReportTable'
 import UserFilterSelectClient from '@/components/admin/UserFilterSelectClient'
 import ExportTimeEntriesButton from '@/components/admin/ExportTimeEntriesButton'
 import BillableBreakdownChartWrapper from '@/components/admin/BillableBreakdownChartWrapper'
+import ApprovalStatusBreakdownChartWrapper from '@/components/admin/ApprovalStatusBreakdownChartWrapper'
 
 interface SearchParams {
   range?: string
@@ -126,6 +127,45 @@ export default async function AdminTimeReportPage({
   // Billable entries count
   const billableEntries = entries.filter(e => e.is_billable).length
   const nonBillableEntries = entries.length - billableEntries
+
+  // Approval status breakdown
+  const approvedMinutes = entries.filter(e => e.status === 'approved').reduce((sum, e) => sum + (e.duration_minutes || 0), 0)
+  const submittedMinutes = entries.filter(e => e.status === 'submitted').reduce((sum, e) => sum + (e.duration_minutes || 0), 0)
+  const draftMinutes = entries.filter(e => e.status === 'draft').reduce((sum, e) => sum + (e.duration_minutes || 0), 0)
+  const rejectedMinutes = entries.filter(e => e.status === 'rejected').reduce((sum, e) => sum + (e.duration_minutes || 0), 0)
+
+  const approvedEntries = entries.filter(e => e.status === 'approved').length
+  const submittedEntries = entries.filter(e => e.status === 'submitted').length
+  const draftEntries = entries.filter(e => e.status === 'draft').length
+  const rejectedEntries = entries.filter(e => e.status === 'rejected').length
+
+  // Approval status breakdown by user
+  const statusByUser: Record<string, { name: string, approvedMinutes: number, submittedMinutes: number, draftMinutes: number, rejectedMinutes: number }> = {}
+  entries.forEach(e => {
+    const userId = e.user_id
+    const user = e.user as { id: string, email: string, full_name: string | null } | null
+    if (!statusByUser[userId]) {
+      statusByUser[userId] = {
+        name: user?.full_name || user?.email || 'Unknown',
+        approvedMinutes: 0,
+        submittedMinutes: 0,
+        draftMinutes: 0,
+        rejectedMinutes: 0,
+      }
+    }
+    if (e.status === 'approved') {
+      statusByUser[userId].approvedMinutes += e.duration_minutes || 0
+    } else if (e.status === 'submitted') {
+      statusByUser[userId].submittedMinutes += e.duration_minutes || 0
+    } else if (e.status === 'draft') {
+      statusByUser[userId].draftMinutes += e.duration_minutes || 0
+    } else if (e.status === 'rejected') {
+      statusByUser[userId].rejectedMinutes += e.duration_minutes || 0
+    }
+  })
+  const statusByUserList = Object.values(statusByUser).sort((a, b) =>
+    (b.approvedMinutes + b.submittedMinutes + b.draftMinutes + b.rejectedMinutes) - (a.approvedMinutes + a.submittedMinutes + a.draftMinutes + a.rejectedMinutes)
+  )
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -333,6 +373,96 @@ export default async function AdminTimeReportPage({
                             {billablePercent}%
                           </span>
                         </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Approval Status Breakdown */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Approval Status Breakdown</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Pie Chart */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Status Distribution</h3>
+              <ApprovalStatusBreakdownChartWrapper data={{ approvedMinutes, submittedMinutes, draftMinutes, rejectedMinutes }} />
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Approved</span>
+                  </div>
+                  <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatDuration(approvedMinutes)}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{approvedEntries} {approvedEntries === 1 ? 'entry' : 'entries'}</p>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Submitted</span>
+                  </div>
+                  <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatDuration(submittedMinutes)}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{submittedEntries} {submittedEntries === 1 ? 'entry' : 'entries'}</p>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Draft</span>
+                  </div>
+                  <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatDuration(draftMinutes)}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{draftEntries} {draftEntries === 1 ? 'entry' : 'entries'}</p>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Rejected</span>
+                  </div>
+                  <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatDuration(rejectedMinutes)}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{rejectedEntries} {rejectedEntries === 1 ? 'entry' : 'entries'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Status Breakdown by User */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Status by User</h3>
+              {statusByUserList.length === 0 ? (
+                <div className="flex items-center justify-center h-[250px] text-gray-500 dark:text-gray-400">
+                  <p className="text-sm">No time entries to display</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-gray-700">
+                        <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-2">User</th>
+                        <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-2">Approved</th>
+                        <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-2">Submitted</th>
+                        <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-2">Draft</th>
+                        <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-2">Rejected</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                      {statusByUserList.map((user, idx) => (
+                        <tr key={idx}>
+                          <td className="py-2 text-sm text-gray-900 dark:text-gray-100">{user.name}</td>
+                          <td className="py-2 text-sm text-right text-green-600 dark:text-green-400 font-medium">{formatDuration(user.approvedMinutes)}</td>
+                          <td className="py-2 text-sm text-right text-yellow-600 dark:text-yellow-400 font-medium">{formatDuration(user.submittedMinutes)}</td>
+                          <td className="py-2 text-sm text-right text-gray-500 dark:text-gray-400">{formatDuration(user.draftMinutes)}</td>
+                          <td className="py-2 text-sm text-right text-red-600 dark:text-red-400 font-medium">{formatDuration(user.rejectedMinutes)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-gray-300 dark:border-gray-600">
+                        <td className="py-2 text-sm font-semibold text-gray-900 dark:text-gray-100">Total</td>
+                        <td className="py-2 text-sm text-right font-semibold text-green-600 dark:text-green-400">{formatDuration(approvedMinutes)}</td>
+                        <td className="py-2 text-sm text-right font-semibold text-yellow-600 dark:text-yellow-400">{formatDuration(submittedMinutes)}</td>
+                        <td className="py-2 text-sm text-right font-semibold text-gray-500 dark:text-gray-400">{formatDuration(draftMinutes)}</td>
+                        <td className="py-2 text-sm text-right font-semibold text-red-600 dark:text-red-400">{formatDuration(rejectedMinutes)}</td>
                       </tr>
                     </tfoot>
                   </table>
