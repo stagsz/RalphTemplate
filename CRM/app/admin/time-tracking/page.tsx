@@ -7,6 +7,7 @@ import DealHoursTable from '@/components/admin/DealHoursTable'
 import DateRangeFilter, { getDateRangeFromParams, type DateRangePreset } from '@/components/dashboard/DateRangeFilter'
 import BillableFilter, { type BillablePreset } from '@/components/admin/BillableFilter'
 import ApprovalStatusFilter, { type ApprovalStatusPreset } from '@/components/admin/ApprovalStatusFilter'
+import HoursPerDayChartWrapper from '@/components/admin/HoursPerDayChartWrapper'
 
 interface SearchParams {
   range?: string
@@ -158,6 +159,22 @@ export default async function AdminTimeTrackingDashboard({
     hoursByDeal[dealId].totalMinutes += e.duration_minutes || 0
   })
   const dealHoursList = Object.values(hoursByDeal).sort((a, b) => b.totalMinutes - a.totalMinutes).slice(0, 10)
+
+  // Hours per day for last 7 days chart
+  const last7Days: { date: string, label: string, totalHours: number, billableHours: number }[] = []
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i)
+    const dateStr = d.toISOString().split('T')[0]
+    const dayEntries = entries.filter(e => e.entry_date === dateStr)
+    const totalMinutesDay = dayEntries.reduce((sum, e) => sum + (e.duration_minutes || 0), 0)
+    const billableMinutesDay = dayEntries.reduce((sum, e) => sum + (e.is_billable ? e.duration_minutes || 0 : 0), 0)
+    last7Days.push({
+      date: dateStr,
+      label: d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+      totalHours: Math.round((totalMinutesDay / 60) * 10) / 10,
+      billableHours: Math.round((billableMinutesDay / 60) * 10) / 10,
+    })
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -335,6 +352,12 @@ export default async function AdminTimeTrackingDashboard({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Hours Per Day Chart (Last 7 Days) */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Hours Per Day (Last 7 Days)</h3>
+          <HoursPerDayChartWrapper data={last7Days} />
         </div>
 
         {/* Hours by User (Sortable) */}
