@@ -7,6 +7,7 @@ import ApprovalStatusFilter, { type ApprovalStatusPreset } from '@/components/ad
 import TimeReportTable from '@/components/admin/TimeReportTable'
 import UserFilterSelectClient from '@/components/admin/UserFilterSelectClient'
 import ExportTimeEntriesButton from '@/components/admin/ExportTimeEntriesButton'
+import BillableBreakdownChartWrapper from '@/components/admin/BillableBreakdownChartWrapper'
 
 interface SearchParams {
   range?: string
@@ -97,7 +98,34 @@ export default async function AdminTimeReportPage({
   const totalEntries = entries.length
   const totalMinutes = entries.reduce((sum, e) => sum + (e.duration_minutes || 0), 0)
   const billableMinutes = entries.reduce((sum, e) => sum + (e.is_billable ? e.duration_minutes || 0 : 0), 0)
+  const nonBillableMinutes = totalMinutes - billableMinutes
   const billablePercent = totalMinutes > 0 ? Math.round((billableMinutes / totalMinutes) * 100) : 0
+
+  // Billable breakdown by user
+  const billableByUser: Record<string, { name: string, billableMinutes: number, nonBillableMinutes: number }> = {}
+  entries.forEach(e => {
+    const userId = e.user_id
+    const user = e.user as { id: string, email: string, full_name: string | null } | null
+    if (!billableByUser[userId]) {
+      billableByUser[userId] = {
+        name: user?.full_name || user?.email || 'Unknown',
+        billableMinutes: 0,
+        nonBillableMinutes: 0,
+      }
+    }
+    if (e.is_billable) {
+      billableByUser[userId].billableMinutes += e.duration_minutes || 0
+    } else {
+      billableByUser[userId].nonBillableMinutes += e.duration_minutes || 0
+    }
+  })
+  const billableByUserList = Object.values(billableByUser).sort((a, b) =>
+    (b.billableMinutes + b.nonBillableMinutes) - (a.billableMinutes + a.nonBillableMinutes)
+  )
+
+  // Billable entries count
+  const billableEntries = entries.filter(e => e.is_billable).length
+  const nonBillableEntries = entries.length - billableEntries
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -221,6 +249,95 @@ export default async function AdminTimeReportPage({
                   </svg>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Billable vs Non-Billable Breakdown */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Billable Breakdown</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Pie Chart */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Hours Distribution</h3>
+              <BillableBreakdownChartWrapper data={{ billableMinutes, nonBillableMinutes }} />
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Billable</span>
+                  </div>
+                  <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatDuration(billableMinutes)}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{billableEntries} {billableEntries === 1 ? 'entry' : 'entries'}</p>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Non-Billable</span>
+                  </div>
+                  <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{formatDuration(nonBillableMinutes)}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{nonBillableEntries} {nonBillableEntries === 1 ? 'entry' : 'entries'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Billable Breakdown by User */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">Billable Hours by User</h3>
+              {billableByUserList.length === 0 ? (
+                <div className="flex items-center justify-center h-[250px] text-gray-500 dark:text-gray-400">
+                  <p className="text-sm">No time entries to display</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-gray-700">
+                        <th className="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-2">User</th>
+                        <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-2">Billable</th>
+                        <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-2">Non-Billable</th>
+                        <th className="text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider py-2">Rate</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                      {billableByUserList.map((user, idx) => {
+                        const userTotal = user.billableMinutes + user.nonBillableMinutes
+                        const userRate = userTotal > 0 ? Math.round((user.billableMinutes / userTotal) * 100) : 0
+                        return (
+                          <tr key={idx}>
+                            <td className="py-2 text-sm text-gray-900 dark:text-gray-100">{user.name}</td>
+                            <td className="py-2 text-sm text-right text-green-600 dark:text-green-400 font-medium">{formatDuration(user.billableMinutes)}</td>
+                            <td className="py-2 text-sm text-right text-gray-500 dark:text-gray-400">{formatDuration(user.nonBillableMinutes)}</td>
+                            <td className="py-2 text-sm text-right">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                userRate >= 75
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                  : userRate >= 50
+                                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                              }`}>
+                                {userRate}%
+                              </span>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-gray-300 dark:border-gray-600">
+                        <td className="py-2 text-sm font-semibold text-gray-900 dark:text-gray-100">Total</td>
+                        <td className="py-2 text-sm text-right font-semibold text-green-600 dark:text-green-400">{formatDuration(billableMinutes)}</td>
+                        <td className="py-2 text-sm text-right font-semibold text-gray-500 dark:text-gray-400">{formatDuration(nonBillableMinutes)}</td>
+                        <td className="py-2 text-sm text-right">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                            {billablePercent}%
+                          </span>
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         </div>
