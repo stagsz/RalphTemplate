@@ -4,6 +4,13 @@ import Link from 'next/link'
 import UserHoursTable from '@/components/admin/UserHoursTable'
 import ContactHoursTable from '@/components/admin/ContactHoursTable'
 import DealHoursTable from '@/components/admin/DealHoursTable'
+import DateRangeFilter, { getDateRangeFromParams, type DateRangePreset } from '@/components/dashboard/DateRangeFilter'
+
+interface SearchParams {
+  range?: string
+  start?: string
+  end?: string
+}
 
 function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60)
@@ -11,13 +18,22 @@ function formatDuration(minutes: number): string {
   return `${hours}h ${mins}m`
 }
 
-export default async function AdminTimeTrackingDashboard() {
+export default async function AdminTimeTrackingDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
   // Require admin role - will redirect if not admin
   await requireAdmin()
 
   const supabase = await createClient()
+  const params = await searchParams
 
-  // Get date ranges
+  // Parse date range from search params
+  const { startDate, endDate } = getDateRangeFromParams(params)
+  const preset = (params.range || 'all') as DateRangePreset
+
+  // Get date ranges for summary cards
   const now = new Date()
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().split('T')[0]
 
@@ -27,8 +43,8 @@ export default async function AdminTimeTrackingDashboard() {
 
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
 
-  // Fetch time entries with related data
-  const { data: allTimeEntries } = await supabase
+  // Fetch time entries with related data, applying date range filter
+  let timeEntriesQuery = supabase
     .from('time_entries')
     .select(`
       *,
@@ -36,11 +52,21 @@ export default async function AdminTimeTrackingDashboard() {
       contact:contacts(id, first_name, last_name, company),
       deal:deals(id, title)
     `)
+
+  if (startDate && endDate) {
+    timeEntriesQuery = timeEntriesQuery
+      .gte('entry_date', startDate)
+      .lte('entry_date', endDate)
+  }
+
+  const { data: allTimeEntries } = await timeEntriesQuery
     .order('entry_date', { ascending: false })
 
   const entries = allTimeEntries || []
 
   // Calculate summary statistics
+  // When a date range filter is active, all entries are already filtered
+  // Show today/week/month as sub-filters of the selected range
   const todayEntries = entries.filter(e => e.entry_date === todayStart)
   const weekEntries = entries.filter(e => e.entry_date >= weekStartStr)
   const monthEntries = entries.filter(e => e.entry_date >= monthStart)
@@ -144,6 +170,16 @@ export default async function AdminTimeTrackingDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Date Range Filter */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-8">
+          <DateRangeFilter
+            startDate={startDate || undefined}
+            endDate={endDate || undefined}
+            preset={preset}
+            basePath="/admin/time-tracking"
+          />
+        </div>
+
         {/* Time Summary Stats */}
         <div className="mb-8">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Time Summary</h2>

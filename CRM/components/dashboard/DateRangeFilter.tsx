@@ -9,6 +9,7 @@ interface DateRangeFilterProps {
   startDate?: string
   endDate?: string
   preset?: DateRangePreset
+  basePath?: string
 }
 
 function getPresetDates(preset: DateRangePreset): { start: string; end: string } | null {
@@ -64,7 +65,7 @@ export function getDateRangeFromParams(params: {
   return { startDate: null, endDate: null }
 }
 
-export default function DateRangeFilter({ startDate, endDate, preset = 'all' }: DateRangeFilterProps) {
+export default function DateRangeFilter({ startDate, endDate, preset = 'all', basePath = '/dashboard' }: DateRangeFilterProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
@@ -89,9 +90,10 @@ export default function DateRangeFilter({ startDate, endDate, preset = 'all' }: 
     }
 
     startTransition(() => {
-      router.push(`/dashboard?${params.toString()}`)
+      const query = params.toString()
+      router.push(query ? `${basePath}?${query}` : basePath)
     })
-  }, [router, searchParams])
+  }, [router, searchParams, basePath])
 
   const handlePresetChange = (newPreset: DateRangePreset) => {
     if (newPreset === 'custom') {
