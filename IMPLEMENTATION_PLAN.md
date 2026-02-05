@@ -5,8 +5,8 @@
 ## Current Status
 
 **Phase**: 5 - Time Tracking (In Progress)
-**Progress**: Testing - TimeEntryForm unit tests added
-**Last Completed**: TIME-37 - Add unit tests for time entry form
+**Progress**: Testing - Time entry actions unit tests added
+**Last Completed**: TIME-38 - Add unit tests for time entry actions
 
 ---
 
@@ -174,7 +174,7 @@ The CRM application has been substantially built with the following features:
 ### Testing
 - [x] TIME-36: Add unit tests for Timer component - `3e36a90`
 - [x] TIME-37: Add unit tests for time entry form - `256ebfe`
-- [ ] TIME-38: Add unit tests for time entry actions
+- [x] TIME-38: Add unit tests for time entry actions
 - [ ] TIME-39: Add E2E test for timer flow
 - [ ] TIME-40: Add E2E test for manual entry flow
 - [ ] TIME-41: Add E2E test for approval workflow
