@@ -5,8 +5,8 @@
 ## Current Status
 
 **Phase**: 5 - Time Tracking (In Progress)
-**Progress**: Admin dashboard - sortable contact/deal hours tables added
-**Last Completed**: TIME-27 - Add hours by contact/deal breakdown (top 10)
+**Progress**: Admin dashboard - date range filter added
+**Last Completed**: TIME-28 - Add date range filter
 
 ---
 
@@ -160,7 +160,7 @@ The CRM application has been substantially built with the following features:
 - [x] TIME-25: Add total hours summary (today, this week, this month) - `4d0e2cc` (included in TIME-24)
 - [x] TIME-26: Add hours by user table (sortable) - `fe3cc75`
 - [x] TIME-27: Add hours by contact/deal breakdown (top 10) - `4b5d7dc`
-- [ ] TIME-28: Add date range filter
+- [x] TIME-28: Add date range filter - `d82bd7c`
 - [ ] TIME-29: Add billable/non-billable filter
 - [ ] TIME-30: Add approval status filter
 - [ ] TIME-31: Add hours per day chart (last 7 days)
@@ -317,3 +317,4 @@ The CRM application has been substantially built with the following features:
 | TIME-25: Add total hours summary (today/week/month) | `4d0e2cc` | 2026-02-04 |
 | TIME-26: Add sortable hours by user table | `fe3cc75` | 2026-02-05 |
 | TIME-27: Add sortable contact/deal hours tables | `4b5d7dc` | 2026-02-05 |
+| TIME-28: Add date range filter to admin dashboard | `d82bd7c` | 2026-02-05 |
