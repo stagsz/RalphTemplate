@@ -5,8 +5,8 @@
 ## Current Status
 
 **Phase**: 5 - Time Tracking (In Progress)
-**Progress**: Testing - Timer E2E test added
-**Last Completed**: TIME-39 - Add E2E test for timer flow
+**Progress**: Testing - Manual entry E2E test added
+**Last Completed**: TIME-40 - Add E2E test for manual entry flow
 
 ---
 
@@ -176,7 +176,7 @@ The CRM application has been substantially built with the following features:
 - [x] TIME-37: Add unit tests for time entry form - `256ebfe`
 - [x] TIME-38: Add unit tests for time entry actions - `f91afb0`
 - [x] TIME-39: Add E2E test for timer flow - `af8dd0f`
-- [ ] TIME-40: Add E2E test for manual entry flow
+- [x] TIME-40: Add E2E test for manual entry flow - `PENDING`
 - [ ] TIME-41: Add E2E test for approval workflow
 
 ---
@@ -329,3 +329,4 @@ The CRM application has been substantially built with the following features:
 | TIME-37: Add unit tests for TimeEntryForm | `256ebfe` | 2026-02-05 |
 | TIME-38: Add unit tests for time entry actions | `f91afb0` | 2026-02-05 |
 | TIME-39: Add E2E test for timer flow | `af8dd0f` | 2026-02-05 |
+| TIME-40: Add E2E test for manual entry flow | `PENDING` | 2026-02-05 |
