@@ -167,7 +167,7 @@ The CRM application has been substantially built with the following features:
 
 ### Reporting & Export
 - [x] TIME-32: Create time tracking report page - `2bb4fab`
-- [x] TIME-33: Add CSV export with all time entry fields - `PENDING`
+- [x] TIME-33: Add CSV export with all time entry fields - `a292e74`
 - [ ] TIME-34: Add billable vs non-billable breakdown
 - [ ] TIME-35: Add approval status breakdown
 
@@ -322,3 +322,4 @@ The CRM application has been substantially built with the following features:
 | TIME-30: Add approval status filter | `bde05f6` | 2026-02-05 |
 | TIME-31: Add hours per day chart (last 7 days) | `899fa1a` | 2026-02-05 |
 | TIME-32: Create time tracking report page | `2bb4fab` | 2026-02-05 |
+| TIME-33: Add CSV export with all time entry fields | `a292e74` | 2026-02-05 |
