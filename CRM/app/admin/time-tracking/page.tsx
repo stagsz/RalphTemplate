@@ -1,6 +1,7 @@
 import { requireAdmin } from '@/lib/auth/permissions'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import UserHoursTable from '@/components/admin/UserHoursTable'
 
 function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60)
@@ -272,44 +273,10 @@ export default async function AdminTimeTrackingDashboard() {
           </div>
         </div>
 
-        {/* Hours by User */}
+        {/* Hours by User (Sortable) */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Hours by User</h3>
-          {userHoursList.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Hours</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Billable</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Approved</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {userHoursList.map((user) => (
-                    <tr key={user.userId} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.name}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{user.email}</div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {formatDuration(user.totalMinutes)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-green-600 dark:text-green-400">
-                        {formatDuration(user.billableMinutes)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-600 dark:text-gray-400">
-                        {formatDuration(user.approvedMinutes)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No time entries recorded yet.</p>
-          )}
+          <UserHoursTable users={userHoursList} />
         </div>
 
         {/* Hours by Contact/Deal */}
