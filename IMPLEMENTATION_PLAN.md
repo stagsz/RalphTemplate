@@ -176,7 +176,7 @@ The CRM application has been substantially built with the following features:
 - [x] TIME-37: Add unit tests for time entry form - `256ebfe`
 - [x] TIME-38: Add unit tests for time entry actions - `f91afb0`
 - [x] TIME-39: Add E2E test for timer flow - `af8dd0f`
-- [x] TIME-40: Add E2E test for manual entry flow - `PENDING`
+- [x] TIME-40: Add E2E test for manual entry flow - `3df1dad`
 - [ ] TIME-41: Add E2E test for approval workflow
 
 ---
@@ -329,4 +329,4 @@ The CRM application has been substantially built with the following features:
 | TIME-37: Add unit tests for TimeEntryForm | `256ebfe` | 2026-02-05 |
 | TIME-38: Add unit tests for time entry actions | `f91afb0` | 2026-02-05 |
 | TIME-39: Add E2E test for timer flow | `af8dd0f` | 2026-02-05 |
-| TIME-40: Add E2E test for manual entry flow | `PENDING` | 2026-02-05 |
+| TIME-40: Add E2E test for manual entry flow | `3df1dad` | 2026-02-05 |
