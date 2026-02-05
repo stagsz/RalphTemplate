@@ -5,8 +5,8 @@
 ## Current Status
 
 **Phase**: 5 - Time Tracking (In Progress)
-**Progress**: Reporting & Export - report page created
-**Last Completed**: TIME-32 - Create time tracking report page
+**Progress**: Reporting & Export - CSV export added
+**Last Completed**: TIME-33 - Add CSV export with all time entry fields
 
 ---
 
@@ -167,7 +167,7 @@ The CRM application has been substantially built with the following features:
 
 ### Reporting & Export
 - [x] TIME-32: Create time tracking report page - `2bb4fab`
-- [ ] TIME-33: Add CSV export with all time entry fields
+- [x] TIME-33: Add CSV export with all time entry fields - `PENDING`
 - [ ] TIME-34: Add billable vs non-billable breakdown
 - [ ] TIME-35: Add approval status breakdown
 

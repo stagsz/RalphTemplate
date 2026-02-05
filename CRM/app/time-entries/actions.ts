@@ -446,6 +446,142 @@ export async function approveTimeEntry(id: string) {
 }
 
 /**
+ * Export time entries to CSV (admin only)
+ * Returns CSV string with all time entry fields and related entity names
+ */
+export async function exportTimeEntriesToCSV(filters: {
+  startDate?: string
+  endDate?: string
+  billable?: string
+  status?: string
+  user?: string
+} = {}): Promise<{ data?: { csv: string; count: number }; error?: string }> {
+  try {
+    const supabase = await createClient()
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    if (userError || !user) {
+      return { error: 'You must be logged in to export time entries' }
+    }
+
+    // Only admins can export all time entries
+    const adminCheck = await isAdmin()
+    if (!adminCheck) {
+      return { error: 'Only admins can export time entries' }
+    }
+
+    let query = supabase
+      .from('time_entries')
+      .select(`
+        *,
+        user:users(id, email, full_name),
+        contact:contacts(id, first_name, last_name, company),
+        deal:deals(id, title),
+        activity:activities(id, subject, type)
+      `)
+      .order('entry_date', { ascending: false })
+
+    // Apply date range filter
+    if (filters.startDate && filters.endDate) {
+      query = query.gte('entry_date', filters.startDate).lte('entry_date', filters.endDate)
+    }
+
+    // Apply billable filter
+    if (filters.billable === 'billable') {
+      query = query.eq('is_billable', true)
+    } else if (filters.billable === 'non-billable') {
+      query = query.eq('is_billable', false)
+    }
+
+    // Apply status filter
+    if (filters.status && filters.status !== 'all') {
+      query = query.eq('status', filters.status)
+    }
+
+    // Apply user filter
+    if (filters.user && filters.user !== 'all') {
+      query = query.eq('user_id', filters.user)
+    }
+
+    const { data: entries, error } = await query
+
+    if (error) {
+      console.error('Error fetching time entries for export:', error)
+      return { error: 'Failed to fetch time entries for export' }
+    }
+
+    if (!entries || entries.length === 0) {
+      return { error: 'No time entries found to export' }
+    }
+
+    // Escape CSV value - handle double quotes and commas
+    const escapeCSV = (value: string): string => {
+      const str = String(value).replace(/"/g, '""')
+      return `"${str}"`
+    }
+
+    // Generate CSV
+    const headers = [
+      'Entry Date',
+      'User Name',
+      'User Email',
+      'Duration (Minutes)',
+      'Duration (Hours)',
+      'Contact',
+      'Company',
+      'Deal',
+      'Activity Type',
+      'Activity Subject',
+      'Notes',
+      'Billable',
+      'Status',
+      'Approval Notes',
+      'Created Date',
+    ]
+    const csvRows = [headers.join(',')]
+
+    entries.forEach((entry) => {
+      const hours = (entry.duration_minutes / 60).toFixed(2)
+      const contactName = entry.contact
+        ? `${entry.contact.first_name} ${entry.contact.last_name}`
+        : ''
+      const company = entry.contact?.company || ''
+      const dealTitle = entry.deal?.title || ''
+      const activityType = entry.activity?.type || ''
+      const activitySubject = entry.activity?.subject || ''
+      const userName = entry.user?.full_name || ''
+      const userEmail = entry.user?.email || ''
+
+      const row = [
+        escapeCSV(entry.entry_date),
+        escapeCSV(userName),
+        escapeCSV(userEmail),
+        escapeCSV(String(entry.duration_minutes)),
+        escapeCSV(hours),
+        escapeCSV(contactName),
+        escapeCSV(company),
+        escapeCSV(dealTitle),
+        escapeCSV(activityType),
+        escapeCSV(activitySubject),
+        escapeCSV(entry.notes || ''),
+        escapeCSV(entry.is_billable ? 'Yes' : 'No'),
+        escapeCSV(entry.status),
+        escapeCSV(entry.approval_notes || ''),
+        escapeCSV(new Date(entry.created_at).toLocaleDateString()),
+      ]
+
+      csvRows.push(row.join(','))
+    })
+
+    const csv = csvRows.join('\n')
+    return { data: { csv, count: entries.length } }
+  } catch (error) {
+    console.error('Unexpected error in exportTimeEntriesToCSV:', error)
+    return { error: 'An unexpected error occurred during export. Please try again.' }
+  }
+}
+
+/**
  * Reject a time entry (admin only)
  * Changes status from 'submitted' to 'rejected' with optional notes
  */

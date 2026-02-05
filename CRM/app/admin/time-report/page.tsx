@@ -6,6 +6,7 @@ import BillableFilter, { type BillablePreset } from '@/components/admin/Billable
 import ApprovalStatusFilter, { type ApprovalStatusPreset } from '@/components/admin/ApprovalStatusFilter'
 import TimeReportTable from '@/components/admin/TimeReportTable'
 import UserFilterSelectClient from '@/components/admin/UserFilterSelectClient'
+import ExportTimeEntriesButton from '@/components/admin/ExportTimeEntriesButton'
 
 interface SearchParams {
   range?: string
@@ -109,6 +110,15 @@ export default async function AdminTimeReportPage({
               <p className="text-gray-500 dark:text-gray-400 mt-1">Detailed view of all individual time entries</p>
             </div>
             <div className="flex gap-3">
+              <ExportTimeEntriesButton
+                searchParams={{
+                  startDate: startDate || undefined,
+                  endDate: endDate || undefined,
+                  billable: billablePreset !== 'all' ? billablePreset : undefined,
+                  status: statusPreset !== 'all' ? statusPreset : undefined,
+                  user: userFilter !== 'all' ? userFilter : undefined,
+                }}
+              />
               <Link
                 href="/admin/time-tracking"
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
