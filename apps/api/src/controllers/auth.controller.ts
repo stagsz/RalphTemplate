@@ -4,6 +4,7 @@
  * Handles:
  * - POST /auth/register - User registration
  * - POST /auth/login - User login
+ * - POST /auth/refresh - Token refresh
  */
 
 import type { Request, Response } from 'express';
@@ -37,6 +38,13 @@ interface RegisterRequestBody {
 interface LoginRequestBody {
   email?: string;
   password?: string;
+}
+
+/**
+ * Request body for token refresh.
+ */
+interface RefreshRequestBody {
+  refreshToken?: string;
 }
 
 /**
@@ -347,6 +355,79 @@ export async function login(req: Request, res: Response): Promise<void> {
     });
   } catch (error) {
     console.error('Login error:', error);
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+/**
+ * POST /auth/refresh
+ * Refresh access token using a valid refresh token.
+ *
+ * Request body:
+ * - refreshToken: string (required) - Valid refresh token
+ *
+ * Returns:
+ * - 200: New token pair generated successfully
+ * - 400: Validation error (missing refresh token)
+ * - 401: Invalid or expired refresh token
+ * - 500: Internal server error
+ */
+export async function refresh(req: Request, res: Response): Promise<void> {
+  try {
+    const body = req.body as RefreshRequestBody;
+
+    // Validate refresh token is present
+    if (!body.refreshToken) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Validation failed',
+          errors: [{ field: 'refreshToken', message: 'Refresh token is required', code: 'REQUIRED' }],
+        },
+      });
+      return;
+    }
+
+    // Verify refresh token
+    const jwtService = getJwtService();
+    await jwtService.initialize();
+    const verifyResult = await jwtService.verifyRefreshToken(body.refreshToken);
+
+    if (!verifyResult.valid) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'INVALID_TOKEN',
+          message: 'Invalid or expired refresh token',
+        },
+      });
+      return;
+    }
+
+    // Generate new token pair using data from the verified refresh token
+    const tokens = await jwtService.generateTokenPair({
+      id: verifyResult.payload.sub,
+      email: verifyResult.payload.email,
+      role: verifyResult.payload.role,
+    });
+
+    // Return new tokens
+    res.status(200).json({
+      success: true,
+      data: {
+        tokens,
+      },
+    });
+  } catch (error) {
+    console.error('Token refresh error:', error);
 
     res.status(500).json({
       success: false,
