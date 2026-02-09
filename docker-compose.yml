@@ -1,27 +1,27 @@
-# Local development databases
-# Modify as needed for your project
+# HazOp Assistant - Development Services
+# PostgreSQL, Redis, MinIO (S3-compatible storage), RabbitMQ (message queue)
 
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: ${PROJECT_NAME:-myapp}-postgres
+    container_name: ${PROJECT_NAME:-hazop}-postgres
     environment:
-      POSTGRES_USER: ${DB_USER:-app}
+      POSTGRES_USER: ${DB_USER:-hazop}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-devpassword}
-      POSTGRES_DB: ${DB_NAME:-app}
+      POSTGRES_DB: ${DB_NAME:-hazop}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-app}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-hazop}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: ${PROJECT_NAME:-myapp}-redis
+    container_name: ${PROJECT_NAME:-hazop}-redis
     ports:
       - "6379:6379"
     volumes:
@@ -32,19 +32,43 @@ services:
       timeout: 5s
       retries: 5
 
-  # Uncomment if you need MongoDB instead of/in addition to PostgreSQL
-  # mongo:
-  #   image: mongo:7
-  #   container_name: ${PROJECT_NAME:-myapp}-mongo
-  #   environment:
-  #     MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-app}
-  #     MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-devpassword}
-  #   ports:
-  #     - "27017:27017"
-  #   volumes:
-  #     - mongo_data:/data/db
+  minio:
+    image: minio/minio:latest
+    container_name: ${PROJECT_NAME:-hazop}-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: ${PROJECT_NAME:-hazop}-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-hazop}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-devpassword}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
 volumes:
   postgres_data:
   redis_data:
-  # mongo_data:
+  minio_data:
+  rabbitmq_data:
