@@ -52,3 +52,15 @@ export type {
 } from './pid-document.js';
 
 export { PID_DOCUMENT_STATUSES, VALID_PID_MIME_TYPES } from './pid-document.js';
+
+// Analysis Node types
+export type {
+  EquipmentType,
+  AnalysisNode,
+  AnalysisNodeWithCreator,
+  AnalysisNodeWithAnalysisCount,
+  CreateAnalysisNodePayload,
+  UpdateAnalysisNodePayload,
+} from './analysis-node.js';
+
+export { EQUIPMENT_TYPES, EQUIPMENT_TYPE_LABELS } from './analysis-node.js';
