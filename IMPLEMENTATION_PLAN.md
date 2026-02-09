@@ -6,8 +6,8 @@
 
 **Phase**: 1 - Foundation (In Progress)
 **Progress**: Database setup in progress
-**Last Completed**: DB-09 - Create reports and report_templates tables
-**Next Task**: DB-10 - Add performance indexes for all tables
+**Last Completed**: DB-10 - Add performance indexes for all tables
+**Next Task**: DB-11 - Create database triggers for updated_at timestamps
 
 ---
 
@@ -82,7 +82,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] DB-07: Create collaboration_sessions and session_participants tables (bae521e)
 - [x] DB-08: Create audit_log table for change tracking (ee49495)
 - [x] DB-09: Create reports and report_templates tables (b9de3bd)
-- [ ] DB-10: Add performance indexes for all tables
+- [x] DB-10: Add performance indexes for all tables (b3ca5da)
 - [ ] DB-11: Create database triggers for updated_at timestamps
 
 ---
@@ -438,3 +438,4 @@ _No blockers currently._
 | DB-07: Create collaboration_sessions and session_participants tables | bae521e | 2026-02-09 |
 | DB-08: Create audit_log table for change tracking | ee49495 | 2026-02-09 |
 | DB-09: Create reports and report_templates tables | b9de3bd | 2026-02-09 |
+| DB-10: Add performance indexes for all tables | b3ca5da | 2026-02-09 |
