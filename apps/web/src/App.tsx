@@ -8,6 +8,7 @@ import {
   UnauthorizedPage,
   ProfilePage,
   AdminPage,
+  ProjectsPage,
 } from './pages';
 import { ProtectedRoute, PublicRoute } from './components/auth';
 
@@ -92,6 +93,16 @@ function App() {
           element={
             <ProtectedRoute>
               <UnauthorizedPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Projects routes - accessible to all authenticated users */}
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute>
+              <ProjectsPage />
             </ProtectedRoute>
           }
         />
