@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 1 - Foundation (In Progress)
-**Progress**: Monorepo structure initialized
-**Last Completed**: SETUP-01 - Initialize Nx monorepo
-**Next Task**: SETUP-02 - Configure Docker Compose for development
+**Progress**: Development infrastructure configured
+**Last Completed**: SETUP-02 - Configure Docker Compose for development
+**Next Task**: SETUP-03 - Set up React 18 + TypeScript + Vite in web app
 
 ---
 
@@ -54,7 +54,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 
 ### Project Setup
 - [x] SETUP-01: Initialize Nx monorepo with apps (web, api) and shared packages (types, utils)
-- [ ] SETUP-02: Configure Docker Compose for development (PostgreSQL, Redis, MinIO, RabbitMQ)
+- [x] SETUP-02: Configure Docker Compose for development (PostgreSQL, Redis, MinIO, RabbitMQ)
 - [ ] SETUP-03: Set up React 18 + TypeScript + Vite in web app
 - [ ] SETUP-04: Set up Express.js + TypeScript in api app
 - [ ] SETUP-05: Configure Tailwind CSS and Mantine UI component library
@@ -414,3 +414,4 @@ _No blockers currently._
 |------|--------|------|
 | Initial planning | - | 2026-02-09 |
 | SETUP-01: Initialize Nx monorepo | dc838a8 | 2026-02-09 |
+| SETUP-02: Configure Docker Compose | 3119b77 | 2026-02-09 |
