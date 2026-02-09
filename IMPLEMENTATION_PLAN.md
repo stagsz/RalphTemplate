@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 1 - Foundation (In Progress)
-**Progress**: Complete code quality infrastructure (ESLint + Prettier)
-**Last Completed**: SETUP-09 - Set up ESLint + Prettier for code quality
-**Next Task**: TYPES-01 - Create User, UserRole type definitions
+**Progress**: Implementing shared type definitions
+**Last Completed**: TYPES-01 - Create User, UserRole type definitions
+**Next Task**: TYPES-02 - Create Project, ProjectStatus type definitions
 
 ---
 
@@ -64,7 +64,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] SETUP-09: Set up ESLint + Prettier for code quality (e2a674a)
 
 ### Shared Types Package
-- [ ] TYPES-01: Create User, UserRole type definitions
+- [x] TYPES-01: Create User, UserRole type definitions (a77cd57)
 - [ ] TYPES-02: Create Project, ProjectStatus type definitions
 - [ ] TYPES-03: Create PIDDocument type definitions
 - [ ] TYPES-04: Create AnalysisNode, EquipmentType type definitions
@@ -422,3 +422,4 @@ _No blockers currently._
 | SETUP-07: Jest + Supertest API testing | 4c15fcf | 2026-02-09 |
 | SETUP-08: Playwright E2E testing | 15a2d04 | 2026-02-09 |
 | SETUP-09: ESLint + Prettier code quality | e2a674a | 2026-02-09 |
+| TYPES-01: User, UserRole type definitions | a77cd57 | 2026-02-09 |
