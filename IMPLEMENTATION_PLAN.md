@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 3 - Project Management
-**Progress**: PROJ-07 complete
-**Last Completed**: PROJ-07 - Create DELETE /projects/:id/members/:userId endpoint
-**Next Task**: PROJ-08 - Create projects list page with status filters
+**Progress**: PROJ-08 complete
+**Last Completed**: PROJ-08 - Create projects list page with status filters
+**Next Task**: PROJ-09 - Create project card component with status badge
 
 ---
 
@@ -135,7 +135,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] PROJ-07: Create DELETE /projects/:id/members/:userId endpoint (remove member) (9947b15)
 
 ### Frontend UI
-- [ ] PROJ-08: Create projects list page with status filters
+- [x] PROJ-08: Create projects list page with status filters (cee074e)
 - [ ] PROJ-09: Create project card component with status badge
 - [ ] PROJ-10: Create new project form modal
 - [ ] PROJ-11: Create project detail page with tabs (Overview, Documents, Analysis, Team)
@@ -471,3 +471,4 @@ _No blockers currently._
 | PROJ-05: Create DELETE /projects/:id endpoint | 28765eb | 2026-02-09 |
 | PROJ-06: Create POST /projects/:id/members endpoint | 01f8bb8 | 2026-02-09 |
 | PROJ-07: Create DELETE /projects/:id/members/:userId endpoint | 9947b15 | 2026-02-09 |
+| PROJ-08: Create projects list page with status filters | cee074e | 2026-02-09 |
