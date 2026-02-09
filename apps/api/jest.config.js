@@ -10,11 +10,16 @@ export default {
       'ts-jest',
       {
         useESM: true,
+        tsconfig: {
+          rootDir: '../../',
+        },
       },
     ],
   },
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^@hazop/types$': '<rootDir>/../../packages/types/src/index.ts',
+    '^@hazop/utils$': '<rootDir>/../../packages/utils/src/index.ts',
   },
 };

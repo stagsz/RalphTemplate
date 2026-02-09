@@ -340,7 +340,7 @@ describe('RBAC Middleware', () => {
 
     describe('viewer minimum (all authenticated)', () => {
       it('should allow all authenticated roles', async () => {
-        for (const [roleName, user] of Object.entries(testUsers)) {
+        for (const [, user] of Object.entries(testUsers)) {
           const token = await jwtService.generateAccessToken(user);
 
           const response = await request(app).get('/anyone-authenticated').set('Authorization', `Bearer ${token}`);

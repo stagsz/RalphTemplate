@@ -5,10 +5,41 @@
  * Integration tests with database will be in AUTH-16.
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
 import { register, login, refresh, logout } from './auth.controller.js';
+
+/**
+ * Generate RSA key pair for testing.
+ */
+async function generateTestKeys(): Promise<{ privateKey: string; publicKey: string }> {
+  const { generateKeyPair, exportPKCS8, exportSPKI } = await import('jose');
+  const { privateKey, publicKey } = await generateKeyPair('RS256', { extractable: true });
+
+  const privateKeyPem = await exportPKCS8(privateKey);
+  const publicKeyPem = await exportSPKI(publicKey);
+
+  return { privateKey: privateKeyPem, publicKey: publicKeyPem };
+}
+
+// Store original env for restoration
+let originalEnv: NodeJS.ProcessEnv;
+
+// Set up JWT environment before all tests
+beforeAll(async () => {
+  originalEnv = { ...process.env };
+  const keys = await generateTestKeys();
+  process.env.JWT_PRIVATE_KEY = keys.privateKey;
+  process.env.JWT_PUBLIC_KEY = keys.publicKey;
+  process.env.JWT_ISSUER = 'hazop-assistant';
+  process.env.JWT_AUDIENCE = 'hazop-api';
+});
+
+// Restore original env after all tests
+afterAll(() => {
+  process.env = originalEnv;
+});
 
 // Create a minimal test app for validation testing
 const createTestApp = () => {
