@@ -38,3 +38,17 @@ export type {
 } from './project.js';
 
 export { PROJECT_STATUSES, PROJECT_MEMBER_ROLES } from './project.js';
+
+// P&ID Document types
+export type {
+  PIDDocumentStatus,
+  PIDMimeType,
+  PIDDocument,
+  PIDDocumentWithUploader,
+  PIDDocumentWithNodeCount,
+  CreatePIDDocumentPayload,
+  UpdatePIDDocumentPayload,
+  UpdatePIDDocumentStatusPayload,
+} from './pid-document.js';
+
+export { PID_DOCUMENT_STATUSES, VALID_PID_MIME_TYPES } from './pid-document.js';
