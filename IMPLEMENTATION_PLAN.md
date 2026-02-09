@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 2 - Authentication & User Management (In Progress)
-**Progress**: API tests for auth endpoints complete, moving to E2E tests
-**Last Completed**: AUTH-16 - Add API tests for auth endpoints (5f48429)
-**Next Task**: AUTH-17 - Add E2E tests for login/logout flow
+**Progress**: Auth testing complete, moving to Admin User Management
+**Last Completed**: AUTH-17 - Add E2E tests for login/logout flow (b5a233d)
+**Next Task**: ADMIN-01 - Create GET /admin/users endpoint (list all users with search/filter)
 
 ---
 
@@ -110,7 +110,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 ### Auth Testing
 - [x] AUTH-15: Add unit tests for JWT token generation/validation (fac9c60)
 - [x] AUTH-16: Add API tests for auth endpoints (5f48429)
-- [ ] AUTH-17: Add E2E tests for login/logout flow
+- [x] AUTH-17: Add E2E tests for login/logout flow (b5a233d)
 
 ### Admin User Management (Administrator Role Only)
 - [ ] ADMIN-01: Create GET /admin/users endpoint (list all users with search/filter)
@@ -456,3 +456,4 @@ _No blockers currently._
 | AUTH-14: Create user profile page with edit functionality | 1a1e187 | 2026-02-09 |
 | AUTH-15: Add unit tests for JWT token generation/validation | fac9c60 | 2026-02-09 |
 | AUTH-16: Add API tests for auth endpoints | 5f48429 | 2026-02-09 |
+| AUTH-17: Add E2E tests for login/logout flow | b5a233d | 2026-02-09 |
