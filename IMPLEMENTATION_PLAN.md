@@ -6,8 +6,8 @@
 
 **Phase**: 1 - Foundation (In Progress)
 **Progress**: Implementing shared type definitions
-**Last Completed**: TYPES-02 - Create Project, ProjectStatus type definitions
-**Next Task**: TYPES-03 - Create PIDDocument type definitions
+**Last Completed**: TYPES-03 - Create PIDDocument type definitions
+**Next Task**: TYPES-04 - Create AnalysisNode, EquipmentType type definitions
 
 ---
 
@@ -66,7 +66,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 ### Shared Types Package
 - [x] TYPES-01: Create User, UserRole type definitions (a77cd57)
 - [x] TYPES-02: Create Project, ProjectStatus type definitions (bcf10dc)
-- [ ] TYPES-03: Create PIDDocument type definitions
+- [x] TYPES-03: Create PIDDocument type definitions (4f1c83e)
 - [ ] TYPES-04: Create AnalysisNode, EquipmentType type definitions
 - [ ] TYPES-05: Create HazopsAnalysis, GuideWord, RiskRanking type definitions
 - [ ] TYPES-06: Create Report, ReportRequest type definitions
@@ -424,3 +424,4 @@ _No blockers currently._
 | SETUP-09: ESLint + Prettier code quality | e2a674a | 2026-02-09 |
 | TYPES-01: User, UserRole type definitions | a77cd57 | 2026-02-09 |
 | TYPES-02: Project, ProjectStatus type definitions | bcf10dc | 2026-02-09 |
+| TYPES-03: PIDDocument type definitions | 4f1c83e | 2026-02-09 |
