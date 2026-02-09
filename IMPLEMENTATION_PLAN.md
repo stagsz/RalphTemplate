@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 3 - Project Management
-**Progress**: PROJ-11 complete
-**Last Completed**: PROJ-11 - Create project detail page with tabs
-**Next Task**: PROJ-12 - Create team management panel
+**Progress**: PROJ-12 complete
+**Last Completed**: PROJ-12 - Create team management panel
+**Next Task**: PROJ-13 - Create project settings form
 
 ---
 
@@ -139,7 +139,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] PROJ-09: Create project card component with status badge (8ec4869)
 - [x] PROJ-10: Create new project form modal (128ac57)
 - [x] PROJ-11: Create project detail page with tabs (Overview, Documents, Analysis, Team) (766041b)
-- [ ] PROJ-12: Create team management panel (add/remove members)
+- [x] PROJ-12: Create team management panel (add/remove members) (becc836)
 - [ ] PROJ-13: Create project settings form (name, description, status)
 
 ### Project Testing
@@ -475,3 +475,4 @@ _No blockers currently._
 | PROJ-09: Create project card component with status badge | 8ec4869 | 2026-02-09 |
 | PROJ-10: Create new project form modal | 128ac57 | 2026-02-09 |
 | PROJ-11: Create project detail page with tabs | 766041b | 2026-02-09 |
+| PROJ-12: Create team management panel | becc836 | 2026-02-09 |
