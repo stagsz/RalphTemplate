@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { LoginPage } from './pages';
+import { LoginPage, RegisterPage } from './pages';
 
 /**
  * Main application component with routing.
  *
  * Public routes:
  * - /login - Login page
- * - /register - Registration page (TODO: AUTH-11)
+ * - /register - Registration page
  * - /forgot-password - Password reset flow (TODO: AUTH-12)
  *
  * Protected routes (TODO: AUTH-13):
@@ -18,6 +18,7 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
         {/* Placeholder: redirect root to login for now */}
         <Route path="/" element={<Navigate to="/login" replace />} />
