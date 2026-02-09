@@ -3,10 +3,12 @@
  *
  * Handles:
  * - GET /admin/users - List all users with search/filter/pagination
+ * - PUT /admin/users/:id/role - Change a user's role
+ * - PUT /admin/users/:id/status - Activate/deactivate a user
  */
 
 import type { Request, Response } from 'express';
-import { listAllUsers, updateUserRole, findUserById } from '../services/user.service.js';
+import { listAllUsers, updateUserRole, updateUserStatus, findUserById } from '../services/user.service.js';
 import type { UserRole } from '@hazop/types';
 
 /**
@@ -334,6 +336,142 @@ export async function changeUserRole(req: Request, res: Response): Promise<void>
     });
   } catch (error) {
     console.error('Change user role error:', error);
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+/**
+ * Request body for updating a user's status.
+ */
+interface UpdateUserStatusBody {
+  isActive?: unknown;
+}
+
+/**
+ * Validate update user status request body.
+ * Returns an array of field errors if validation fails.
+ */
+function validateUpdateUserStatusBody(body: UpdateUserStatusBody): FieldError[] {
+  const errors: FieldError[] = [];
+
+  // isActive is required
+  if (body.isActive === undefined || body.isActive === null) {
+    errors.push({
+      field: 'isActive',
+      message: 'isActive is required',
+      code: 'REQUIRED',
+    });
+    return errors;
+  }
+
+  // isActive must be a boolean
+  if (typeof body.isActive !== 'boolean') {
+    errors.push({
+      field: 'isActive',
+      message: 'isActive must be a boolean',
+      code: 'INVALID_TYPE',
+    });
+  }
+
+  return errors;
+}
+
+/**
+ * PUT /admin/users/:id/status
+ * Update a user's active status (activate/deactivate).
+ * Requires administrator role.
+ *
+ * Path parameters:
+ * - id: User ID (UUID)
+ *
+ * Request body:
+ * - isActive: boolean (required)
+ *
+ * Returns:
+ * - 200: Updated user
+ * - 400: Validation error
+ * - 401: Not authenticated
+ * - 403: Not authorized (non-admin) or self-status-change
+ * - 404: User not found
+ * - 500: Internal server error
+ */
+export async function changeUserStatus(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const body = req.body as UpdateUserStatusBody;
+
+    // Validate user ID format
+    if (!id || !isValidUUID(id)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid user ID format',
+        },
+      });
+      return;
+    }
+
+    // Validate request body
+    const validationErrors = validateUpdateUserStatusBody(body);
+    if (validationErrors.length > 0) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Validation failed',
+          errors: validationErrors,
+        },
+      });
+      return;
+    }
+
+    const newStatus = body.isActive as boolean;
+
+    // Prevent admin from changing their own status
+    const currentUserId = (req.user as { id: string } | undefined)?.id;
+    if (currentUserId === id) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Cannot change your own status',
+        },
+      });
+      return;
+    }
+
+    // Check if user exists
+    const existingUser = await findUserById(id);
+    if (!existingUser) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'User not found',
+        },
+      });
+      return;
+    }
+
+    // Update the user's status
+    const updatedUser = await updateUserStatus(id, newStatus);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        user: updatedUser,
+      },
+    });
+  } catch (error) {
+    console.error('Change user status error:', error);
 
     res.status(500).json({
       success: false,

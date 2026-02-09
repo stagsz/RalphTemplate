@@ -4,6 +4,7 @@
  * Provides endpoints for admin-only operations:
  * - GET /admin/users - List all users with search/filter/pagination
  * - PUT /admin/users/:id/role - Change a user's role
+ * - PUT /admin/users/:id/status - Activate/deactivate a user
  *
  * All routes require administrator role.
  */
@@ -11,7 +12,7 @@
 import { Router } from 'express';
 import { authenticate, requireAuth } from '../middleware/auth.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
-import { listUsers, changeUserRole } from '../controllers/admin.controller.js';
+import { listUsers, changeUserRole, changeUserStatus } from '../controllers/admin.controller.js';
 
 const router = Router();
 
@@ -43,5 +44,18 @@ router.get('/users', authenticate, requireAuth, requireRole('administrator'), li
  * - role: UserRole ('administrator' | 'lead_analyst' | 'analyst' | 'viewer')
  */
 router.put('/users/:id/role', authenticate, requireAuth, requireRole('administrator'), changeUserRole);
+
+/**
+ * PUT /admin/users/:id/status
+ * Activate or deactivate a user.
+ * Requires administrator role.
+ *
+ * Path parameters:
+ * - id: User ID (UUID)
+ *
+ * Request body:
+ * - isActive: boolean (true to activate, false to deactivate)
+ */
+router.put('/users/:id/status', authenticate, requireAuth, requireRole('administrator'), changeUserStatus);
 
 export default router;

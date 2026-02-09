@@ -363,3 +363,26 @@ export async function updateUserRole(userId: string, role: UserRole): Promise<Us
 
   return rowToUser(result.rows[0]);
 }
+
+/**
+ * Update a user's active status (activate/deactivate).
+ * For admin use only.
+ * Returns the updated user (without password hash).
+ */
+export async function updateUserStatus(userId: string, isActive: boolean): Promise<User> {
+  const pool = getPool();
+
+  const result = await pool.query<UserRow>(
+    `UPDATE hazop.users
+     SET is_active = $1
+     WHERE id = $2
+     RETURNING id, email, password_hash, name, role, organization, is_active, created_at, updated_at`,
+    [isActive, userId]
+  );
+
+  if (!result.rows[0]) {
+    throw new Error('User not found');
+  }
+
+  return rowToUser(result.rows[0]);
+}
