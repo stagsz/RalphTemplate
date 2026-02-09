@@ -10,7 +10,7 @@
 
 import { Router } from 'express';
 import { authenticate, requireAuth } from '../middleware/auth.middleware.js';
-import { listProjects, createProject, getProjectById, updateProject } from '../controllers/projects.controller.js';
+import { listProjects, createProject, getProjectById, updateProject, deleteProject } from '../controllers/projects.controller.js';
 
 const router = Router();
 
@@ -73,5 +73,18 @@ router.get('/:id', authenticate, requireAuth, getProjectById);
  * Returns the updated project with creator info and user's role.
  */
 router.put('/:id', authenticate, requireAuth, updateProject);
+
+/**
+ * DELETE /projects/:id
+ * Archive a project by ID.
+ *
+ * Path parameters:
+ * - id: string (required) - Project UUID
+ *
+ * Sets the project status to 'archived' rather than permanently deleting.
+ * Only project owners and leads can archive projects.
+ * Returns the archived project with creator info and user's role.
+ */
+router.delete('/:id', authenticate, requireAuth, deleteProject);
 
 export default router;

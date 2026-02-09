@@ -4,6 +4,9 @@
  * Handles:
  * - GET /projects - List user's projects with search/filter/pagination
  * - POST /projects - Create a new project
+ * - GET /projects/:id - Get project details
+ * - PUT /projects/:id - Update project
+ * - DELETE /projects/:id - Archive project
  */
 
 import type { Request, Response } from 'express';
@@ -700,6 +703,135 @@ export async function updateProject(req: Request, res: Response): Promise<void> 
         return;
       }
     }
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+/**
+ * DELETE /projects/:id
+ * Archive a project by ID.
+ * This endpoint sets the project status to 'archived' rather than permanently deleting it.
+ * Only the project owner or users with 'lead' role can archive the project.
+ *
+ * Path parameters:
+ * - id: string (required) - Project UUID
+ *
+ * Returns:
+ * - 200: Archived project with creator info and user's role
+ * - 400: Invalid project ID format
+ * - 401: Not authenticated
+ * - 403: Not authorized to archive this project
+ * - 404: Project not found
+ * - 500: Internal server error
+ */
+export async function deleteProject(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid project ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Project ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project
+    const hasAccess = await userHasProjectAccess(userId, id);
+    if (!hasAccess) {
+      // Check if project exists to return appropriate error
+      const project = await findProjectByIdService(id);
+      if (!project) {
+        res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Project not found',
+          },
+        });
+        return;
+      }
+
+      // Project exists but user doesn't have access
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this project',
+        },
+      });
+      return;
+    }
+
+    // Get user's role - only owner and lead can archive projects
+    const userRole = await getUserProjectRole(userId, id);
+    if (!userRole || !['owner', 'lead'].includes(userRole)) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Only project owners and leads can archive projects',
+        },
+      });
+      return;
+    }
+
+    // Archive the project by setting status to 'archived'
+    const archivedProject = await updateProjectService(id, { status: 'archived' });
+    if (!archivedProject) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Project not found',
+        },
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        project: {
+          ...archivedProject,
+          userRole,
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Delete project error:', error);
 
     res.status(500).json({
       success: false,
