@@ -1,65 +1,141 @@
 {
-  "product": {
-    "name": "{{PROJECT_NAME}}",
-    "tagline": "{{Short tagline}}",
-    "description": "{{2-3 sentence description}}"
-  },
-  "users": {
-    "primary": "{{Primary user type}}",
-    "personas": [
-      {
-        "name": "{{Persona 1}}",
-        "needs": "{{What they need from this product}}"
-      },
-      {
-        "name": "{{Persona 2}}",
-        "needs": "{{What they need from this product}}"
-      }
+  "title": "HazOp Assistant Product Requirements Document (PRD)",
+  "version": "1.0",
+  "date": "2025-09-02",
+  "author": "John (PM Agent)",
+  "goals": {
+    "primary": [
+      "Enable systematic hazard identification and analysis through structured HazOps methodology automation",
+      "Provide comprehensive P&ID interpretation and interactive node-based analysis capabilities",
+      "Integrate risk assessment, LOPA analysis, and regulatory compliance validation into unified workflow",
+      "Generate professional-quality reports and documentation suitable for regulatory submission and stakeholder communication",
+      "Streamline HazOps process efficiency while maintaining engineering rigor and safety standards"
     ]
   },
-  "features": {
-    "core": [
-      {
-        "id": "F1",
-        "name": "{{Feature name}}",
-        "description": "{{What it does}}"
-      },
-      {
-        "id": "F2",
-        "name": "{{Feature name}}",
-        "description": "{{What it does}}"
-      },
-      {
-        "id": "F3",
-        "name": "{{Feature name}}",
-        "description": "{{What it does}}"
-      }
-    ],
-    "future": [
-      {
-        "id": "F10",
-        "name": "{{Future feature}}",
-        "description": "{{For later}}"
-      }
-    ]
-  },
-  "techStack": {
-    "frontend": [],
-    "backend": [],
-    "database": [],
-    "auth": [],
-    "other": []
-  },
-  "dataModels": {
-    "example_model": {
-      "fields": ["id", "name", "created_at"],
-      "relationships": ["belongs_to: other_model"]
+  "backgroundContext": "The process industry currently relies on fragmented toolchains for conducting Hazard and Operability Studies (HazOps), combining manual P&ID review, spreadsheet-based analysis tracking, and separate risk assessment tools. This fragmentation leads to inconsistencies, increased analysis time, and potential gaps in safety coverage. The HazOp Assistant addresses this by providing an integrated platform that guides engineers through established HazOps methodology while automating documentation, risk assessment, and compliance validation.",
+  "functionalRequirements": [
+    {
+      "id": "FR1",
+      "description": "The system shall interpret and analyze uploaded P&ID (Piping & Instrumentation Diagram) files to identify process areas, equipment, piping, valves, control loops, and instrumentation."
+    },
+    {
+      "id": "FR2",
+      "description": "The system shall guide users through node-by-node HazOps analysis using standard guide words (No, More, Less, Reverse, Early, Late, Other than)."
+    },
+    {
+      "id": "FR3",
+      "description": "The system shall provide prepared answer menus for Causes, Consequences, Safeguards, and Recommendations during HazOps analysis."
+    },
+    {
+      "id": "FR4",
+      "description": "The system shall automatically populate HazOps analysis tables with user selections and inputs."
+    },
+    {
+      "id": "FR5",
+      "description": "The system shall perform risk ranking using severity × likelihood × detectability methodology and display results in risk matrices."
+    },
+    {
+      "id": "FR6",
+      "description": "The system shall validate safeguards and recommend Layers of Protection Analysis (LOPA) where relevant."
+    },
+    {
+      "id": "FR7",
+      "description": "The system shall cross-reference findings with applicable regulations and standards (IEC 61511, ISO 31000, ISO 9001, ATEX/DSEAR, PED, OSHA PSM, EPA, SEVESO III)."
+    },
+    {
+      "id": "FR8",
+      "description": "The system shall generate structured outputs in multiple formats: Word/PDF reports, PowerPoint presentations, and Excel spreadsheets."
+    },
+    {
+      "id": "FR9",
+      "description": "The system shall maintain structured workflow: Node → Guide word → Cause → Consequence → Safeguard → Recommendation → Risk → Compliance."
     }
+  ],
+  "nonFunctionalRequirements": [
+    {
+      "id": "NFR1",
+      "description": "The system shall provide menu-style selection options when multiple answers are possible to ensure consistency and efficiency."
+    },
+    {
+      "id": "NFR2",
+      "description": "All generated reports and outputs must be export-ready and professionally formatted for regulatory compliance."
+    },
+    {
+      "id": "NFR3",
+      "description": "The system shall ensure all results are clear, actionable, and traceable to specific P&ID nodes and analysis steps."
+    },
+    {
+      "id": "NFR4",
+      "description": "The system must handle industrial-grade P&ID complexity including multiple process areas and interconnected systems."
+    },
+    {
+      "id": "NFR5",
+      "description": "Risk assessment calculations must follow industry-standard methodologies for reliability and regulatory acceptance."
+    }
+  ],
+  "userInterfaceDesignGoals": {
+    "overallUXVision": "The interface should embody industrial engineering professionalism while providing intuitive workflow guidance.",
+    "keyInteractionParadigms": [
+      "Guided Workflow: Step-by-step progression through HazOps methodology with clear breadcrumbs and status indicators",
+      "Menu-Driven Selection: Dropdown menus and radio buttons for standardized inputs",
+      "Visual P&ID Integration: Interactive overlay or split-pane view allowing users to reference diagrams",
+      "Progressive Disclosure: Complex regulatory compliance details revealed on-demand",
+      "Bulk Operations: Ability to apply similar analysis patterns across multiple nodes efficiently"
+    ],
+    "coreScreensAndViews": [
+      "P&ID Upload & Analysis Screen",
+      "HazOps Analysis Workspace",
+      "Risk Assessment Dashboard",
+      "Compliance Validation Screen",
+      "Report Generation Center",
+      "Project Management View"
+    ],
+    "accessibility": "WCAG AA",
+    "targetPlatform": "Web Responsive (Desktop primary, tablet support)"
   },
-  "constraints": {
-    "maxFileSize": "{{if applicable}}",
-    "supportedFormats": [],
-    "compliance": "{{GDPR, SOC2, etc if applicable}}",
-    "other": []
-  }
+  "technicalAssumptions": {
+    "repositoryStructure": "Monorepo",
+    "serviceArchitecture": "Monolithic Web Application with Microservice Components",
+    "frontendStack": [
+      "React/TypeScript",
+      "Canvas/SVG libraries",
+      "Component library"
+    ],
+    "backendStack": [
+      "Node.js/Express or Python/FastAPI",
+      "PostgreSQL",
+      "Redis"
+    ],
+    "fileProcessing": [
+      "PDF parsing libraries",
+      "Image processing",
+      "Office document generation"
+    ]
+  },
+  "epics": [
+    {
+      "id": 1,
+      "title": "Foundation & P&ID Processing Infrastructure",
+      "goal": "Establish the foundational project infrastructure with authentication, data models, and core P&ID processing capabilities.",
+      "stories": 5
+    },
+    {
+      "id": 2,
+      "title": "Core HazOps Analysis Workflow",
+      "goal": "Implement the complete guided HazOps analysis methodology with menu-driven selections, structured workflow progression, and comprehensive data capture.",
+      "stories": 6
+    },
+    {
+      "id": 3,
+      "title": "Risk Assessment & Compliance Integration",
+      "goal": "Transform basic HazOps analysis into professional-grade safety assessment by implementing comprehensive risk ranking methodologies and compliance validation.",
+      "stories": 6
+    },
+    {
+      "id": 4,
+      "title": "Professional Reporting & Export Systems",
+      "goal": "Complete the end-to-end professional workflow by implementing comprehensive report generation capabilities in multiple formats.",
+      "stories": 6
+    }
+  ]
 }
