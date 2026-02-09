@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 3 - Project Management
-**Progress**: PROJ-03 complete
-**Last Completed**: PROJ-03 - Create GET /projects/:id endpoint (c5a9f6f)
-**Next Task**: PROJ-04 - Create PUT /projects/:id endpoint
+**Progress**: PROJ-04 complete
+**Last Completed**: PROJ-04 - Create PUT /projects/:id endpoint (ceda9af)
+**Next Task**: PROJ-05 - Create DELETE /projects/:id endpoint (archive project)
 
 ---
 
@@ -129,7 +129,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] PROJ-01: Create GET /projects endpoint (list user projects with pagination) (045b495)
 - [x] PROJ-02: Create POST /projects endpoint (create new project) (fd5de9a)
 - [x] PROJ-03: Create GET /projects/:id endpoint (project details) (c5a9f6f)
-- [ ] PROJ-04: Create PUT /projects/:id endpoint (update project)
+- [x] PROJ-04: Create PUT /projects/:id endpoint (update project) (ceda9af)
 - [ ] PROJ-05: Create DELETE /projects/:id endpoint (archive project)
 - [ ] PROJ-06: Create POST /projects/:id/members endpoint (invite team member)
 - [ ] PROJ-07: Create DELETE /projects/:id/members/:userId endpoint (remove member)
@@ -467,3 +467,4 @@ _No blockers currently._
 | PROJ-01: Create GET /projects endpoint | 045b495 | 2026-02-09 |
 | PROJ-02: Create POST /projects endpoint | fd5de9a | 2026-02-09 |
 | PROJ-03: Create GET /projects/:id endpoint | c5a9f6f | 2026-02-09 |
+| PROJ-04: Create PUT /projects/:id endpoint | ceda9af | 2026-02-09 |
