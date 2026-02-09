@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 1 - Foundation (In Progress)
-**Progress**: Shared types complete, starting database setup
-**Last Completed**: TYPES-07 - Create API request/response type definitions
-**Next Task**: DB-01 - Create PostgreSQL schema with custom enum types
+**Progress**: Database setup in progress
+**Last Completed**: DB-01 - Create PostgreSQL schema with custom enum types
+**Next Task**: DB-02 - Create users table with password_hash, role, organization
 
 ---
 
@@ -73,7 +73,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] TYPES-07: Create API request/response type definitions (eeb81c5)
 
 ### Database Setup
-- [ ] DB-01: Create PostgreSQL schema with custom enum types (user_role, project_status, etc.)
+- [x] DB-01: Create PostgreSQL schema with custom enum types (user_role, project_status, etc.) (977df3c)
 - [ ] DB-02: Create users table with password_hash, role, organization
 - [ ] DB-03: Create projects and project_members tables
 - [ ] DB-04: Create pid_documents table with processing_status
@@ -429,3 +429,4 @@ _No blockers currently._
 | TYPES-05: HazopsAnalysis, GuideWord, RiskRanking types | 0f10b5c | 2026-02-09 |
 | TYPES-06: Report, ReportRequest type definitions | fb99a7d | 2026-02-09 |
 | TYPES-07: API request/response type definitions | eeb81c5 | 2026-02-09 |
+| DB-01: PostgreSQL schema with custom enum types | 977df3c | 2026-02-09 |
