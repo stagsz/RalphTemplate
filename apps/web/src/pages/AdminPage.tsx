@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Button, TextInput, Select, Table, Alert, Pagination } from '@mantine/core';
+import { Button, TextInput, Select, Table, Alert, Pagination, Modal } from '@mantine/core';
 import { useAuthStore, selectUser } from '../store/auth.store';
 import { authService } from '../services/auth.service';
 import {
@@ -53,6 +53,16 @@ const SORT_OPTIONS = [
 ];
 
 /**
+ * Role options for the role editor modal (no "All Roles" option).
+ */
+const ROLE_EDITOR_OPTIONS = [
+  { value: 'administrator', label: 'Administrator' },
+  { value: 'lead_analyst', label: 'Lead Analyst' },
+  { value: 'analyst', label: 'Analyst' },
+  { value: 'viewer', label: 'Viewer' },
+];
+
+/**
  * Admin page for managing users.
  *
  * Features:
@@ -91,6 +101,11 @@ export function AdminPage() {
 
   // Status update state
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+
+  // Role editor modal state
+  const [roleModalUser, setRoleModalUser] = useState<User | null>(null);
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [isUpdatingRole, setIsUpdatingRole] = useState(false);
 
   /**
    * Debounce search query.
@@ -196,6 +211,51 @@ export function AdminPage() {
     setStatusFilter('');
     setSortValue('created_at:desc');
     setPage(1);
+  };
+
+  /**
+   * Open the role editor modal for a user.
+   */
+  const handleOpenRoleModal = (user: User) => {
+    setRoleModalUser(user);
+    setSelectedRole(user.role);
+  };
+
+  /**
+   * Close the role editor modal.
+   */
+  const handleCloseRoleModal = () => {
+    setRoleModalUser(null);
+    setSelectedRole(null);
+  };
+
+  /**
+   * Submit the role change.
+   */
+  const handleChangeRole = async () => {
+    if (!roleModalUser || !selectedRole) {
+      return;
+    }
+
+    // Don't submit if role hasn't changed
+    if (selectedRole === roleModalUser.role) {
+      handleCloseRoleModal();
+      return;
+    }
+
+    setIsUpdatingRole(true);
+    const result = await adminService.changeUserRole(roleModalUser.id, selectedRole);
+
+    if (result.success && result.data) {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === roleModalUser.id ? result.data!.user : u))
+      );
+      handleCloseRoleModal();
+    } else {
+      setError(result.error || { code: 'UNKNOWN', message: 'Failed to update user role' });
+    }
+
+    setIsUpdatingRole(false);
   };
 
   return (
@@ -428,21 +488,37 @@ export function AdminPage() {
                         {formatDate(user.createdAt)}
                       </Table.Td>
                       <Table.Td className="text-right">
-                        <Button
-                          variant="subtle"
-                          size="xs"
-                          color={user.isActive ? 'red' : 'green'}
-                          onClick={() => handleToggleStatus(user)}
-                          loading={updatingUserId === user.id}
-                          disabled={user.id === currentUser?.id}
-                          styles={{
-                            root: {
-                              borderRadius: '4px',
-                            },
-                          }}
-                        >
-                          {user.isActive ? 'Deactivate' : 'Activate'}
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="subtle"
+                            size="xs"
+                            color="blue"
+                            onClick={() => handleOpenRoleModal(user)}
+                            disabled={user.id === currentUser?.id}
+                            styles={{
+                              root: {
+                                borderRadius: '4px',
+                              },
+                            }}
+                          >
+                            Edit Role
+                          </Button>
+                          <Button
+                            variant="subtle"
+                            size="xs"
+                            color={user.isActive ? 'red' : 'green'}
+                            onClick={() => handleToggleStatus(user)}
+                            loading={updatingUserId === user.id}
+                            disabled={user.id === currentUser?.id}
+                            styles={{
+                              root: {
+                                borderRadius: '4px',
+                              },
+                            }}
+                          >
+                            {user.isActive ? 'Deactivate' : 'Activate'}
+                          </Button>
+                        </div>
                       </Table.Td>
                     </Table.Tr>
                   ))
@@ -476,6 +552,89 @@ export function AdminPage() {
           )}
         </div>
       </main>
+
+      {/* Role Editor Modal */}
+      <Modal
+        opened={roleModalUser !== null}
+        onClose={handleCloseRoleModal}
+        title={
+          <span className="font-semibold text-slate-900">
+            Edit User Role
+          </span>
+        }
+        centered
+        styles={{
+          content: {
+            borderRadius: '4px',
+          },
+          header: {
+            borderBottom: '1px solid #e2e8f0',
+            paddingBottom: '12px',
+          },
+        }}
+      >
+        {roleModalUser && (
+          <div className="mt-4">
+            <div className="mb-4">
+              <p className="text-sm text-slate-600">
+                Change role for <span className="font-medium text-slate-900">{roleModalUser.name}</span>
+              </p>
+              <p className="text-xs text-slate-500 mt-1">{roleModalUser.email}</p>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Role
+              </label>
+              <Select
+                data={ROLE_EDITOR_OPTIONS}
+                value={selectedRole}
+                onChange={(value) => setSelectedRole(value as UserRole)}
+                styles={{
+                  input: {
+                    borderRadius: '4px',
+                    '&:focus': {
+                      borderColor: '#1e40af',
+                    },
+                  },
+                }}
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+              <Button
+                variant="subtle"
+                color="gray"
+                onClick={handleCloseRoleModal}
+                disabled={isUpdatingRole}
+                styles={{
+                  root: {
+                    borderRadius: '4px',
+                  },
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleChangeRole}
+                loading={isUpdatingRole}
+                disabled={selectedRole === roleModalUser.role}
+                styles={{
+                  root: {
+                    borderRadius: '4px',
+                    backgroundColor: '#1e40af',
+                    '&:hover': {
+                      backgroundColor: '#1e3a8a',
+                    },
+                  },
+                }}
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
