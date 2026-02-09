@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 2 - Authentication & User Management (In Progress)
-**Progress**: Frontend auth store complete, moving to login page
-**Last Completed**: AUTH-09 - Create auth store with Zustand
-**Next Task**: AUTH-10 - Create login page with email/password form
+**Progress**: Login page complete, moving to registration page
+**Last Completed**: AUTH-10 - Create login page with email/password form
+**Next Task**: AUTH-11 - Create registration page with role selection
 
 ---
 
@@ -101,7 +101,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 
 ### Frontend Auth
 - [x] AUTH-09: Create auth store with Zustand (user state, tokens) (de6fb38)
-- [ ] AUTH-10: Create login page with email/password form
+- [x] AUTH-10: Create login page with email/password form (bf0aa75)
 - [ ] AUTH-11: Create registration page with role selection
 - [ ] AUTH-12: Create password reset flow (forgot password page)
 - [ ] AUTH-13: Implement auth guards for protected routes
@@ -449,3 +449,4 @@ _No blockers currently._
 | AUTH-07: Create auth middleware for protected routes | 325d01c | 2026-02-09 |
 | AUTH-08: Implement role-based access control | af11d4f | 2026-02-09 |
 | AUTH-09: Create auth store with Zustand | de6fb38 | 2026-02-09 |
+| AUTH-10: Create login page with email/password form | bf0aa75 | 2026-02-09 |
