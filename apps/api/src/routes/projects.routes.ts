@@ -10,7 +10,7 @@
 
 import { Router } from 'express';
 import { authenticate, requireAuth } from '../middleware/auth.middleware.js';
-import { listProjects, createProject, getProjectById, updateProject, deleteProject, addMember } from '../controllers/projects.controller.js';
+import { listProjects, createProject, getProjectById, updateProject, deleteProject, addMember, removeMember } from '../controllers/projects.controller.js';
 
 const router = Router();
 
@@ -102,5 +102,19 @@ router.delete('/:id', authenticate, requireAuth, deleteProject);
  * Returns the created member with user info.
  */
 router.post('/:id/members', authenticate, requireAuth, addMember);
+
+/**
+ * DELETE /projects/:id/members/:userId
+ * Remove a user from a project.
+ *
+ * Path parameters:
+ * - id: string (required) - Project UUID
+ * - userId: string (required) - User UUID to remove
+ *
+ * Only project owners and leads can remove members.
+ * Project owners cannot remove themselves.
+ * Returns success confirmation.
+ */
+router.delete('/:id/members/:userId', authenticate, requireAuth, removeMember);
 
 export default router;

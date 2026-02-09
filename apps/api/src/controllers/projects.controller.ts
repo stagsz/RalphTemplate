@@ -20,6 +20,8 @@ import {
   userExists,
   isProjectMember,
   addProjectMember as addProjectMemberService,
+  removeProjectMember as removeProjectMemberService,
+  getProjectCreatorId,
 } from '../services/project.service.js';
 import type { ProjectStatus, ProjectMemberRole } from '@hazop/types';
 import { PROJECT_STATUSES, PROJECT_MEMBER_ROLES } from '@hazop/types';
@@ -1081,6 +1083,166 @@ export async function addMember(req: Request, res: Response): Promise<void> {
         return;
       }
     }
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+/**
+ * DELETE /projects/:id/members/:userId
+ * Remove a user from a project.
+ * Only project owners and leads can remove members.
+ * Project owners cannot remove themselves from the project.
+ *
+ * Path parameters:
+ * - id: string (required) - Project UUID
+ * - userId: string (required) - User UUID to remove
+ *
+ * Returns:
+ * - 200: Member removed successfully
+ * - 400: Invalid UUID format
+ * - 401: Not authenticated
+ * - 403: Not authorized to remove members OR cannot remove project owner
+ * - 404: Project or member not found
+ * - 500: Internal server error
+ */
+export async function removeMember(req: Request, res: Response): Promise<void> {
+  try {
+    const { id, userId: targetUserId } = req.params;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format for project ID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid project ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Project ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format for target user ID
+    if (!uuidRegex.test(targetUserId)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid user ID format',
+          errors: [
+            {
+              field: 'userId',
+              message: 'User ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project
+    const hasAccess = await userHasProjectAccess(userId, id);
+    if (!hasAccess) {
+      // Check if project exists to return appropriate error
+      const project = await findProjectByIdService(id);
+      if (!project) {
+        res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Project not found',
+          },
+        });
+        return;
+      }
+
+      // Project exists but user doesn't have access
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this project',
+        },
+      });
+      return;
+    }
+
+    // Get user's role - only owner and lead can remove members
+    const userRole = await getUserProjectRole(userId, id);
+    if (!userRole || !['owner', 'lead'].includes(userRole)) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Only project owners and leads can remove members',
+        },
+      });
+      return;
+    }
+
+    // Check if the target user is the project creator (owner cannot be removed)
+    const creatorId = await getProjectCreatorId(id);
+    if (creatorId === targetUserId) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Cannot remove the project owner',
+        },
+      });
+      return;
+    }
+
+    // Check if target user is actually a member
+    const isMember = await isProjectMember(id, targetUserId);
+    if (!isMember) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'User is not a member of this project',
+        },
+      });
+      return;
+    }
+
+    // Remove the member
+    await removeProjectMemberService(id, targetUserId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Member removed successfully',
+    });
+  } catch (error) {
+    console.error('Remove member error:', error);
 
     res.status(500).json({
       success: false,

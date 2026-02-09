@@ -602,3 +602,41 @@ export async function addProjectMember(
 
   return rowToProjectMemberWithUser(result.rows[0]);
 }
+
+/**
+ * Remove a member from a project.
+ * Deletes the membership record from the project_members table.
+ *
+ * @param projectId - The ID of the project
+ * @param userId - The ID of the user to remove
+ * @returns True if the member was removed, false if no membership existed
+ */
+export async function removeProjectMember(
+  projectId: string,
+  userId: string
+): Promise<boolean> {
+  const pool = getPool();
+
+  const result = await pool.query(
+    `DELETE FROM hazop.project_members
+     WHERE project_id = $1 AND user_id = $2`,
+    [projectId, userId]
+  );
+
+  return (result.rowCount ?? 0) > 0;
+}
+
+/**
+ * Get the project creator's user ID.
+ *
+ * @param projectId - The ID of the project
+ * @returns The creator's user ID, or null if project not found
+ */
+export async function getProjectCreatorId(projectId: string): Promise<string | null> {
+  const pool = getPool();
+  const result = await pool.query<{ created_by_id: string }>(
+    `SELECT created_by_id FROM hazop.projects WHERE id = $1`,
+    [projectId]
+  );
+  return result.rows[0]?.created_by_id ?? null;
+}
