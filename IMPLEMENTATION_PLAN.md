@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 4 - P&ID Document Management
-**Progress**: PID-02 complete
-**Last Completed**: PID-02 - Create file upload middleware with validation (PDF, PNG, JPG, DWG)
-**Next Task**: PID-03 - Create file retrieval service with signed URLs
+**Progress**: PID-03 complete
+**Last Completed**: PID-03 - Create file retrieval service with signed URLs
+**Next Task**: PID-04 - Create POST /projects/:id/documents endpoint (upload P&ID)
 
 ---
 
@@ -153,7 +153,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 ### File Storage Service
 - [x] PID-01: Configure MinIO client for S3-compatible storage (fb07e54)
 - [x] PID-02: Create file upload middleware with validation (PDF, PNG, JPG, DWG) (e453f86)
-- [ ] PID-03: Create file retrieval service with signed URLs
+- [x] PID-03: Create file retrieval service with signed URLs (a800aa7)
 
 ### Backend API
 - [ ] PID-04: Create POST /projects/:id/documents endpoint (upload P&ID)
@@ -481,3 +481,4 @@ _No blockers currently._
 | PROJ-15: Add E2E tests for project creation workflow | 7ba79cd | 2026-02-10 |
 | PID-01: Configure MinIO client for S3-compatible storage | fb07e54 | 2026-02-10 |
 | PID-02: Create file upload middleware with validation | e453f86 | 2026-02-10 |
+| PID-03: Create file retrieval service with signed URLs | a800aa7 | 2026-02-10 |
