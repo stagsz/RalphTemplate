@@ -5,13 +5,14 @@
  * - GET /analyses/:id - Get analysis session details with progress metrics
  * - PUT /analyses/:id - Update analysis session metadata
  * - POST /analyses/:id/entries - Create analysis entry for node/guideword
+ * - GET /analyses/:id/entries - List analysis entries with filtering/pagination
  *
  * All routes require authentication.
  */
 
 import { Router } from 'express';
 import { authenticate, requireAuth } from '../middleware/auth.middleware.js';
-import { getAnalysisById, updateAnalysis, createAnalysisEntry } from '../controllers/analyses.controller.js';
+import { getAnalysisById, updateAnalysis, createAnalysisEntry, listEntries } from '../controllers/analyses.controller.js';
 
 const router = Router();
 
@@ -71,5 +72,26 @@ router.put('/:id', authenticate, requireAuth, updateAnalysis);
  * Only accessible if the user is a member of the project that owns the analysis.
  */
 router.post('/:id/entries', authenticate, requireAuth, createAnalysisEntry);
+
+/**
+ * GET /analyses/:id/entries
+ * List analysis entries with pagination and filtering.
+ *
+ * Path parameters:
+ * - id: string (required) - Analysis UUID
+ *
+ * Query parameters:
+ * - page: number (1-based, default 1)
+ * - limit: number (default 20, max 100)
+ * - sortBy: 'created_at' | 'updated_at' | 'parameter' | 'guide_word' | 'risk_score' (default 'created_at')
+ * - sortOrder: 'asc' | 'desc' (default 'asc')
+ * - search: string (searches parameter and deviation)
+ * - nodeId: string (filter by node UUID)
+ * - guideWord: GuideWord (filter by guide word)
+ * - riskLevel: RiskLevel (filter by risk level)
+ *
+ * Only accessible if the user is a member of the project that owns the analysis.
+ */
+router.get('/:id/entries', authenticate, requireAuth, listEntries);
 
 export default router;

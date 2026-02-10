@@ -19,10 +19,11 @@ import {
   findAnalysisById,
   createAnalysisEntry as createAnalysisEntryService,
   nodeExistsInDocument,
+  listAnalysisEntries,
 } from '../services/hazop-analysis.service.js';
 import { userHasProjectAccess, findProjectById } from '../services/project.service.js';
-import { ANALYSIS_STATUSES, GUIDE_WORDS } from '@hazop/types';
-import type { AnalysisStatus, GuideWord } from '@hazop/types';
+import { ANALYSIS_STATUSES, GUIDE_WORDS, RISK_LEVELS } from '@hazop/types';
+import type { AnalysisStatus, GuideWord, RiskLevel } from '@hazop/types';
 
 /**
  * Validation error for a specific field.
@@ -1284,6 +1285,258 @@ export async function createAnalysisEntry(req: Request, res: Response): Promise<
         return;
       }
     }
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+// ============================================================================
+// List Analysis Entries
+// ============================================================================
+
+/**
+ * Query parameters for listing analysis entries.
+ */
+interface ListEntriesQuery {
+  page?: string;
+  limit?: string;
+  sortBy?: string;
+  sortOrder?: string;
+  search?: string;
+  nodeId?: string;
+  guideWord?: string;
+  riskLevel?: string;
+}
+
+/**
+ * Valid sort fields for analysis entries.
+ */
+const validEntrySortFields = ['created_at', 'updated_at', 'parameter', 'guide_word', 'risk_score'];
+
+/**
+ * Validate list entries query parameters.
+ * Returns an array of field errors if validation fails.
+ */
+function validateListEntriesQuery(query: ListEntriesQuery): FieldError[] {
+  const errors: FieldError[] = [];
+
+  // Validate page
+  if (query.page !== undefined) {
+    const page = parseInt(query.page, 10);
+    if (isNaN(page) || page < 1) {
+      errors.push({
+        field: 'page',
+        message: 'Page must be a positive integer',
+        code: 'INVALID_VALUE',
+      });
+    }
+  }
+
+  // Validate limit
+  if (query.limit !== undefined) {
+    const limit = parseInt(query.limit, 10);
+    if (isNaN(limit) || limit < 1 || limit > 100) {
+      errors.push({
+        field: 'limit',
+        message: 'Limit must be between 1 and 100',
+        code: 'INVALID_VALUE',
+      });
+    }
+  }
+
+  // Validate sortBy
+  if (query.sortBy !== undefined && !validEntrySortFields.includes(query.sortBy)) {
+    errors.push({
+      field: 'sortBy',
+      message: `sortBy must be one of: ${validEntrySortFields.join(', ')}`,
+      code: 'INVALID_VALUE',
+    });
+  }
+
+  // Validate sortOrder
+  if (query.sortOrder !== undefined && !['asc', 'desc'].includes(query.sortOrder)) {
+    errors.push({
+      field: 'sortOrder',
+      message: 'sortOrder must be "asc" or "desc"',
+      code: 'INVALID_VALUE',
+    });
+  }
+
+  // Validate nodeId (if provided, must be valid UUID)
+  if (query.nodeId !== undefined && !UUID_REGEX.test(query.nodeId)) {
+    errors.push({
+      field: 'nodeId',
+      message: 'nodeId must be a valid UUID',
+      code: 'INVALID_FORMAT',
+    });
+  }
+
+  // Validate guideWord filter
+  if (query.guideWord !== undefined && !GUIDE_WORDS.includes(query.guideWord as GuideWord)) {
+    errors.push({
+      field: 'guideWord',
+      message: `guideWord must be one of: ${GUIDE_WORDS.join(', ')}`,
+      code: 'INVALID_VALUE',
+    });
+  }
+
+  // Validate riskLevel filter
+  if (query.riskLevel !== undefined && !RISK_LEVELS.includes(query.riskLevel as RiskLevel)) {
+    errors.push({
+      field: 'riskLevel',
+      message: `riskLevel must be one of: ${RISK_LEVELS.join(', ')}`,
+      code: 'INVALID_VALUE',
+    });
+  }
+
+  return errors;
+}
+
+/**
+ * GET /analyses/:id/entries
+ * List analysis entries for an analysis with pagination and filtering.
+ * All project members can view entries.
+ *
+ * Path parameters:
+ * - id: string (required) - Analysis UUID
+ *
+ * Query parameters:
+ * - page: number (1-based, default 1)
+ * - limit: number (default 20, max 100)
+ * - sortBy: 'created_at' | 'updated_at' | 'parameter' | 'guide_word' | 'risk_score' (default 'created_at')
+ * - sortOrder: 'asc' | 'desc' (default 'asc')
+ * - search: string (searches parameter and deviation)
+ * - nodeId: string (filter by node UUID)
+ * - guideWord: GuideWord (filter by guide word)
+ * - riskLevel: RiskLevel (filter by risk level)
+ *
+ * Returns:
+ * - 200: Paginated list of analysis entries
+ * - 400: Validation error
+ * - 401: Not authenticated
+ * - 403: Not authorized to access this analysis
+ * - 404: Analysis not found
+ * - 500: Internal server error
+ */
+export async function listEntries(req: Request, res: Response): Promise<void> {
+  try {
+    const { id: analysisId } = req.params;
+    const query = req.query as ListEntriesQuery;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate analysis ID format
+    if (!UUID_REGEX.test(analysisId)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid analysis ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Analysis ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Validate query parameters
+    const validationErrors = validateListEntriesQuery(query);
+    if (validationErrors.length > 0) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid query parameters',
+          errors: validationErrors,
+        },
+      });
+      return;
+    }
+
+    // Find the analysis to check existence and project access
+    const existingAnalysis = await findAnalysisById(analysisId);
+    if (!existingAnalysis) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Analysis not found',
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project that owns this analysis
+    const hasAccess = await userHasProjectAccess(userId, existingAnalysis.projectId);
+    if (!hasAccess) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this analysis',
+        },
+      });
+      return;
+    }
+
+    // Parse query parameters
+    const page = query.page ? parseInt(query.page, 10) : undefined;
+    const limit = query.limit ? parseInt(query.limit, 10) : undefined;
+    const sortBy = query.sortBy as 'created_at' | 'updated_at' | 'parameter' | 'guide_word' | 'risk_score' | undefined;
+    const sortOrder = query.sortOrder as 'asc' | 'desc' | undefined;
+    const search = query.search;
+    const nodeId = query.nodeId;
+    const guideWord = query.guideWord as GuideWord | undefined;
+    const riskLevel = query.riskLevel as RiskLevel | undefined;
+
+    // Fetch entries
+    const result = await listAnalysisEntries(
+      analysisId,
+      { nodeId, guideWord, riskLevel, search },
+      { page, limit, sortBy, sortOrder }
+    );
+
+    // Calculate pagination metadata
+    const currentPage = page ?? 1;
+    const currentLimit = limit ?? 20;
+    const totalPages = Math.ceil(result.total / currentLimit);
+
+    res.status(200).json({
+      success: true,
+      data: { entries: result.entries },
+      meta: {
+        page: currentPage,
+        limit: currentLimit,
+        total: result.total,
+        totalPages,
+        hasNextPage: currentPage < totalPages,
+        hasPrevPage: currentPage > 1,
+      },
+    });
+  } catch (error) {
+    console.error('List analysis entries error:', error);
 
     res.status(500).json({
       success: false,

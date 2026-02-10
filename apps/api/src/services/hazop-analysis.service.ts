@@ -903,3 +903,134 @@ export async function getEntryAnalysisId(entryId: string): Promise<string | null
   );
   return result.rows[0]?.analysis_id ?? null;
 }
+
+// ============================================================================
+// List Analysis Entries
+// ============================================================================
+
+/**
+ * Filter options for listing analysis entries.
+ */
+export interface ListEntriesFilters {
+  /** Filter by node ID */
+  nodeId?: string;
+  /** Filter by guide word */
+  guideWord?: GuideWord;
+  /** Filter by risk level */
+  riskLevel?: RiskLevel;
+  /** Search query for parameter or deviation */
+  search?: string;
+}
+
+/**
+ * Pagination options for listing analysis entries.
+ */
+export interface ListEntriesPagination {
+  /** Page number (1-based). Defaults to 1. */
+  page?: number;
+  /** Number of items per page. Defaults to 20, max 100. */
+  limit?: number;
+  /** Field to sort by. Defaults to 'created_at'. */
+  sortBy?: 'created_at' | 'updated_at' | 'parameter' | 'guide_word' | 'risk_score';
+  /** Sort direction. Defaults to 'asc'. */
+  sortOrder?: 'asc' | 'desc';
+}
+
+/**
+ * Result from listing analysis entries.
+ */
+export interface ListEntriesResult {
+  /** Array of analysis entries */
+  entries: AnalysisEntry[];
+  /** Total number of entries matching the filters */
+  total: number;
+}
+
+/**
+ * List analysis entries for an analysis with optional filtering and pagination.
+ *
+ * @param analysisId - The ID of the analysis
+ * @param filters - Optional filters (nodeId, guideWord, riskLevel, search)
+ * @param pagination - Optional pagination options
+ * @returns Paginated list of analysis entries
+ */
+export async function listAnalysisEntries(
+  analysisId: string,
+  filters?: ListEntriesFilters,
+  pagination?: ListEntriesPagination
+): Promise<ListEntriesResult> {
+  const pool = getPool();
+
+  // Build WHERE clause
+  const whereClauses: string[] = ['ae.analysis_id = $1'];
+  const values: unknown[] = [analysisId];
+  let paramIndex = 2;
+
+  // Filter by node ID
+  if (filters?.nodeId) {
+    whereClauses.push(`ae.node_id = $${paramIndex}`);
+    values.push(filters.nodeId);
+    paramIndex++;
+  }
+
+  // Filter by guide word
+  if (filters?.guideWord) {
+    whereClauses.push(`ae.guide_word = $${paramIndex}`);
+    values.push(filters.guideWord);
+    paramIndex++;
+  }
+
+  // Filter by risk level
+  if (filters?.riskLevel) {
+    whereClauses.push(`ae.risk_level = $${paramIndex}`);
+    values.push(filters.riskLevel);
+    paramIndex++;
+  }
+
+  // Search by parameter or deviation
+  if (filters?.search) {
+    whereClauses.push(
+      `(LOWER(ae.parameter) LIKE $${paramIndex} OR LOWER(ae.deviation) LIKE $${paramIndex})`
+    );
+    values.push(`%${filters.search.toLowerCase()}%`);
+    paramIndex++;
+  }
+
+  const whereClause = `WHERE ${whereClauses.join(' AND ')}`;
+
+  // Pagination
+  const page = Math.max(pagination?.page ?? 1, 1);
+  const limit = Math.min(Math.max(pagination?.limit ?? 20, 1), 100);
+  const offset = (page - 1) * limit;
+
+  // Sorting - use allowlist to prevent SQL injection
+  const allowedSortFields = ['created_at', 'updated_at', 'parameter', 'guide_word', 'risk_score'];
+  const sortBy = allowedSortFields.includes(pagination?.sortBy ?? '')
+    ? pagination!.sortBy
+    : 'created_at';
+  const sortOrder = pagination?.sortOrder === 'desc' ? 'DESC' : 'ASC';
+
+  // Get total count
+  const countResult = await pool.query<{ count: string }>(
+    `SELECT COUNT(*) as count
+     FROM hazop.analysis_entries ae
+     ${whereClause}`,
+    values
+  );
+  const total = parseInt(countResult.rows[0].count, 10);
+
+  // Get entries
+  const entriesResult = await pool.query<AnalysisEntryRow>(
+    `SELECT ae.*
+     FROM hazop.analysis_entries ae
+     ${whereClause}
+     ORDER BY ae.${sortBy} ${sortOrder}
+     LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+    [...values, limit, offset]
+  );
+
+  return {
+    entries: entriesResult.rows.map(rowToAnalysisEntry),
+    total,
+  };
+}
