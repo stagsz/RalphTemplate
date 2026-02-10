@@ -4,10 +4,10 @@
 
 ## Current Status
 
-**Phase**: 3 - Project Management (COMPLETE)
-**Progress**: PROJ-15 complete (Phase 3 finished)
-**Last Completed**: PROJ-15 - Add E2E tests for project creation workflow
-**Next Task**: PID-01 - Configure MinIO client for S3-compatible storage (Phase 4)
+**Phase**: 4 - P&ID Document Management
+**Progress**: PID-01 complete
+**Last Completed**: PID-01 - Configure MinIO client for S3-compatible storage
+**Next Task**: PID-02 - Create file upload middleware with validation (PDF, PNG, JPG, DWG)
 
 ---
 
@@ -151,7 +151,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 ## Phase 4: P&ID Document Management
 
 ### File Storage Service
-- [ ] PID-01: Configure MinIO client for S3-compatible storage
+- [x] PID-01: Configure MinIO client for S3-compatible storage (fb07e54)
 - [ ] PID-02: Create file upload middleware with validation (PDF, PNG, JPG, DWG)
 - [ ] PID-03: Create file retrieval service with signed URLs
 
@@ -479,3 +479,4 @@ _No blockers currently._
 | PROJ-13: Create project settings form | 81d529d | 2026-02-09 |
 | PROJ-14: Add API tests for project CRUD endpoints | ea3f410 | 2026-02-10 |
 | PROJ-15: Add E2E tests for project creation workflow | 7ba79cd | 2026-02-10 |
+| PID-01: Configure MinIO client for S3-compatible storage | fb07e54 | 2026-02-10 |
