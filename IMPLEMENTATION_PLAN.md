@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 3 - Project Management
-**Progress**: PROJ-12 complete
-**Last Completed**: PROJ-12 - Create team management panel
-**Next Task**: PROJ-13 - Create project settings form
+**Progress**: PROJ-13 complete
+**Last Completed**: PROJ-13 - Create project settings form
+**Next Task**: PROJ-14 - Add API tests for project CRUD endpoints
 
 ---
 
@@ -140,7 +140,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] PROJ-10: Create new project form modal (128ac57)
 - [x] PROJ-11: Create project detail page with tabs (Overview, Documents, Analysis, Team) (766041b)
 - [x] PROJ-12: Create team management panel (add/remove members) (becc836)
-- [ ] PROJ-13: Create project settings form (name, description, status)
+- [x] PROJ-13: Create project settings form (name, description, status) (81d529d)
 
 ### Project Testing
 - [ ] PROJ-14: Add API tests for project CRUD endpoints
@@ -476,3 +476,4 @@ _No blockers currently._
 | PROJ-10: Create new project form modal | 128ac57 | 2026-02-09 |
 | PROJ-11: Create project detail page with tabs | 766041b | 2026-02-09 |
 | PROJ-12: Create team management panel | becc836 | 2026-02-09 |
+| PROJ-13: Create project settings form | 81d529d | 2026-02-09 |
