@@ -15,7 +15,7 @@ import {
   getUserProjectRole,
   findProjectById as findProjectByIdService,
 } from '../services/project.service.js';
-import { createPIDDocument, listProjectDocuments, findPIDDocumentById, deletePIDDocument, createAnalysisNode, nodeIdExistsForDocument, listDocumentNodes, findAnalysisNodeById, updateAnalysisNode, nodeIdExistsForDocumentExcluding } from '../services/pid-document.service.js';
+import { createPIDDocument, listProjectDocuments, findPIDDocumentById, deletePIDDocument, createAnalysisNode, nodeIdExistsForDocument, listDocumentNodes, findAnalysisNodeById, updateAnalysisNode, nodeIdExistsForDocumentExcluding, deleteAnalysisNode } from '../services/pid-document.service.js';
 import { uploadFile, generateStoragePath, deleteFile, getSignedDownloadUrl } from '../services/storage.service.js';
 import { getUploadedFileBuffer, getUploadMeta } from '../middleware/upload.middleware.js';
 import { PID_DOCUMENT_STATUSES, EQUIPMENT_TYPES } from '@hazop/types';
@@ -1609,6 +1609,148 @@ export async function updateNode(req: Request, res: Response): Promise<void> {
         return;
       }
     }
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+/**
+ * DELETE /nodes/:id
+ * Delete an analysis node.
+ * User must have appropriate role on the project that owns the document.
+ * Viewers cannot delete nodes.
+ *
+ * Path parameters:
+ * - id: string (required) - Node UUID
+ *
+ * Returns:
+ * - 200: Node deleted successfully
+ * - 400: Invalid node ID format
+ * - 401: Not authenticated
+ * - 403: Not authorized to delete this node
+ * - 404: Node not found
+ * - 500: Internal server error
+ */
+export async function deleteNode(req: Request, res: Response): Promise<void> {
+  try {
+    const { id: nodeUuid } = req.params;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(nodeUuid)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid node ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Node ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Find the node
+    const existingNode = await findAnalysisNodeById(nodeUuid);
+    if (!existingNode) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Node not found',
+        },
+      });
+      return;
+    }
+
+    // Find the document to get the project ID
+    const document = await findPIDDocumentById(existingNode.documentId);
+    if (!document) {
+      // Document was deleted - node should have been cascade deleted too
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Node not found',
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project that owns this document
+    const hasAccess = await userHasProjectAccess(userId, document.projectId);
+    if (!hasAccess) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this node',
+        },
+      });
+      return;
+    }
+
+    // Get user's role - only owner, lead, and member can delete nodes
+    // Viewers cannot delete nodes
+    const userRole = await getUserProjectRole(userId, document.projectId);
+    if (!userRole || userRole === 'viewer') {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to delete nodes in this project',
+        },
+      });
+      return;
+    }
+
+    // Delete the node
+    const deletedNode = await deleteAnalysisNode(nodeUuid);
+    if (!deletedNode) {
+      // Node was deleted between findById and delete (race condition)
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Node not found',
+        },
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        message: 'Node deleted successfully',
+        nodeId: deletedNode.id,
+      },
+    });
+  } catch (error) {
+    console.error('Delete node error:', error);
 
     res.status(500).json({
       success: false,

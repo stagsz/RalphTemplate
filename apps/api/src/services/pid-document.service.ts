@@ -913,3 +913,39 @@ export async function nodeIdExistsForDocumentExcluding(
 
   return result.rows[0]?.exists ?? false;
 }
+
+/**
+ * Delete an analysis node by ID.
+ * Returns the deleted node (for confirmation and cleanup operations).
+ *
+ * @param nodeId - The node UUID
+ * @returns The deleted node, or null if not found
+ */
+export async function deleteAnalysisNode(
+  nodeId: string
+): Promise<AnalysisNode | null> {
+  const pool = getPool();
+
+  const result = await pool.query<AnalysisNodeRow>(
+    `DELETE FROM hazop.analysis_nodes
+     WHERE id = $1
+     RETURNING
+       id,
+       document_id,
+       node_id,
+       description,
+       equipment_type,
+       x_coordinate,
+       y_coordinate,
+       created_by_id,
+       created_at,
+       updated_at`,
+    [nodeId]
+  );
+
+  if (!result.rows[0]) {
+    return null;
+  }
+
+  return rowToNode(result.rows[0]);
+}

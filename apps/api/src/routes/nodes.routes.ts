@@ -3,13 +3,14 @@
  *
  * Provides endpoints for analysis node operations:
  * - PUT /nodes/:id - Update an existing analysis node
+ * - DELETE /nodes/:id - Delete an existing analysis node
  *
  * All routes require authentication.
  */
 
 import { Router } from 'express';
 import { authenticate, requireAuth } from '../middleware/auth.middleware.js';
-import { updateNode } from '../controllers/documents.controller.js';
+import { updateNode, deleteNode } from '../controllers/documents.controller.js';
 
 const router = Router();
 
@@ -31,5 +32,17 @@ const router = Router();
  * Viewers cannot update nodes.
  */
 router.put('/:id', authenticate, requireAuth, updateNode);
+
+/**
+ * DELETE /nodes/:id
+ * Delete an existing analysis node.
+ *
+ * Path parameters:
+ * - id: string (required) - Node UUID
+ *
+ * Only accessible by project members with owner, lead, or member role.
+ * Viewers cannot delete nodes.
+ */
+router.delete('/:id', authenticate, requireAuth, deleteNode);
 
 export default router;
