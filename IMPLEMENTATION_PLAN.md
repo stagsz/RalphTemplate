@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 4 - P&ID Document Management
-**Progress**: PID-19 complete
-**Last Completed**: PID-19 - Create node editing modal
-**Next Task**: PID-20 - Add API tests for document upload/retrieval
+**Progress**: PID-20 complete
+**Last Completed**: PID-20 - Add API tests for document upload/retrieval
+**Next Task**: PID-21 - Add E2E tests for P&ID upload workflow
 
 ---
 
@@ -178,7 +178,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] PID-19: Create node editing modal (b3f9a29)
 
 ### P&ID Testing
-- [ ] PID-20: Add API tests for document upload/retrieval
+- [x] PID-20: Add API tests for document upload/retrieval (e4489ea)
 - [ ] PID-21: Add E2E tests for P&ID upload workflow
 
 ---
