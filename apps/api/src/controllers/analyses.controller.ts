@@ -5,6 +5,8 @@
  * - POST /projects/:id/analyses - Create a new analysis session
  * - GET /projects/:id/analyses - List analysis sessions
  * - GET /analyses/:id - Get analysis session details
+ * - PUT /analyses/:id - Update analysis session metadata
+ * - POST /analyses/:id/entries - Create analysis entry for node/guideword
  */
 
 import type { Request, Response } from 'express';
@@ -15,10 +17,12 @@ import {
   findAnalysisByIdWithProgress,
   updateAnalysis as updateAnalysisService,
   findAnalysisById,
+  createAnalysisEntry as createAnalysisEntryService,
+  nodeExistsInDocument,
 } from '../services/hazop-analysis.service.js';
 import { userHasProjectAccess, findProjectById } from '../services/project.service.js';
-import { ANALYSIS_STATUSES } from '@hazop/types';
-import type { AnalysisStatus } from '@hazop/types';
+import { ANALYSIS_STATUSES, GUIDE_WORDS } from '@hazop/types';
+import type { AnalysisStatus, GuideWord } from '@hazop/types';
 
 /**
  * Validation error for a specific field.
@@ -46,6 +50,21 @@ interface UpdateAnalysisBody {
   name?: unknown;
   description?: unknown;
   leadAnalystId?: unknown;
+}
+
+/**
+ * Request body for creating an analysis entry.
+ */
+interface CreateAnalysisEntryBody {
+  nodeId?: unknown;
+  guideWord?: unknown;
+  parameter?: unknown;
+  deviation?: unknown;
+  causes?: unknown;
+  consequences?: unknown;
+  safeguards?: unknown;
+  recommendations?: unknown;
+  notes?: unknown;
 }
 
 /**
@@ -200,6 +219,181 @@ function validateUpdateAnalysisRequest(body: UpdateAnalysisBody): FieldError[] {
         field: 'leadAnalystId',
         message: 'Lead analyst ID must be a valid UUID',
         code: 'INVALID_FORMAT',
+      });
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Validate a string array field.
+ * Returns null if valid, or an error message if invalid.
+ */
+function validateStringArray(value: unknown, fieldName: string): string | null {
+  if (!Array.isArray(value)) {
+    return `${fieldName} must be an array`;
+  }
+  for (let i = 0; i < value.length; i++) {
+    if (typeof value[i] !== 'string') {
+      return `${fieldName}[${i}] must be a string`;
+    }
+  }
+  return null;
+}
+
+/**
+ * Validate create analysis entry request body.
+ * Returns an array of field errors if validation fails.
+ */
+function validateCreateAnalysisEntryRequest(body: CreateAnalysisEntryBody): FieldError[] {
+  const errors: FieldError[] = [];
+
+  // Validate nodeId (required, must be a valid UUID)
+  if (body.nodeId === undefined || body.nodeId === null) {
+    errors.push({
+      field: 'nodeId',
+      message: 'Node ID is required',
+      code: 'REQUIRED',
+    });
+  } else if (typeof body.nodeId !== 'string') {
+    errors.push({
+      field: 'nodeId',
+      message: 'Node ID must be a string',
+      code: 'INVALID_TYPE',
+    });
+  } else if (!UUID_REGEX.test(body.nodeId)) {
+    errors.push({
+      field: 'nodeId',
+      message: 'Node ID must be a valid UUID',
+      code: 'INVALID_FORMAT',
+    });
+  }
+
+  // Validate guideWord (required, must be a valid guide word)
+  if (body.guideWord === undefined || body.guideWord === null) {
+    errors.push({
+      field: 'guideWord',
+      message: 'Guide word is required',
+      code: 'REQUIRED',
+    });
+  } else if (typeof body.guideWord !== 'string') {
+    errors.push({
+      field: 'guideWord',
+      message: 'Guide word must be a string',
+      code: 'INVALID_TYPE',
+    });
+  } else if (!GUIDE_WORDS.includes(body.guideWord as GuideWord)) {
+    errors.push({
+      field: 'guideWord',
+      message: `Guide word must be one of: ${GUIDE_WORDS.join(', ')}`,
+      code: 'INVALID_VALUE',
+    });
+  }
+
+  // Validate parameter (required, non-empty string, max 100 chars)
+  if (body.parameter === undefined || body.parameter === null) {
+    errors.push({
+      field: 'parameter',
+      message: 'Parameter is required',
+      code: 'REQUIRED',
+    });
+  } else if (typeof body.parameter !== 'string') {
+    errors.push({
+      field: 'parameter',
+      message: 'Parameter must be a string',
+      code: 'INVALID_TYPE',
+    });
+  } else if (body.parameter.trim().length === 0) {
+    errors.push({
+      field: 'parameter',
+      message: 'Parameter cannot be empty',
+      code: 'EMPTY',
+    });
+  } else if (body.parameter.length > 100) {
+    errors.push({
+      field: 'parameter',
+      message: 'Parameter must be 100 characters or less',
+      code: 'MAX_LENGTH',
+    });
+  }
+
+  // Validate deviation (required, non-empty string)
+  if (body.deviation === undefined || body.deviation === null) {
+    errors.push({
+      field: 'deviation',
+      message: 'Deviation is required',
+      code: 'REQUIRED',
+    });
+  } else if (typeof body.deviation !== 'string') {
+    errors.push({
+      field: 'deviation',
+      message: 'Deviation must be a string',
+      code: 'INVALID_TYPE',
+    });
+  } else if (body.deviation.trim().length === 0) {
+    errors.push({
+      field: 'deviation',
+      message: 'Deviation cannot be empty',
+      code: 'EMPTY',
+    });
+  }
+
+  // Validate causes (optional, but if provided must be array of strings)
+  if (body.causes !== undefined && body.causes !== null) {
+    const causesError = validateStringArray(body.causes, 'causes');
+    if (causesError) {
+      errors.push({
+        field: 'causes',
+        message: causesError,
+        code: 'INVALID_TYPE',
+      });
+    }
+  }
+
+  // Validate consequences (optional, but if provided must be array of strings)
+  if (body.consequences !== undefined && body.consequences !== null) {
+    const consequencesError = validateStringArray(body.consequences, 'consequences');
+    if (consequencesError) {
+      errors.push({
+        field: 'consequences',
+        message: consequencesError,
+        code: 'INVALID_TYPE',
+      });
+    }
+  }
+
+  // Validate safeguards (optional, but if provided must be array of strings)
+  if (body.safeguards !== undefined && body.safeguards !== null) {
+    const safeguardsError = validateStringArray(body.safeguards, 'safeguards');
+    if (safeguardsError) {
+      errors.push({
+        field: 'safeguards',
+        message: safeguardsError,
+        code: 'INVALID_TYPE',
+      });
+    }
+  }
+
+  // Validate recommendations (optional, but if provided must be array of strings)
+  if (body.recommendations !== undefined && body.recommendations !== null) {
+    const recommendationsError = validateStringArray(body.recommendations, 'recommendations');
+    if (recommendationsError) {
+      errors.push({
+        field: 'recommendations',
+        message: recommendationsError,
+        code: 'INVALID_TYPE',
+      });
+    }
+  }
+
+  // Validate notes (optional, but if provided must be string)
+  if (body.notes !== undefined && body.notes !== null) {
+    if (typeof body.notes !== 'string') {
+      errors.push({
+        field: 'notes',
+        message: 'Notes must be a string',
+        code: 'INVALID_TYPE',
       });
     }
   }
@@ -888,6 +1082,203 @@ export async function updateAnalysis(req: Request, res: Response): Promise<void>
                 code: 'INVALID_REFERENCE',
               },
             ],
+          },
+        });
+        return;
+      }
+    }
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+// ============================================================================
+// Create Analysis Entry
+// ============================================================================
+
+/**
+ * POST /analyses/:id/entries
+ * Create a new analysis entry for a node/guideword combination.
+ * User must have access to the project that owns the analysis.
+ * Only draft analyses can have entries added.
+ *
+ * Path parameters:
+ * - id: string (required) - Analysis UUID
+ *
+ * Request body:
+ * - nodeId: string (required) - Analysis node UUID
+ * - guideWord: GuideWord (required) - Guide word to apply
+ * - parameter: string (required) - Parameter being analyzed (e.g., "flow", "pressure")
+ * - deviation: string (required) - Description of the deviation
+ * - causes: string[] (optional) - Possible causes (default [])
+ * - consequences: string[] (optional) - Potential consequences (default [])
+ * - safeguards: string[] (optional) - Existing safeguards (default [])
+ * - recommendations: string[] (optional) - Recommended actions (default [])
+ * - notes: string (optional) - Additional notes
+ *
+ * Returns:
+ * - 201: Created entry with details
+ * - 400: Validation error or analysis not in draft status
+ * - 401: Not authenticated
+ * - 403: Not authorized to access this analysis
+ * - 404: Analysis or node not found
+ * - 409: Entry already exists for this node/guideword/parameter combination
+ * - 500: Internal server error
+ */
+export async function createAnalysisEntry(req: Request, res: Response): Promise<void> {
+  try {
+    const { id: analysisId } = req.params;
+    const body = req.body as CreateAnalysisEntryBody;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format
+    if (!UUID_REGEX.test(analysisId)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid analysis ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Analysis ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Validate request body
+    const validationErrors = validateCreateAnalysisEntryRequest(body);
+    if (validationErrors.length > 0) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Validation failed',
+          errors: validationErrors,
+        },
+      });
+      return;
+    }
+
+    // Find the analysis to check status and project access
+    const existingAnalysis = await findAnalysisById(analysisId);
+    if (!existingAnalysis) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Analysis not found',
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project that owns this analysis
+    const hasAccess = await userHasProjectAccess(userId, existingAnalysis.projectId);
+    if (!hasAccess) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this analysis',
+        },
+      });
+      return;
+    }
+
+    // Only allow adding entries to draft analyses
+    if (existingAnalysis.status !== 'draft') {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_STATUS',
+          message: 'Can only add entries to draft analyses. Current status: ' + existingAnalysis.status,
+        },
+      });
+      return;
+    }
+
+    const nodeId = body.nodeId as string;
+
+    // Verify the node exists and belongs to the analysis document
+    const nodeExists = await nodeExistsInDocument(nodeId, existingAnalysis.documentId);
+    if (!nodeExists) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Node not found in the analysis document',
+        },
+      });
+      return;
+    }
+
+    // Create the entry
+    const entry = await createAnalysisEntryService(userId, {
+      analysisId,
+      nodeId,
+      guideWord: body.guideWord as GuideWord,
+      parameter: (body.parameter as string).trim(),
+      deviation: (body.deviation as string).trim(),
+      causes: Array.isArray(body.causes) ? body.causes as string[] : undefined,
+      consequences: Array.isArray(body.consequences) ? body.consequences as string[] : undefined,
+      safeguards: Array.isArray(body.safeguards) ? body.safeguards as string[] : undefined,
+      recommendations: Array.isArray(body.recommendations) ? body.recommendations as string[] : undefined,
+      notes: typeof body.notes === 'string' ? body.notes : undefined,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: { entry },
+    });
+  } catch (error) {
+    console.error('Create analysis entry error:', error);
+
+    // Handle constraint violations
+    if (error instanceof Error && 'code' in error) {
+      const dbError = error as { code: string };
+
+      // Foreign key constraint violation (node or analysis doesn't exist)
+      if (dbError.code === '23503') {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid reference: node or analysis does not exist',
+          },
+        });
+        return;
+      }
+
+      // Unique constraint violation (entry already exists)
+      if (dbError.code === '23505') {
+        res.status(409).json({
+          success: false,
+          error: {
+            code: 'CONFLICT',
+            message: 'An entry already exists for this node, guide word, and parameter combination',
           },
         });
         return;

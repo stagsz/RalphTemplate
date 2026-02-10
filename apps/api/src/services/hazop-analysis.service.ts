@@ -6,7 +6,7 @@
  */
 
 import { getPool } from '../config/database.config.js';
-import type { AnalysisStatus } from '@hazop/types';
+import type { AnalysisStatus, GuideWord, RiskRanking, RiskLevel } from '@hazop/types';
 
 // ============================================================================
 // Database Row Types (snake_case matching PostgreSQL schema)
@@ -55,6 +55,31 @@ export interface HazopAnalysisRowWithProgress extends HazopAnalysisRow {
   low_risk_count: string;
 }
 
+/**
+ * Analysis entry row from the database.
+ */
+export interface AnalysisEntryRow {
+  id: string;
+  analysis_id: string;
+  node_id: string;
+  guide_word: GuideWord;
+  parameter: string;
+  deviation: string;
+  causes: string[];
+  consequences: string[];
+  safeguards: string[];
+  recommendations: string[];
+  severity: number | null;
+  likelihood: number | null;
+  detectability: number | null;
+  risk_score: number | null;
+  risk_level: RiskLevel | null;
+  notes: string | null;
+  created_by_id: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
 // ============================================================================
 // API Response Types (camelCase for JavaScript)
 // ============================================================================
@@ -100,6 +125,27 @@ export interface HazopAnalysisWithProgress extends HazopAnalysis {
   highRiskCount: number;
   mediumRiskCount: number;
   lowRiskCount: number;
+}
+
+/**
+ * Analysis entry object (API response format).
+ */
+export interface AnalysisEntry {
+  id: string;
+  analysisId: string;
+  nodeId: string;
+  guideWord: GuideWord;
+  parameter: string;
+  deviation: string;
+  causes: string[];
+  consequences: string[];
+  safeguards: string[];
+  recommendations: string[];
+  riskRanking: RiskRanking | null;
+  notes: string | null;
+  createdById: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // ============================================================================
@@ -155,6 +201,48 @@ function rowToHazopAnalysisWithProgress(row: HazopAnalysisRowWithProgress): Hazo
     highRiskCount: parseInt(row.high_risk_count, 10),
     mediumRiskCount: parseInt(row.medium_risk_count, 10),
     lowRiskCount: parseInt(row.low_risk_count, 10),
+  };
+}
+
+/**
+ * Convert a database row to an AnalysisEntry object.
+ * Maps snake_case columns to camelCase properties.
+ */
+function rowToAnalysisEntry(row: AnalysisEntryRow): AnalysisEntry {
+  // Build risk ranking if all risk fields are present
+  let riskRanking: RiskRanking | null = null;
+  if (
+    row.severity !== null &&
+    row.likelihood !== null &&
+    row.detectability !== null &&
+    row.risk_score !== null &&
+    row.risk_level !== null
+  ) {
+    riskRanking = {
+      severity: row.severity as 1 | 2 | 3 | 4 | 5,
+      likelihood: row.likelihood as 1 | 2 | 3 | 4 | 5,
+      detectability: row.detectability as 1 | 2 | 3 | 4 | 5,
+      riskScore: row.risk_score,
+      riskLevel: row.risk_level,
+    };
+  }
+
+  return {
+    id: row.id,
+    analysisId: row.analysis_id,
+    nodeId: row.node_id,
+    guideWord: row.guide_word,
+    parameter: row.parameter,
+    deviation: row.deviation,
+    causes: row.causes,
+    consequences: row.consequences,
+    safeguards: row.safeguards,
+    recommendations: row.recommendations,
+    riskRanking,
+    notes: row.notes,
+    createdById: row.created_by_id,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -223,6 +311,22 @@ export interface UpdateAnalysisData {
   name?: string;
   description?: string | null;
   leadAnalystId?: string;
+}
+
+/**
+ * Payload for creating a new analysis entry.
+ */
+export interface CreateAnalysisEntryData {
+  analysisId: string;
+  nodeId: string;
+  guideWord: GuideWord;
+  parameter: string;
+  deviation: string;
+  causes?: string[];
+  consequences?: string[];
+  safeguards?: string[];
+  recommendations?: string[];
+  notes?: string;
 }
 
 // ============================================================================
@@ -699,4 +803,103 @@ export async function revertAnalysisToDraft(
   }
 
   return findAnalysisById(result.rows[0].id);
+}
+
+// ============================================================================
+// Analysis Entry Service Functions
+// ============================================================================
+
+/**
+ * Check if a node exists in a document.
+ *
+ * @param nodeId - The node ID to check
+ * @param documentId - The document ID the node should belong to
+ * @returns True if the node exists and belongs to the document, false otherwise
+ */
+export async function nodeExistsInDocument(
+  nodeId: string,
+  documentId: string
+): Promise<boolean> {
+  const pool = getPool();
+  const result = await pool.query<{ exists: boolean }>(
+    `SELECT EXISTS(
+       SELECT 1 FROM hazop.analysis_nodes
+       WHERE id = $1 AND document_id = $2
+     ) AS exists`,
+    [nodeId, documentId]
+  );
+  return result.rows[0]?.exists ?? false;
+}
+
+/**
+ * Create a new analysis entry for a node/guideword combination.
+ *
+ * @param userId - The ID of the user creating the entry
+ * @param data - Entry creation data
+ * @returns The created analysis entry
+ * @throws Error with code '23503' if analysis or node doesn't exist (FK violation)
+ * @throws Error with code '23505' if entry with same analysis/node/guideword/parameter already exists
+ */
+export async function createAnalysisEntry(
+  userId: string,
+  data: CreateAnalysisEntryData
+): Promise<AnalysisEntry> {
+  const pool = getPool();
+
+  const result = await pool.query<AnalysisEntryRow>(
+    `INSERT INTO hazop.analysis_entries
+       (analysis_id, node_id, guide_word, parameter, deviation, causes, consequences, safeguards, recommendations, notes, created_by_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     RETURNING *`,
+    [
+      data.analysisId,
+      data.nodeId,
+      data.guideWord,
+      data.parameter,
+      data.deviation,
+      JSON.stringify(data.causes ?? []),
+      JSON.stringify(data.consequences ?? []),
+      JSON.stringify(data.safeguards ?? []),
+      JSON.stringify(data.recommendations ?? []),
+      data.notes ?? null,
+      userId,
+    ]
+  );
+
+  return rowToAnalysisEntry(result.rows[0]);
+}
+
+/**
+ * Find an analysis entry by ID.
+ *
+ * @param entryId - The entry ID to find
+ * @returns The analysis entry, or null if not found
+ */
+export async function findAnalysisEntryById(entryId: string): Promise<AnalysisEntry | null> {
+  const pool = getPool();
+  const result = await pool.query<AnalysisEntryRow>(
+    `SELECT * FROM hazop.analysis_entries WHERE id = $1`,
+    [entryId]
+  );
+
+  if (!result.rows[0]) {
+    return null;
+  }
+
+  return rowToAnalysisEntry(result.rows[0]);
+}
+
+/**
+ * Get the analysis ID for an entry.
+ *
+ * @param entryId - The entry ID
+ * @returns The analysis ID, or null if entry not found
+ */
+export async function getEntryAnalysisId(entryId: string): Promise<string | null> {
+  const pool = getPool();
+  const result = await pool.query<{ analysis_id: string }>(
+    `SELECT analysis_id FROM hazop.analysis_entries WHERE id = $1`,
+    [entryId]
+  );
+  return result.rows[0]?.analysis_id ?? null;
 }
