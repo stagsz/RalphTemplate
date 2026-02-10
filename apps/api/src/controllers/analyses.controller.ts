@@ -6,6 +6,7 @@
  * - GET /projects/:id/analyses - List analysis sessions
  * - GET /analyses/:id - Get analysis session details
  * - PUT /analyses/:id - Update analysis session metadata
+ * - POST /analyses/:id/complete - Finalize/complete an analysis
  * - POST /analyses/:id/entries - Create analysis entry for node/guideword
  * - GET /analyses/:id/entries - List analysis entries
  * - PUT /entries/:id - Update analysis entry
@@ -20,6 +21,7 @@ import {
   findAnalysisByIdWithProgress,
   updateAnalysis as updateAnalysisService,
   findAnalysisById,
+  approveAnalysis as approveAnalysisService,
   createAnalysisEntry as createAnalysisEntryService,
   nodeExistsInDocument,
   listAnalysisEntries,
@@ -1202,6 +1204,182 @@ export async function updateAnalysis(req: Request, res: Response): Promise<void>
         return;
       }
     }
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+// ============================================================================
+// Complete Analysis
+// ============================================================================
+
+/**
+ * Request body for completing an analysis.
+ */
+interface CompleteAnalysisBody {
+  comments?: unknown;
+}
+
+/**
+ * POST /analyses/:id/complete
+ * Finalize/complete a HazOps analysis session.
+ * Changes the analysis status from 'in_review' to 'approved'.
+ *
+ * User must have access to the project that owns the analysis.
+ * Only lead analysts, analysts with non-viewer roles, or administrators can complete analyses.
+ * The analysis must be in 'in_review' status.
+ *
+ * Path parameters:
+ * - id: string (required) - Analysis UUID
+ *
+ * Request body (optional):
+ * - comments: string - Approval/completion comments
+ *
+ * Returns:
+ * - 200: Completed analysis with details
+ * - 400: Validation error or analysis not in review status
+ * - 401: Not authenticated
+ * - 403: Not authorized to complete this analysis
+ * - 404: Analysis not found
+ * - 500: Internal server error
+ */
+export async function completeAnalysis(req: Request, res: Response): Promise<void> {
+  try {
+    const { id: analysisId } = req.params;
+    const body = req.body as CompleteAnalysisBody;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format
+    if (!UUID_REGEX.test(analysisId)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid analysis ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Analysis ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Validate comments field if provided
+    if (body.comments !== undefined && body.comments !== null) {
+      if (typeof body.comments !== 'string') {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Validation failed',
+            errors: [
+              {
+                field: 'comments',
+                message: 'Comments must be a string',
+                code: 'INVALID_TYPE',
+              },
+            ],
+          },
+        });
+        return;
+      }
+    }
+
+    // Find the analysis to check status and project access
+    const existingAnalysis = await findAnalysisById(analysisId);
+    if (!existingAnalysis) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Analysis not found',
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project that owns this analysis
+    const hasAccess = await userHasProjectAccess(userId, existingAnalysis.projectId);
+    if (!hasAccess) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this analysis',
+        },
+      });
+      return;
+    }
+
+    // Get user's role - viewers cannot complete analyses
+    const userRole = await getUserProjectRole(userId, existingAnalysis.projectId);
+    if (!userRole || userRole === 'viewer') {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to complete analyses in this project',
+        },
+      });
+      return;
+    }
+
+    // Only allow completing analyses that are in_review status
+    if (existingAnalysis.status !== 'in_review') {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_STATUS',
+          message: 'Only analyses in review status can be completed. Current status: ' + existingAnalysis.status,
+        },
+      });
+      return;
+    }
+
+    // Complete (approve) the analysis
+    const comments = typeof body.comments === 'string' ? body.comments : '';
+    const completedAnalysis = await approveAnalysisService(analysisId, userId, comments);
+
+    if (!completedAnalysis) {
+      // This shouldn't happen if status check passed, but handle it gracefully
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_STATUS',
+          message: 'Unable to complete analysis. Status may have changed.',
+        },
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: { analysis: completedAnalysis },
+    });
+  } catch (error) {
+    console.error('Complete analysis error:', error);
 
     res.status(500).json({
       success: false,

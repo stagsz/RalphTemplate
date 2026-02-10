@@ -12,7 +12,7 @@
 
 import { Router } from 'express';
 import { authenticate, requireAuth } from '../middleware/auth.middleware.js';
-import { getAnalysisById, updateAnalysis, createAnalysisEntry, listEntries } from '../controllers/analyses.controller.js';
+import { getAnalysisById, updateAnalysis, createAnalysisEntry, listEntries, completeAnalysis } from '../controllers/analyses.controller.js';
 
 const router = Router();
 
@@ -49,6 +49,22 @@ router.get('/:id', authenticate, requireAuth, getAnalysisById);
  * Only accessible if the user is a member of the project that owns the analysis.
  */
 router.put('/:id', authenticate, requireAuth, updateAnalysis);
+
+/**
+ * POST /analyses/:id/complete
+ * Finalize/complete a HazOps analysis session.
+ *
+ * Path parameters:
+ * - id: string (required) - Analysis UUID
+ *
+ * Request body (optional):
+ * - comments: string - Approval/completion comments
+ *
+ * The analysis must be in 'in_review' status to be completed.
+ * Only lead analysts, analysts with appropriate permissions, or administrators can complete analyses.
+ * Changes status from 'in_review' to 'approved'.
+ */
+router.post('/:id/complete', authenticate, requireAuth, completeAnalysis);
 
 /**
  * POST /analyses/:id/entries
