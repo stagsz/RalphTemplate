@@ -6,6 +6,7 @@
  * - POST /projects/:id/documents - Upload a P&ID document
  * - GET /documents/:id - Get a single document by ID
  * - DELETE /documents/:id - Delete a document
+ * - GET /documents/:id/download - Get a signed download URL for a document
  */
 
 import type { Request, Response } from 'express';
@@ -15,7 +16,7 @@ import {
   findProjectById as findProjectByIdService,
 } from '../services/project.service.js';
 import { createPIDDocument, listProjectDocuments, findPIDDocumentById, deletePIDDocument } from '../services/pid-document.service.js';
-import { uploadFile, generateStoragePath, deleteFile } from '../services/storage.service.js';
+import { uploadFile, generateStoragePath, deleteFile, getSignedDownloadUrl } from '../services/storage.service.js';
 import { getUploadedFileBuffer, getUploadMeta } from '../middleware/upload.middleware.js';
 import { PID_DOCUMENT_STATUSES } from '@hazop/types';
 import type { PIDDocumentStatus } from '@hazop/types';
@@ -636,6 +637,142 @@ export async function deleteDocumentById(req: Request, res: Response): Promise<v
     });
   } catch (error) {
     console.error('Delete document by ID error:', error);
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+/**
+ * GET /documents/:id/download
+ * Get a signed download URL for a P&ID document.
+ * User must have access to the project that owns the document.
+ *
+ * Path parameters:
+ * - id: string (required) - Document UUID
+ *
+ * Query parameters:
+ * - expiresIn: number (optional) - URL expiration time in seconds (default: 3600, max: 604800)
+ *
+ * Returns:
+ * - 200: Signed download URL
+ * - 400: Invalid document ID format or invalid expiresIn
+ * - 401: Not authenticated
+ * - 403: Not authorized to access this document
+ * - 404: Document not found
+ * - 500: Internal server error
+ */
+export async function downloadDocument(req: Request, res: Response): Promise<void> {
+  try {
+    const { id: documentId } = req.params;
+    const expiresInParam = req.query.expiresIn as string | undefined;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(documentId)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid document ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Document ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Validate expiresIn if provided
+    let expiresIn: number | undefined;
+    if (expiresInParam !== undefined) {
+      expiresIn = parseInt(expiresInParam, 10);
+      if (isNaN(expiresIn) || expiresIn < 1 || expiresIn > 604800) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid expiresIn parameter',
+            errors: [
+              {
+                field: 'expiresIn',
+                message: 'expiresIn must be a number between 1 and 604800 seconds',
+                code: 'INVALID_VALUE',
+              },
+            ],
+          },
+        });
+        return;
+      }
+    }
+
+    // Find the document
+    const document = await findPIDDocumentById(documentId);
+    if (!document) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Document not found',
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project that owns this document
+    const hasAccess = await userHasProjectAccess(userId, document.projectId);
+    if (!hasAccess) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this document',
+        },
+      });
+      return;
+    }
+
+    // Generate signed download URL
+    const downloadUrl = await getSignedDownloadUrl(
+      document.storagePath,
+      document.filename,
+      expiresIn
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        downloadUrl,
+        filename: document.filename,
+        mimeType: document.mimeType,
+        fileSize: document.fileSize,
+        expiresIn: expiresIn ?? 3600,
+      },
+    });
+  } catch (error) {
+    console.error('Download document error:', error);
 
     res.status(500).json({
       success: false,
