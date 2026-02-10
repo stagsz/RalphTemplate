@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 5 - Core HazOps Analysis Workflow
-**Progress**: Backend API endpoints complete, starting frontend analysis workspace
-**Last Completed**: HAZOP-15 - Create POST /analyses/:id/complete endpoint (finalize analysis)
-**Next Task**: HAZOP-16 - Create analysis session list page with status indicators
+**Progress**: Frontend analysis workspace in progress
+**Last Completed**: HAZOP-16 - Create analysis session list page with status indicators (de417ea)
+**Next Task**: HAZOP-17 - Create new analysis session wizard (select P&ID, name, methodology)
 
 ---
 
@@ -205,7 +205,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] HAZOP-15: Create POST /analyses/:id/complete endpoint (finalize analysis) (b4bca6f)
 
 ### Frontend Analysis Workspace
-- [ ] HAZOP-16: Create analysis session list page with status indicators
+- [x] HAZOP-16: Create analysis session list page with status indicators (de417ea)
 - [ ] HAZOP-17: Create new analysis session wizard (select P&ID, name, methodology)
 - [ ] HAZOP-18: Create analysis workspace layout (split-pane: P&ID viewer + analysis panel)
 - [ ] HAZOP-19: Create node selection component (click node on P&ID to select)
@@ -515,3 +515,4 @@ _No blockers currently._
 | HAZOP-13: Create PUT /entries/:id endpoint | 77ed7d0 | 2026-02-10 |
 | HAZOP-14: Create DELETE /entries/:id endpoint | b8da84e | 2026-02-10 |
 | HAZOP-15: Create POST /analyses/:id/complete endpoint | b4bca6f | 2026-02-10 |
+| HAZOP-16: Create analysis session list page with status indicators | de417ea | 2026-02-10 |
