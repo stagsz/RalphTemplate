@@ -758,3 +758,158 @@ export async function listDocumentNodes(
 
   return { nodes, total };
 }
+
+/**
+ * Find an analysis node by its UUID.
+ *
+ * @param nodeId - The node UUID (not the user-defined nodeId)
+ * @returns The node with creator information, or null if not found
+ */
+export async function findAnalysisNodeById(
+  nodeId: string
+): Promise<AnalysisNodeWithCreator | null> {
+  const pool = getPool();
+
+  const result = await pool.query<AnalysisNodeRowWithCreator>(
+    `SELECT
+       n.id,
+       n.document_id,
+       n.node_id,
+       n.description,
+       n.equipment_type,
+       n.x_coordinate,
+       n.y_coordinate,
+       n.created_by_id,
+       n.created_at,
+       n.updated_at,
+       u.name AS created_by_name,
+       u.email AS created_by_email
+     FROM hazop.analysis_nodes n
+     INNER JOIN hazop.users u ON n.created_by_id = u.id
+     WHERE n.id = $1`,
+    [nodeId]
+  );
+
+  if (!result.rows[0]) {
+    return null;
+  }
+
+  return rowToNodeWithCreator(result.rows[0]);
+}
+
+/**
+ * Payload for updating an existing analysis node.
+ * All fields are optional - only provided fields are updated.
+ */
+export interface UpdateAnalysisNodeData {
+  nodeId?: string;
+  description?: string;
+  equipmentType?: EquipmentType;
+  x?: number;
+  y?: number;
+}
+
+/**
+ * Update an analysis node in the database.
+ * Only provided fields are updated.
+ *
+ * @param id - The node UUID
+ * @param data - Fields to update
+ * @returns The updated node with creator information, or null if not found
+ * @throws Error with code '23505' if nodeId is duplicate within document
+ */
+export async function updateAnalysisNode(
+  id: string,
+  data: UpdateAnalysisNodeData
+): Promise<AnalysisNodeWithCreator | null> {
+  const pool = getPool();
+
+  // Build dynamic SET clause based on provided fields
+  const setClauses: string[] = ['updated_at = NOW()'];
+  const params: (string | number)[] = [id];
+  let paramIndex = 2;
+
+  if (data.nodeId !== undefined) {
+    setClauses.push(`node_id = $${paramIndex}`);
+    params.push(data.nodeId);
+    paramIndex++;
+  }
+
+  if (data.description !== undefined) {
+    setClauses.push(`description = $${paramIndex}`);
+    params.push(data.description);
+    paramIndex++;
+  }
+
+  if (data.equipmentType !== undefined) {
+    setClauses.push(`equipment_type = $${paramIndex}`);
+    params.push(data.equipmentType);
+    paramIndex++;
+  }
+
+  if (data.x !== undefined) {
+    setClauses.push(`x_coordinate = $${paramIndex}`);
+    params.push(data.x);
+    paramIndex++;
+  }
+
+  if (data.y !== undefined) {
+    setClauses.push(`y_coordinate = $${paramIndex}`);
+    params.push(data.y);
+    paramIndex++;
+  }
+
+  const result = await pool.query<AnalysisNodeRowWithCreator>(
+    `UPDATE hazop.analysis_nodes n
+     SET ${setClauses.join(', ')}
+     FROM hazop.users u
+     WHERE n.id = $1 AND u.id = n.created_by_id
+     RETURNING
+       n.id,
+       n.document_id,
+       n.node_id,
+       n.description,
+       n.equipment_type,
+       n.x_coordinate,
+       n.y_coordinate,
+       n.created_by_id,
+       n.created_at,
+       n.updated_at,
+       u.name AS created_by_name,
+       u.email AS created_by_email`,
+    params
+  );
+
+  if (!result.rows[0]) {
+    return null;
+  }
+
+  return rowToNodeWithCreator(result.rows[0]);
+}
+
+/**
+ * Check if a node ID already exists for a document, excluding a specific node.
+ * Used for validating updates that change the nodeId.
+ *
+ * @param documentId - The document ID
+ * @param nodeId - The node ID to check
+ * @param excludeId - The node UUID to exclude from the check
+ * @returns True if the nodeId already exists for another node in this document
+ */
+export async function nodeIdExistsForDocumentExcluding(
+  documentId: string,
+  nodeId: string,
+  excludeId: string
+): Promise<boolean> {
+  const pool = getPool();
+
+  const result = await pool.query<{ exists: boolean }>(
+    `SELECT EXISTS(
+       SELECT 1 FROM hazop.analysis_nodes
+       WHERE document_id = $1 AND node_id = $2 AND id != $3
+     ) AS exists`,
+    [documentId, nodeId, excludeId]
+  );
+
+  return result.rows[0]?.exists ?? false;
+}

@@ -8,6 +8,7 @@ import usersRoutes from './routes/users.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import projectsRoutes from './routes/projects.routes.js';
 import documentsRoutes from './routes/documents.routes.js';
+import nodesRoutes from './routes/nodes.routes.js';
 import { configurePassport, initializePassport } from './config/passport.config.js';
 
 // Load .env from project root (two levels up from this file)
@@ -61,6 +62,9 @@ app.use('/projects', projectsRoutes);
 
 // Document routes
 app.use('/documents', documentsRoutes);
+
+// Node routes
+app.use('/nodes', nodesRoutes);
 
 // Only start the server when this file is run directly (not imported for testing)
 const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);

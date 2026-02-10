@@ -15,7 +15,7 @@ import {
   getUserProjectRole,
   findProjectById as findProjectByIdService,
 } from '../services/project.service.js';
-import { createPIDDocument, listProjectDocuments, findPIDDocumentById, deletePIDDocument, createAnalysisNode, nodeIdExistsForDocument, listDocumentNodes } from '../services/pid-document.service.js';
+import { createPIDDocument, listProjectDocuments, findPIDDocumentById, deletePIDDocument, createAnalysisNode, nodeIdExistsForDocument, listDocumentNodes, findAnalysisNodeById, updateAnalysisNode, nodeIdExistsForDocumentExcluding } from '../services/pid-document.service.js';
 import { uploadFile, generateStoragePath, deleteFile, getSignedDownloadUrl } from '../services/storage.service.js';
 import { getUploadedFileBuffer, getUploadMeta } from '../middleware/upload.middleware.js';
 import { PID_DOCUMENT_STATUSES, EQUIPMENT_TYPES } from '@hazop/types';
@@ -1277,6 +1277,338 @@ export async function listNodes(req: Request, res: Response): Promise<void> {
     });
   } catch (error) {
     console.error('List nodes error:', error);
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+/**
+ * Request body for updating an analysis node.
+ */
+interface UpdateNodeBody {
+  nodeId?: string;
+  description?: string;
+  equipmentType?: string;
+  x?: number;
+  y?: number;
+}
+
+/**
+ * PUT /nodes/:id
+ * Update an existing analysis node.
+ * User must have appropriate role on the project that owns the document.
+ * Viewers cannot update nodes.
+ *
+ * Path parameters:
+ * - id: string (required) - Node UUID
+ *
+ * Body (all fields optional):
+ * - nodeId: string - User-defined node identifier (e.g., "P-101")
+ * - description: string - Description of the node/equipment
+ * - equipmentType: EquipmentType - Type of equipment
+ * - x: number - X coordinate as percentage (0-100)
+ * - y: number - Y coordinate as percentage (0-100)
+ *
+ * Returns:
+ * - 200: Updated node with creator info
+ * - 400: Validation error (invalid format, empty body)
+ * - 401: Not authenticated
+ * - 403: Not authorized to update this node
+ * - 404: Node not found
+ * - 409: Node ID already exists in this document
+ * - 500: Internal server error
+ */
+export async function updateNode(req: Request, res: Response): Promise<void> {
+  try {
+    const { id: nodeUuid } = req.params;
+    const body = req.body as UpdateNodeBody;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(nodeUuid)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid node ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Node ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Check if body has at least one field to update
+    const hasUpdates = body.nodeId !== undefined ||
+      body.description !== undefined ||
+      body.equipmentType !== undefined ||
+      body.x !== undefined ||
+      body.y !== undefined;
+
+    if (!hasUpdates) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'At least one field must be provided for update',
+          errors: [
+            {
+              field: 'body',
+              message: 'Request body must contain at least one field to update',
+              code: 'EMPTY_BODY',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Validate request body fields
+    const errors: FieldError[] = [];
+
+    // Validate nodeId if provided
+    if (body.nodeId !== undefined) {
+      if (typeof body.nodeId !== 'string' || body.nodeId.trim().length === 0) {
+        errors.push({
+          field: 'nodeId',
+          message: 'Node ID must be a non-empty string',
+          code: 'INVALID_VALUE',
+        });
+      } else if (body.nodeId.length > 50) {
+        errors.push({
+          field: 'nodeId',
+          message: 'Node ID must be 50 characters or less',
+          code: 'MAX_LENGTH',
+        });
+      }
+    }
+
+    // Validate description if provided
+    if (body.description !== undefined) {
+      if (typeof body.description !== 'string' || body.description.trim().length === 0) {
+        errors.push({
+          field: 'description',
+          message: 'Description must be a non-empty string',
+          code: 'INVALID_VALUE',
+        });
+      } else if (body.description.length > 500) {
+        errors.push({
+          field: 'description',
+          message: 'Description must be 500 characters or less',
+          code: 'MAX_LENGTH',
+        });
+      }
+    }
+
+    // Validate equipmentType if provided
+    if (body.equipmentType !== undefined) {
+      if (typeof body.equipmentType !== 'string') {
+        errors.push({
+          field: 'equipmentType',
+          message: 'Equipment type must be a string',
+          code: 'INVALID_TYPE',
+        });
+      } else if (!EQUIPMENT_TYPES.includes(body.equipmentType as EquipmentType)) {
+        errors.push({
+          field: 'equipmentType',
+          message: `Equipment type must be one of: ${EQUIPMENT_TYPES.join(', ')}`,
+          code: 'INVALID_VALUE',
+        });
+      }
+    }
+
+    // Validate x coordinate if provided
+    if (body.x !== undefined) {
+      if (typeof body.x !== 'number' || isNaN(body.x)) {
+        errors.push({
+          field: 'x',
+          message: 'X coordinate must be a number',
+          code: 'INVALID_TYPE',
+        });
+      } else if (body.x < 0 || body.x > 100) {
+        errors.push({
+          field: 'x',
+          message: 'X coordinate must be between 0 and 100',
+          code: 'OUT_OF_RANGE',
+        });
+      }
+    }
+
+    // Validate y coordinate if provided
+    if (body.y !== undefined) {
+      if (typeof body.y !== 'number' || isNaN(body.y)) {
+        errors.push({
+          field: 'y',
+          message: 'Y coordinate must be a number',
+          code: 'INVALID_TYPE',
+        });
+      } else if (body.y < 0 || body.y > 100) {
+        errors.push({
+          field: 'y',
+          message: 'Y coordinate must be between 0 and 100',
+          code: 'OUT_OF_RANGE',
+        });
+      }
+    }
+
+    if (errors.length > 0) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid request data',
+          errors,
+        },
+      });
+      return;
+    }
+
+    // Find the node
+    const existingNode = await findAnalysisNodeById(nodeUuid);
+    if (!existingNode) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Node not found',
+        },
+      });
+      return;
+    }
+
+    // Find the document to get the project ID
+    const document = await findPIDDocumentById(existingNode.documentId);
+    if (!document) {
+      // Document was deleted - node should have been cascade deleted too
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Node not found',
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project that owns this document
+    const hasAccess = await userHasProjectAccess(userId, document.projectId);
+    if (!hasAccess) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this node',
+        },
+      });
+      return;
+    }
+
+    // Get user's role - only owner, lead, and member can update nodes
+    // Viewers cannot update nodes
+    const userRole = await getUserProjectRole(userId, document.projectId);
+    if (!userRole || userRole === 'viewer') {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to update nodes in this project',
+        },
+      });
+      return;
+    }
+
+    // If nodeId is being updated, check for duplicates
+    if (body.nodeId !== undefined && body.nodeId.trim() !== existingNode.nodeId) {
+      const nodeIdExists = await nodeIdExistsForDocumentExcluding(
+        existingNode.documentId,
+        body.nodeId.trim(),
+        nodeUuid
+      );
+      if (nodeIdExists) {
+        res.status(409).json({
+          success: false,
+          error: {
+            code: 'CONFLICT',
+            message: `Node ID "${body.nodeId}" already exists in this document`,
+            errors: [
+              {
+                field: 'nodeId',
+                message: 'This node ID is already in use for this document',
+                code: 'DUPLICATE',
+              },
+            ],
+          },
+        });
+        return;
+      }
+    }
+
+    // Update the node
+    const updatedNode = await updateAnalysisNode(nodeUuid, {
+      nodeId: body.nodeId?.trim(),
+      description: body.description?.trim(),
+      equipmentType: body.equipmentType as EquipmentType | undefined,
+      x: body.x,
+      y: body.y,
+    });
+
+    if (!updatedNode) {
+      // Node was deleted between findById and update (race condition)
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Node not found',
+        },
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: { node: updatedNode },
+    });
+  } catch (error) {
+    console.error('Update node error:', error);
+
+    // Handle duplicate constraint violation (belt and suspenders)
+    if (error instanceof Error && 'code' in error) {
+      const dbError = error as { code: string };
+      if (dbError.code === '23505') {
+        res.status(409).json({
+          success: false,
+          error: {
+            code: 'CONFLICT',
+            message: 'A node with this ID already exists in this document',
+          },
+        });
+        return;
+      }
+    }
 
     res.status(500).json({
       success: false,
