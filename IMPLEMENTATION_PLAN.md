@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 4 - P&ID Document Management
-**Progress**: PID-11 complete
-**Last Completed**: PID-11 - Create node listing endpoint GET /documents/:id/nodes
-**Next Task**: PID-12 - Create node update endpoint PUT /nodes/:id
+**Progress**: PID-12 complete
+**Last Completed**: PID-12 - Create node update endpoint PUT /nodes/:id
+**Next Task**: PID-13 - Create node delete endpoint DELETE /nodes/:id
 
 ---
 
@@ -166,7 +166,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] PID-09: Create basic P&ID metadata extraction (dimensions, file info) (a55163a)
 - [x] PID-10: Create manual node creation endpoint POST /documents/:id/nodes (526790c)
 - [x] PID-11: Create node listing endpoint GET /documents/:id/nodes (164260b)
-- [ ] PID-12: Create node update endpoint PUT /nodes/:id
+- [x] PID-12: Create node update endpoint PUT /nodes/:id (28edd5e)
 - [ ] PID-13: Create node delete endpoint DELETE /nodes/:id
 
 ### Frontend UI
@@ -490,3 +490,4 @@ _No blockers currently._
 | PID-09: Create basic P&ID metadata extraction | a55163a | 2026-02-10 |
 | PID-10: Create manual node creation endpoint POST /documents/:id/nodes | 526790c | 2026-02-10 |
 | PID-11: Create node listing endpoint GET /documents/:id/nodes | 164260b | 2026-02-10 |
+| PID-12: Create node update endpoint PUT /nodes/:id | 28edd5e | 2026-02-10 |
