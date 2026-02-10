@@ -4,13 +4,16 @@
  * Provides endpoints for project management:
  * - GET /projects - List user's projects with search/filter/pagination
  * - POST /projects - Create a new project
+ * - POST /projects/:id/documents - Upload a P&ID document
  *
  * All routes require authentication.
  */
 
 import { Router } from 'express';
 import { authenticate, requireAuth } from '../middleware/auth.middleware.js';
-import { listProjects, createProject, getProjectById, updateProject, deleteProject, addMember, removeMember } from '../controllers/projects.controller.js';
+import { listProjects, createProject, getProjectById, updateProject, deleteProject, addMember, removeMember, listMembers } from '../controllers/projects.controller.js';
+import { uploadDocument } from '../controllers/documents.controller.js';
+import { uploadPID, handleMulterError, validatePIDUpload } from '../middleware/upload.middleware.js';
 
 const router = Router();
 
@@ -88,6 +91,18 @@ router.put('/:id', authenticate, requireAuth, updateProject);
 router.delete('/:id', authenticate, requireAuth, deleteProject);
 
 /**
+ * GET /projects/:id/members
+ * List all members of a project.
+ *
+ * Path parameters:
+ * - id: string (required) - Project UUID
+ *
+ * Only accessible to project members.
+ * Returns array of members with user info.
+ */
+router.get('/:id/members', authenticate, requireAuth, listMembers);
+
+/**
  * POST /projects/:id/members
  * Add a user as a member to a project.
  *
@@ -116,5 +131,31 @@ router.post('/:id/members', authenticate, requireAuth, addMember);
  * Returns success confirmation.
  */
 router.delete('/:id/members/:userId', authenticate, requireAuth, removeMember);
+
+/**
+ * POST /projects/:id/documents
+ * Upload a P&ID document to a project.
+ *
+ * Path parameters:
+ * - id: string (required) - Project UUID
+ *
+ * Body (multipart/form-data):
+ * - file: The P&ID document file (PDF, PNG, JPG, or DWG)
+ *
+ * Supported file types: PDF, PNG, JPG, DWG (max 50MB)
+ * Only project members (owner, lead, member) can upload documents.
+ * Viewers cannot upload documents.
+ *
+ * Returns the created document with uploader info.
+ */
+router.post(
+  '/:id/documents',
+  authenticate,
+  requireAuth,
+  uploadPID.single('file'),
+  handleMulterError,
+  validatePIDUpload,
+  uploadDocument
+);
 
 export default router;
