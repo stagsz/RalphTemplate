@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 4 - P&ID Document Management
-**Progress**: PID-08 complete
-**Last Completed**: PID-08 - Create GET /documents/:id/download endpoint (download original)
-**Next Task**: PID-09 - Create basic P&ID metadata extraction (dimensions, file info)
+**Progress**: PID-09 complete
+**Last Completed**: PID-09 - Create basic P&ID metadata extraction (dimensions, file info)
+**Next Task**: PID-10 - Create manual node creation endpoint POST /documents/:id/nodes
 
 ---
 
@@ -163,7 +163,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] PID-08: Create GET /documents/:id/download endpoint (download original) (d2c5105)
 
 ### P&ID Processing Service
-- [ ] PID-09: Create basic P&ID metadata extraction (dimensions, file info)
+- [x] PID-09: Create basic P&ID metadata extraction (dimensions, file info) (a55163a)
 - [ ] PID-10: Create manual node creation endpoint POST /documents/:id/nodes
 - [ ] PID-11: Create node listing endpoint GET /documents/:id/nodes
 - [ ] PID-12: Create node update endpoint PUT /nodes/:id
@@ -487,3 +487,4 @@ _No blockers currently._
 | PID-06: Create GET /documents/:id endpoint | eb9e7d9 | 2026-02-10 |
 | PID-07: Create DELETE /documents/:id endpoint | f8025b2 | 2026-02-10 |
 | PID-08: Create GET /documents/:id/download endpoint | d2c5105 | 2026-02-10 |
+| PID-09: Create basic P&ID metadata extraction | a55163a | 2026-02-10 |
