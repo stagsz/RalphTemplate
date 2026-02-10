@@ -4,10 +4,10 @@
 
 ## Current Status
 
-**Phase**: 3 - Project Management
-**Progress**: PROJ-14 complete
-**Last Completed**: PROJ-14 - Add API tests for project CRUD endpoints
-**Next Task**: PROJ-15 - Add E2E tests for project creation workflow
+**Phase**: 3 - Project Management (COMPLETE)
+**Progress**: PROJ-15 complete (Phase 3 finished)
+**Last Completed**: PROJ-15 - Add E2E tests for project creation workflow
+**Next Task**: PID-01 - Configure MinIO client for S3-compatible storage (Phase 4)
 
 ---
 
@@ -144,7 +144,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 
 ### Project Testing
 - [x] PROJ-14: Add API tests for project CRUD endpoints (ea3f410)
-- [ ] PROJ-15: Add E2E tests for project creation workflow
+- [x] PROJ-15: Add E2E tests for project creation workflow (7ba79cd)
 
 ---
 
@@ -478,3 +478,4 @@ _No blockers currently._
 | PROJ-12: Create team management panel | becc836 | 2026-02-09 |
 | PROJ-13: Create project settings form | 81d529d | 2026-02-09 |
 | PROJ-14: Add API tests for project CRUD endpoints | ea3f410 | 2026-02-10 |
+| PROJ-15: Add E2E tests for project creation workflow | 7ba79cd | 2026-02-10 |
