@@ -10,6 +10,7 @@ import projectsRoutes from './routes/projects.routes.js';
 import documentsRoutes from './routes/documents.routes.js';
 import nodesRoutes from './routes/nodes.routes.js';
 import guideWordsRoutes from './routes/guide-words.routes.js';
+import preparedCausesRoutes from './routes/prepared-causes.routes.js';
 import { configurePassport, initializePassport } from './config/passport.config.js';
 
 // Load .env from project root (two levels up from this file)
@@ -69,6 +70,9 @@ app.use('/nodes', nodesRoutes);
 
 // Guide Words routes
 app.use('/guide-words', guideWordsRoutes);
+
+// Prepared Causes routes
+app.use('/prepared-causes', preparedCausesRoutes);
 
 // Only start the server when this file is run directly (not imported for testing)
 const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);

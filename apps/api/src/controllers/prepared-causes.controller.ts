@@ -13,6 +13,7 @@
  */
 
 import type { Request, Response } from 'express';
+import type { EquipmentType, GuideWord } from '@hazop/types';
 import {
   getAllPreparedCauses,
   getPreparedCausesFiltered,
@@ -84,8 +85,8 @@ export function listPreparedCauses(req: Request, res: Response): void {
   }
 
   const result = getPreparedCausesFiltered({
-    equipmentType: equipmentType as string | undefined,
-    guideWord: guideWord as string | undefined,
+    equipmentType: equipmentType as EquipmentType | undefined,
+    guideWord: guideWord as GuideWord | undefined,
     commonOnly: commonOnly === 'true',
     search: search as string | undefined,
   });
@@ -254,8 +255,8 @@ export function getPreparedCausesByContext(req: Request, res: Response): void {
   }
 
   const result = getPreparedCausesForContext(
-    equipmentType as string,
-    guideWord as string
+    equipmentType as EquipmentType,
+    guideWord as GuideWord
   );
 
   res.status(200).json({
