@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 4 - P&ID Document Management
-**Progress**: PID-13 complete
-**Last Completed**: PID-13 - Create node delete endpoint DELETE /nodes/:id
-**Next Task**: PID-14 - Create P&ID upload component with drag-and-drop
+**Progress**: PID-14 complete
+**Last Completed**: PID-14 - Create P&ID upload component with drag-and-drop
+**Next Task**: PID-15 - Create document list view with thumbnails
 
 ---
 
@@ -170,7 +170,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] PID-13: Create node delete endpoint DELETE /nodes/:id (2244ab1)
 
 ### Frontend UI
-- [ ] PID-14: Create P&ID upload component with drag-and-drop
+- [x] PID-14: Create P&ID upload component with drag-and-drop (d12702e)
 - [ ] PID-15: Create document list view with thumbnails
 - [ ] PID-16: Create P&ID viewer component (zoom, pan functionality)
 - [ ] PID-17: Create node overlay component (clickable markers on P&ID)
@@ -492,3 +492,4 @@ _No blockers currently._
 | PID-11: Create node listing endpoint GET /documents/:id/nodes | 164260b | 2026-02-10 |
 | PID-12: Create node update endpoint PUT /nodes/:id | 28edd5e | 2026-02-10 |
 | PID-13: Create node delete endpoint DELETE /nodes/:id | 2244ab1 | 2026-02-10 |
+| PID-14: Create P&ID upload component with drag-and-drop | d12702e | 2026-02-10 |
