@@ -3,13 +3,14 @@
  *
  * Provides endpoints for HazOps analysis session operations:
  * - GET /analyses/:id - Get analysis session details with progress metrics
+ * - PUT /analyses/:id - Update analysis session metadata
  *
  * All routes require authentication.
  */
 
 import { Router } from 'express';
 import { authenticate, requireAuth } from '../middleware/auth.middleware.js';
-import { getAnalysisById } from '../controllers/analyses.controller.js';
+import { getAnalysisById, updateAnalysis } from '../controllers/analyses.controller.js';
 
 const router = Router();
 
@@ -29,5 +30,22 @@ const router = Router();
  * Only accessible if the user is a member of the project that owns the analysis.
  */
 router.get('/:id', authenticate, requireAuth, getAnalysisById);
+
+/**
+ * PUT /analyses/:id
+ * Update a HazOps analysis session metadata.
+ *
+ * Path parameters:
+ * - id: string (required) - Analysis UUID
+ *
+ * Request body (all fields optional):
+ * - name: string - Analysis session name (max 255 chars)
+ * - description: string | null - Analysis description (null to clear)
+ * - leadAnalystId: string - Lead analyst UUID
+ *
+ * Only draft analyses can be updated.
+ * Only accessible if the user is a member of the project that owns the analysis.
+ */
+router.put('/:id', authenticate, requireAuth, updateAnalysis);
 
 export default router;

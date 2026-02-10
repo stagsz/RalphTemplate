@@ -13,6 +13,8 @@ import {
   documentBelongsToProject,
   listProjectAnalyses,
   findAnalysisByIdWithProgress,
+  updateAnalysis as updateAnalysisService,
+  findAnalysisById,
 } from '../services/hazop-analysis.service.js';
 import { userHasProjectAccess, findProjectById } from '../services/project.service.js';
 import { ANALYSIS_STATUSES } from '@hazop/types';
@@ -32,6 +34,15 @@ interface FieldError {
  */
 interface CreateAnalysisBody {
   documentId?: unknown;
+  name?: unknown;
+  description?: unknown;
+  leadAnalystId?: unknown;
+}
+
+/**
+ * Request body for updating an analysis.
+ */
+interface UpdateAnalysisBody {
   name?: unknown;
   description?: unknown;
   leadAnalystId?: unknown;
@@ -98,6 +109,74 @@ function validateCreateAnalysisRequest(body: CreateAnalysisBody): FieldError[] {
   }
 
   // Validate description (optional, but if provided must be string)
+  if (body.description !== undefined && body.description !== null) {
+    if (typeof body.description !== 'string') {
+      errors.push({
+        field: 'description',
+        message: 'Description must be a string',
+        code: 'INVALID_TYPE',
+      });
+    }
+  }
+
+  // Validate leadAnalystId (optional, but if provided must be valid UUID)
+  if (body.leadAnalystId !== undefined && body.leadAnalystId !== null) {
+    if (typeof body.leadAnalystId !== 'string') {
+      errors.push({
+        field: 'leadAnalystId',
+        message: 'Lead analyst ID must be a string',
+        code: 'INVALID_TYPE',
+      });
+    } else if (!UUID_REGEX.test(body.leadAnalystId)) {
+      errors.push({
+        field: 'leadAnalystId',
+        message: 'Lead analyst ID must be a valid UUID',
+        code: 'INVALID_FORMAT',
+      });
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Validate update analysis request body.
+ * Returns an array of field errors if validation fails.
+ * All fields are optional - only validates fields that are provided.
+ */
+function validateUpdateAnalysisRequest(body: UpdateAnalysisBody): FieldError[] {
+  const errors: FieldError[] = [];
+
+  // Validate name (optional, but if provided: non-empty string, max 255 chars)
+  if (body.name !== undefined) {
+    if (body.name === null) {
+      errors.push({
+        field: 'name',
+        message: 'Name cannot be null',
+        code: 'INVALID_VALUE',
+      });
+    } else if (typeof body.name !== 'string') {
+      errors.push({
+        field: 'name',
+        message: 'Name must be a string',
+        code: 'INVALID_TYPE',
+      });
+    } else if (body.name.trim().length === 0) {
+      errors.push({
+        field: 'name',
+        message: 'Name cannot be empty',
+        code: 'EMPTY',
+      });
+    } else if (body.name.length > 255) {
+      errors.push({
+        field: 'name',
+        message: 'Name must be 255 characters or less',
+        code: 'MAX_LENGTH',
+      });
+    }
+  }
+
+  // Validate description (optional, can be null to clear, but if provided must be string)
   if (body.description !== undefined && body.description !== null) {
     if (typeof body.description !== 'string') {
       errors.push({
@@ -628,6 +707,192 @@ export async function getAnalysisById(req: Request, res: Response): Promise<void
     });
   } catch (error) {
     console.error('Get analysis by ID error:', error);
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+// ============================================================================
+// Update Analysis
+// ============================================================================
+
+/**
+ * PUT /analyses/:id
+ * Update a HazOps analysis session metadata.
+ * User must have access to the project that owns the analysis.
+ * Only draft analyses can have their metadata updated.
+ *
+ * Path parameters:
+ * - id: string (required) - Analysis UUID
+ *
+ * Request body (all fields optional):
+ * - name: string - Analysis session name (max 255 chars)
+ * - description: string | null - Analysis description (null to clear)
+ * - leadAnalystId: string - Lead analyst UUID
+ *
+ * Returns:
+ * - 200: Updated analysis with details
+ * - 400: Validation error or analysis not in draft status
+ * - 401: Not authenticated
+ * - 403: Not authorized to access this analysis
+ * - 404: Analysis not found
+ * - 500: Internal server error
+ */
+export async function updateAnalysis(req: Request, res: Response): Promise<void> {
+  try {
+    const { id: analysisId } = req.params;
+    const body = req.body as UpdateAnalysisBody;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format
+    if (!UUID_REGEX.test(analysisId)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid analysis ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Analysis ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Validate request body
+    const validationErrors = validateUpdateAnalysisRequest(body);
+    if (validationErrors.length > 0) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Validation failed',
+          errors: validationErrors,
+        },
+      });
+      return;
+    }
+
+    // Find the analysis to check status and project access
+    const existingAnalysis = await findAnalysisById(analysisId);
+    if (!existingAnalysis) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Analysis not found',
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project that owns this analysis
+    const hasAccess = await userHasProjectAccess(userId, existingAnalysis.projectId);
+    if (!hasAccess) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this analysis',
+        },
+      });
+      return;
+    }
+
+    // Only allow updates to draft analyses
+    if (existingAnalysis.status !== 'draft') {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_STATUS',
+          message: 'Only draft analyses can be updated. Current status: ' + existingAnalysis.status,
+        },
+      });
+      return;
+    }
+
+    // Build update data from validated fields
+    const updateData: {
+      name?: string;
+      description?: string | null;
+      leadAnalystId?: string;
+    } = {};
+
+    if (body.name !== undefined && typeof body.name === 'string') {
+      updateData.name = body.name.trim();
+    }
+
+    if (body.description !== undefined) {
+      updateData.description = typeof body.description === 'string' ? body.description : null;
+    }
+
+    if (body.leadAnalystId !== undefined && typeof body.leadAnalystId === 'string') {
+      updateData.leadAnalystId = body.leadAnalystId;
+    }
+
+    // Update the analysis
+    const updatedAnalysis = await updateAnalysisService(analysisId, updateData);
+    if (!updatedAnalysis) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Analysis not found',
+        },
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: { analysis: updatedAnalysis },
+    });
+  } catch (error) {
+    console.error('Update analysis error:', error);
+
+    // Handle foreign key constraint violation (e.g., lead analyst doesn't exist)
+    if (error instanceof Error && 'code' in error) {
+      const dbError = error as { code: string };
+      if (dbError.code === '23503') {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid reference: lead analyst does not exist',
+            errors: [
+              {
+                field: 'leadAnalystId',
+                message: 'Lead analyst does not exist',
+                code: 'INVALID_REFERENCE',
+              },
+            ],
+          },
+        });
+        return;
+      }
+    }
 
     res.status(500).json({
       success: false,
