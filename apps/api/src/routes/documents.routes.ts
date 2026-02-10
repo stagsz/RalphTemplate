@@ -5,6 +5,7 @@
  * - GET /documents/:id - Get a document by ID
  * - GET /documents/:id/download - Get a signed download URL for a document
  * - DELETE /documents/:id - Delete a document
+ * - GET /documents/:id/nodes - List analysis nodes for a document
  * - POST /documents/:id/nodes - Create a new analysis node on a document
  *
  * All routes require authentication.
@@ -12,7 +13,7 @@
 
 import { Router } from 'express';
 import { authenticate, requireAuth } from '../middleware/auth.middleware.js';
-import { getDocumentById, deleteDocumentById, downloadDocument, createNode } from '../controllers/documents.controller.js';
+import { getDocumentById, deleteDocumentById, downloadDocument, createNode, listNodes } from '../controllers/documents.controller.js';
 
 const router = Router();
 
@@ -55,6 +56,26 @@ router.get('/:id/download', authenticate, requireAuth, downloadDocument);
  * Viewers cannot delete documents.
  */
 router.delete('/:id', authenticate, requireAuth, deleteDocumentById);
+
+/**
+ * GET /documents/:id/nodes
+ * List all analysis nodes for a P&ID document.
+ *
+ * Path parameters:
+ * - id: string (required) - Document UUID
+ *
+ * Query parameters:
+ * - page: number (1-based, default 1)
+ * - limit: number (default 50, max 100)
+ * - sortBy: 'created_at' | 'node_id' | 'equipment_type' (default 'node_id')
+ * - sortOrder: 'asc' | 'desc' (default 'asc')
+ * - search: string (searches node_id and description)
+ * - equipmentType: EquipmentType (filter by equipment type)
+ *
+ * Returns paginated list of nodes with creator info.
+ * Only accessible if the user is a member of the project that owns the document.
+ */
+router.get('/:id/nodes', authenticate, requireAuth, listNodes);
 
 /**
  * POST /documents/:id/nodes

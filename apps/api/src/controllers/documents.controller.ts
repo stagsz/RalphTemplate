@@ -15,7 +15,7 @@ import {
   getUserProjectRole,
   findProjectById as findProjectByIdService,
 } from '../services/project.service.js';
-import { createPIDDocument, listProjectDocuments, findPIDDocumentById, deletePIDDocument, createAnalysisNode, nodeIdExistsForDocument } from '../services/pid-document.service.js';
+import { createPIDDocument, listProjectDocuments, findPIDDocumentById, deletePIDDocument, createAnalysisNode, nodeIdExistsForDocument, listDocumentNodes } from '../services/pid-document.service.js';
 import { uploadFile, generateStoragePath, deleteFile, getSignedDownloadUrl } from '../services/storage.service.js';
 import { getUploadedFileBuffer, getUploadMeta } from '../middleware/upload.middleware.js';
 import { PID_DOCUMENT_STATUSES, EQUIPMENT_TYPES } from '@hazop/types';
@@ -1052,6 +1052,231 @@ export async function createNode(req: Request, res: Response): Promise<void> {
         return;
       }
     }
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+/**
+ * Query parameters for listing nodes.
+ */
+interface ListNodesQuery {
+  page?: string;
+  limit?: string;
+  sortBy?: string;
+  sortOrder?: string;
+  search?: string;
+  equipmentType?: string;
+}
+
+/**
+ * Valid sort fields for nodes.
+ */
+const validNodeSortFields = ['created_at', 'node_id', 'equipment_type'];
+
+/**
+ * Validate list nodes query parameters.
+ * Returns an array of field errors if validation fails.
+ */
+function validateListNodesQuery(query: ListNodesQuery): FieldError[] {
+  const errors: FieldError[] = [];
+
+  // Validate page
+  if (query.page !== undefined) {
+    const page = parseInt(query.page, 10);
+    if (isNaN(page) || page < 1) {
+      errors.push({
+        field: 'page',
+        message: 'Page must be a positive integer',
+        code: 'INVALID_VALUE',
+      });
+    }
+  }
+
+  // Validate limit
+  if (query.limit !== undefined) {
+    const limit = parseInt(query.limit, 10);
+    if (isNaN(limit) || limit < 1 || limit > 100) {
+      errors.push({
+        field: 'limit',
+        message: 'Limit must be between 1 and 100',
+        code: 'INVALID_VALUE',
+      });
+    }
+  }
+
+  // Validate sortBy
+  if (query.sortBy !== undefined && !validNodeSortFields.includes(query.sortBy)) {
+    errors.push({
+      field: 'sortBy',
+      message: `sortBy must be one of: ${validNodeSortFields.join(', ')}`,
+      code: 'INVALID_VALUE',
+    });
+  }
+
+  // Validate sortOrder
+  if (query.sortOrder !== undefined && !['asc', 'desc'].includes(query.sortOrder)) {
+    errors.push({
+      field: 'sortOrder',
+      message: 'sortOrder must be "asc" or "desc"',
+      code: 'INVALID_VALUE',
+    });
+  }
+
+  // Validate equipment type filter
+  if (query.equipmentType !== undefined && !EQUIPMENT_TYPES.includes(query.equipmentType as EquipmentType)) {
+    errors.push({
+      field: 'equipmentType',
+      message: `equipmentType must be one of: ${EQUIPMENT_TYPES.join(', ')}`,
+      code: 'INVALID_VALUE',
+    });
+  }
+
+  return errors;
+}
+
+/**
+ * GET /documents/:id/nodes
+ * List all analysis nodes for a P&ID document with pagination and filtering.
+ * All project members can view nodes.
+ *
+ * Path parameters:
+ * - id: string (required) - Document UUID
+ *
+ * Query parameters:
+ * - page: number (1-based, default 1)
+ * - limit: number (default 50, max 100)
+ * - sortBy: 'created_at' | 'node_id' | 'equipment_type' (default 'node_id')
+ * - sortOrder: 'asc' | 'desc' (default 'asc')
+ * - search: string (searches node_id and description)
+ * - equipmentType: EquipmentType (filter by equipment type)
+ *
+ * Returns:
+ * - 200: Paginated list of nodes with creator info
+ * - 400: Validation error
+ * - 401: Not authenticated
+ * - 403: Not authorized to access this document
+ * - 404: Document not found
+ * - 500: Internal server error
+ */
+export async function listNodes(req: Request, res: Response): Promise<void> {
+  try {
+    const { id: documentId } = req.params;
+    const query = req.query as ListNodesQuery;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(documentId)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid document ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Document ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Validate query parameters
+    const validationErrors = validateListNodesQuery(query);
+    if (validationErrors.length > 0) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid query parameters',
+          errors: validationErrors,
+        },
+      });
+      return;
+    }
+
+    // Find the document
+    const document = await findPIDDocumentById(documentId);
+    if (!document) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Document not found',
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project that owns this document
+    const hasAccess = await userHasProjectAccess(userId, document.projectId);
+    if (!hasAccess) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this document',
+        },
+      });
+      return;
+    }
+
+    // Parse query parameters
+    const page = query.page ? parseInt(query.page, 10) : undefined;
+    const limit = query.limit ? parseInt(query.limit, 10) : undefined;
+    const sortBy = query.sortBy as 'created_at' | 'node_id' | 'equipment_type' | undefined;
+    const sortOrder = query.sortOrder as 'asc' | 'desc' | undefined;
+    const search = query.search;
+    const equipmentType = query.equipmentType as EquipmentType | undefined;
+
+    // Fetch nodes
+    const result = await listDocumentNodes(
+      documentId,
+      { equipmentType, search },
+      { page, limit, sortBy, sortOrder }
+    );
+
+    // Calculate pagination metadata
+    const currentPage = page ?? 1;
+    const currentLimit = limit ?? 50;
+    const totalPages = Math.ceil(result.total / currentLimit);
+
+    res.status(200).json({
+      success: true,
+      data: result.nodes,
+      meta: {
+        page: currentPage,
+        limit: currentLimit,
+        total: result.total,
+        totalPages,
+        hasNextPage: currentPage < totalPages,
+        hasPrevPage: currentPage > 1,
+      },
+    });
+  } catch (error) {
+    console.error('List nodes error:', error);
 
     res.status(500).json({
       success: false,

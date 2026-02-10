@@ -643,3 +643,118 @@ export async function nodeIdExistsForDocument(
 
   return result.rows[0]?.exists ?? false;
 }
+
+/**
+ * Filters for listing document nodes.
+ */
+export interface ListNodesFilters {
+  equipmentType?: EquipmentType;
+  search?: string;
+}
+
+/**
+ * Pagination options for listing document nodes.
+ */
+export interface ListNodesPagination {
+  page?: number;
+  limit?: number;
+  sortBy?: 'created_at' | 'node_id' | 'equipment_type';
+  sortOrder?: 'asc' | 'desc';
+}
+
+/**
+ * Result of listing document nodes.
+ */
+export interface ListNodesResult {
+  nodes: AnalysisNodeWithCreator[];
+  total: number;
+}
+
+/**
+ * List all analysis nodes for a document with pagination and filtering.
+ *
+ * @param documentId - The document ID
+ * @param filters - Optional filters (equipmentType, search)
+ * @param pagination - Optional pagination options
+ * @returns Paginated list of nodes with creator info
+ */
+export async function listDocumentNodes(
+  documentId: string,
+  filters: ListNodesFilters = {},
+  pagination: ListNodesPagination = {}
+): Promise<ListNodesResult> {
+  const pool = getPool();
+
+  // Set defaults for pagination
+  const page = pagination.page ?? 1;
+  const limit = pagination.limit ?? 50;
+  const sortBy = pagination.sortBy ?? 'node_id';
+  const sortOrder = pagination.sortOrder ?? 'asc';
+  const offset = (page - 1) * limit;
+
+  // Build WHERE clause conditions
+  const conditions: string[] = ['n.document_id = $1'];
+  const params: (string | number)[] = [documentId];
+  let paramIndex = 2;
+
+  // Filter by equipment type
+  if (filters.equipmentType) {
+    conditions.push(`n.equipment_type = $${paramIndex}`);
+    params.push(filters.equipmentType);
+    paramIndex++;
+  }
+
+  // Filter by search (node_id or description)
+  if (filters.search) {
+    conditions.push(`(n.node_id ILIKE $${paramIndex} OR n.description ILIKE $${paramIndex})`);
+    params.push(`%${filters.search}%`);
+    paramIndex++;
+  }
+
+  const whereClause = conditions.join(' AND ');
+
+  // Validate and map sort column
+  const sortColumnMap: Record<string, string> = {
+    created_at: 'n.created_at',
+    node_id: 'n.node_id',
+    equipment_type: 'n.equipment_type',
+  };
+  const sortColumn = sortColumnMap[sortBy] || 'n.node_id';
+  const order = sortOrder === 'asc' ? 'ASC' : 'DESC';
+
+  // Count total matching nodes
+  const countResult = await pool.query<{ count: string }>(
+    `SELECT COUNT(*) as count
+     FROM hazop.analysis_nodes n
+     WHERE ${whereClause}`,
+    params
+  );
+  const total = parseInt(countResult.rows[0]?.count ?? '0', 10);
+
+  // Fetch paginated nodes with creator info
+  const result = await pool.query<AnalysisNodeRowWithCreator>(
+    `SELECT
+       n.id,
+       n.document_id,
+       n.node_id,
+       n.description,
+       n.equipment_type,
+       n.x_coordinate,
+       n.y_coordinate,
+       n.created_by_id,
+       n.created_at,
+       n.updated_at,
+       u.name AS created_by_name,
+       u.email AS created_by_email
+     FROM hazop.analysis_nodes n
+     INNER JOIN hazop.users u ON n.created_by_id = u.id
+     WHERE ${whereClause}
+     ORDER BY ${sortColumn} ${order}
+     LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+    [...params, limit, offset]
+  );
+
+  const nodes = result.rows.map(rowToNodeWithCreator);
+
+  return { nodes, total };
+}
