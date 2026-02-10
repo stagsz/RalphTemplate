@@ -4,6 +4,7 @@
  * Handles:
  * - GET /projects/:id/documents - List P&ID documents for a project
  * - POST /projects/:id/documents - Upload a P&ID document
+ * - GET /documents/:id - Get a single document by ID
  */
 
 import type { Request, Response } from 'express';
@@ -12,7 +13,7 @@ import {
   getUserProjectRole,
   findProjectById as findProjectByIdService,
 } from '../services/project.service.js';
-import { createPIDDocument, listProjectDocuments } from '../services/pid-document.service.js';
+import { createPIDDocument, listProjectDocuments, findPIDDocumentById } from '../services/pid-document.service.js';
 import { uploadFile, generateStoragePath } from '../services/storage.service.js';
 import { getUploadedFileBuffer, getUploadMeta } from '../middleware/upload.middleware.js';
 import { PID_DOCUMENT_STATUSES } from '@hazop/types';
@@ -407,6 +408,102 @@ export async function uploadDocument(req: Request, res: Response): Promise<void>
       error: {
         code: 'INTERNAL_ERROR',
         message: 'An unexpected error occurred while uploading the document',
+      },
+    });
+  }
+}
+
+/**
+ * GET /documents/:id
+ * Get a P&ID document by ID.
+ * User must have access to the project that owns the document.
+ *
+ * Path parameters:
+ * - id: string (required) - Document UUID
+ *
+ * Returns:
+ * - 200: Document with uploader info
+ * - 400: Invalid document ID format
+ * - 401: Not authenticated
+ * - 403: Not authorized to access this document
+ * - 404: Document not found
+ * - 500: Internal server error
+ */
+export async function getDocumentById(req: Request, res: Response): Promise<void> {
+  try {
+    const { id: documentId } = req.params;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(documentId)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid document ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Document ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Find the document
+    const document = await findPIDDocumentById(documentId);
+    if (!document) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Document not found',
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project that owns this document
+    const hasAccess = await userHasProjectAccess(userId, document.projectId);
+    if (!hasAccess) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this document',
+        },
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: { document },
+    });
+  } catch (error) {
+    console.error('Get document by ID error:', error);
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
       },
     });
   }
