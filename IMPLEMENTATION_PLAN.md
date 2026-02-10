@@ -4,10 +4,10 @@
 
 ## Current Status
 
-**Phase**: 4 - P&ID Document Management
-**Progress**: PID-20 complete
-**Last Completed**: PID-20 - Add API tests for document upload/retrieval
-**Next Task**: PID-21 - Add E2E tests for P&ID upload workflow
+**Phase**: 5 - Core HazOps Analysis Workflow
+**Progress**: Phase 4 complete, starting Phase 5
+**Last Completed**: PID-21 - Add E2E tests for P&ID upload workflow
+**Next Task**: HAZOP-01 - Create HazOps analysis session service
 
 ---
 
@@ -179,7 +179,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 
 ### P&ID Testing
 - [x] PID-20: Add API tests for document upload/retrieval (e4489ea)
-- [ ] PID-21: Add E2E tests for P&ID upload workflow
+- [x] PID-21: Add E2E tests for P&ID upload workflow (beac65c)
 
 ---
 
@@ -498,3 +498,5 @@ _No blockers currently._
 | PID-17: Create node overlay component (clickable markers on P&ID) | ad9d78c | 2026-02-10 |
 | PID-18: Create node creation form (node ID, description, equipment type) | 4bab101 | 2026-02-10 |
 | PID-19: Create node editing modal | b3f9a29 | 2026-02-10 |
+| PID-20: Add API tests for document upload/retrieval | e4489ea | 2026-02-10 |
+| PID-21: Add E2E tests for P&ID upload workflow | beac65c | 2026-02-10 |
