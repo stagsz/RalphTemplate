@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 3 - Project Management
-**Progress**: PROJ-13 complete
-**Last Completed**: PROJ-13 - Create project settings form
-**Next Task**: PROJ-14 - Add API tests for project CRUD endpoints
+**Progress**: PROJ-14 complete
+**Last Completed**: PROJ-14 - Add API tests for project CRUD endpoints
+**Next Task**: PROJ-15 - Add E2E tests for project creation workflow
 
 ---
 
@@ -143,7 +143,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] PROJ-13: Create project settings form (name, description, status) (81d529d)
 
 ### Project Testing
-- [ ] PROJ-14: Add API tests for project CRUD endpoints
+- [x] PROJ-14: Add API tests for project CRUD endpoints (ea3f410)
 - [ ] PROJ-15: Add E2E tests for project creation workflow
 
 ---
@@ -477,3 +477,4 @@ _No blockers currently._
 | PROJ-11: Create project detail page with tabs | 766041b | 2026-02-09 |
 | PROJ-12: Create team management panel | becc836 | 2026-02-09 |
 | PROJ-13: Create project settings form | 81d529d | 2026-02-09 |
+| PROJ-14: Add API tests for project CRUD endpoints | ea3f410 | 2026-02-10 |
