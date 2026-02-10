@@ -6,8 +6,8 @@
 
 **Phase**: 5 - Core HazOps Analysis Workflow
 **Progress**: Backend API endpoints in progress
-**Last Completed**: HAZOP-10 - Create PUT /analyses/:id endpoint (update analysis metadata)
-**Next Task**: HAZOP-11 - Create POST /analyses/:id/entries endpoint (create analysis entry for node/guideword)
+**Last Completed**: HAZOP-11 - Create POST /analyses/:id/entries endpoint (create analysis entry for node/guideword)
+**Next Task**: HAZOP-12 - Create GET /analyses/:id/entries endpoint (list all entries)
 
 ---
 
@@ -198,7 +198,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] HAZOP-08: Create GET /projects/:id/analyses endpoint (list analysis sessions) (ba3a8fe)
 - [x] HAZOP-09: Create GET /analyses/:id endpoint (analysis session details) (b93623b)
 - [x] HAZOP-10: Create PUT /analyses/:id endpoint (update analysis metadata) (f9f6a50)
-- [ ] HAZOP-11: Create POST /analyses/:id/entries endpoint (create analysis entry for node/guideword)
+- [x] HAZOP-11: Create POST /analyses/:id/entries endpoint (create analysis entry for node/guideword) (88cdc58)
 - [ ] HAZOP-12: Create GET /analyses/:id/entries endpoint (list all entries)
 - [ ] HAZOP-13: Create PUT /entries/:id endpoint (update analysis entry)
 - [ ] HAZOP-14: Create DELETE /entries/:id endpoint (delete analysis entry)
@@ -510,3 +510,4 @@ _No blockers currently._
 | HAZOP-08: Create GET /projects/:id/analyses endpoint | ba3a8fe | 2026-02-10 |
 | HAZOP-09: Create GET /analyses/:id endpoint | b93623b | 2026-02-10 |
 | HAZOP-10: Create PUT /analyses/:id endpoint | f9f6a50 | 2026-02-10 |
+| HAZOP-11: Create POST /analyses/:id/entries endpoint | 88cdc58 | 2026-02-10 |
