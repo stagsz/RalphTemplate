@@ -14,6 +14,7 @@ import preparedCausesRoutes from './routes/prepared-causes.routes.js';
 import preparedConsequencesRoutes from './routes/prepared-consequences.routes.js';
 import preparedSafeguardsRoutes from './routes/prepared-safeguards.routes.js';
 import preparedRecommendationsRoutes from './routes/prepared-recommendations.routes.js';
+import analysesRoutes from './routes/analyses.routes.js';
 import { configurePassport, initializePassport } from './config/passport.config.js';
 
 // Load .env from project root (two levels up from this file)
@@ -85,6 +86,9 @@ app.use('/prepared-safeguards', preparedSafeguardsRoutes);
 
 // Prepared Recommendations routes
 app.use('/prepared-recommendations', preparedRecommendationsRoutes);
+
+// Analyses routes
+app.use('/analyses', analysesRoutes);
 
 // Only start the server when this file is run directly (not imported for testing)
 const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);

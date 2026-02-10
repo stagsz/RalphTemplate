@@ -4,6 +4,7 @@
  * Handles:
  * - POST /projects/:id/analyses - Create a new analysis session
  * - GET /projects/:id/analyses - List analysis sessions
+ * - GET /analyses/:id - Get analysis session details
  */
 
 import type { Request, Response } from 'express';
@@ -11,6 +12,7 @@ import {
   createAnalysis as createAnalysisService,
   documentBelongsToProject,
   listProjectAnalyses,
+  findAnalysisByIdWithProgress,
 } from '../services/hazop-analysis.service.js';
 import { userHasProjectAccess, findProjectById } from '../services/project.service.js';
 import { ANALYSIS_STATUSES } from '@hazop/types';
@@ -526,6 +528,106 @@ export async function listAnalyses(req: Request, res: Response): Promise<void> {
     });
   } catch (error) {
     console.error('List analyses error:', error);
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+// ============================================================================
+// Get Analysis By ID
+// ============================================================================
+
+/**
+ * GET /analyses/:id
+ * Get a HazOps analysis session by ID.
+ * User must have access to the project that owns the analysis.
+ * Returns the analysis with progress metrics (node counts, entry counts, risk distribution).
+ *
+ * Path parameters:
+ * - id: string (required) - Analysis UUID
+ *
+ * Returns:
+ * - 200: Analysis with progress metrics
+ * - 400: Invalid analysis ID format
+ * - 401: Not authenticated
+ * - 403: Not authorized to access this analysis
+ * - 404: Analysis not found
+ * - 500: Internal server error
+ */
+export async function getAnalysisById(req: Request, res: Response): Promise<void> {
+  try {
+    const { id: analysisId } = req.params;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format
+    if (!UUID_REGEX.test(analysisId)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid analysis ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Analysis ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Find the analysis with progress metrics
+    const analysis = await findAnalysisByIdWithProgress(analysisId);
+    if (!analysis) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Analysis not found',
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project that owns this analysis
+    const hasAccess = await userHasProjectAccess(userId, analysis.projectId);
+    if (!hasAccess) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this analysis',
+        },
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: { analysis },
+    });
+  } catch (error) {
+    console.error('Get analysis by ID error:', error);
 
     res.status(500).json({
       success: false,
