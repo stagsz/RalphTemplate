@@ -199,8 +199,6 @@ export async function listUserProjects(
   const sortBy = allowedSortFields.includes(pagination?.sortBy ?? '')
     ? pagination!.sortBy
     : 'created_at';
-  // Prefix with p. for the projects table
-  const sortColumn = `p.${sortBy}`;
   const sortOrder = pagination?.sortOrder === 'asc' ? 'ASC' : 'DESC';
 
   // Get total count using DISTINCT since a user might be both creator and member
@@ -213,35 +211,10 @@ export async function listUserProjects(
   );
   const total = parseInt(countResult.rows[0].count, 10);
 
-  // Get paginated projects with creator info and membership role
+  // Get all projects with creator info and membership role
   // Use LEFT JOIN to include projects where user is creator but not explicitly a member
   // Use COALESCE to get the membership role, checking both direct membership and owner status
-  const projectsResult = await pool.query<ProjectRowWithMembership>(
-    `SELECT DISTINCT ON (p.id)
-       p.id,
-       p.name,
-       p.description,
-       p.status,
-       p.created_by_id,
-       p.organization,
-       p.created_at,
-       p.updated_at,
-       u.name AS created_by_name,
-       u.email AS created_by_email,
-       CASE
-         WHEN p.created_by_id = $1 THEN COALESCE(pm_user.role, 'owner'::hazop.project_member_role)
-         ELSE pm_user.role
-       END AS member_role
-     FROM hazop.projects p
-     INNER JOIN hazop.users u ON p.created_by_id = u.id
-     LEFT JOIN hazop.project_members pm ON p.id = pm.project_id
-     LEFT JOIN hazop.project_members pm_user ON p.id = pm_user.project_id AND pm_user.user_id = $1
-     ${whereClause}
-     ORDER BY p.id, ${sortColumn} ${sortOrder}`,
-    values
-  );
-
-  // Re-sort since DISTINCT ON requires its own ORDER BY first
+  // DISTINCT ON requires ordering by the distinct column first, so we sort in application layer
   const sortedProjects = await pool.query<ProjectRowWithMembership>(
     `SELECT DISTINCT ON (p.id)
        p.id,
@@ -639,4 +612,91 @@ export async function getProjectCreatorId(projectId: string): Promise<string | n
     [projectId]
   );
   return result.rows[0]?.created_by_id ?? null;
+}
+
+/**
+ * List all members of a project including the creator (as owner).
+ *
+ * @param projectId - The ID of the project
+ * @returns Array of project members with user details
+ */
+export async function listProjectMembers(projectId: string): Promise<ProjectMemberWithUser[]> {
+  const pool = getPool();
+
+  // Get explicit project members
+  const membersResult = await pool.query<ProjectMemberRow>(
+    `SELECT
+       pm.id,
+       pm.project_id,
+       pm.user_id,
+       pm.role,
+       pm.joined_at,
+       u.name AS user_name,
+       u.email AS user_email
+     FROM hazop.project_members pm
+     INNER JOIN hazop.users u ON pm.user_id = u.id
+     WHERE pm.project_id = $1
+     ORDER BY pm.role, pm.joined_at`,
+    [projectId]
+  );
+
+  // Get the project creator
+  const creatorResult = await pool.query<{
+    id: string;
+    created_by_id: string;
+    created_at: Date;
+    user_name: string;
+    user_email: string;
+  }>(
+    `SELECT
+       p.id,
+       p.created_by_id,
+       p.created_at,
+       u.name AS user_name,
+       u.email AS user_email
+     FROM hazop.projects p
+     INNER JOIN hazop.users u ON p.created_by_id = u.id
+     WHERE p.id = $1`,
+    [projectId]
+  );
+
+  const members: ProjectMemberWithUser[] = [];
+
+  // Add the creator as owner if they exist and aren't already in the members list
+  if (creatorResult.rows[0]) {
+    const creator = creatorResult.rows[0];
+    const creatorInMembers = membersResult.rows.find(m => m.user_id === creator.created_by_id);
+
+    if (!creatorInMembers) {
+      // Creator is not explicitly in project_members, add them as owner
+      members.push({
+        id: `owner-${creator.created_by_id}`, // Synthetic ID for owner
+        projectId: projectId,
+        userId: creator.created_by_id,
+        role: 'owner',
+        joinedAt: creator.created_at,
+        userName: creator.user_name,
+        userEmail: creator.user_email,
+      });
+    }
+  }
+
+  // Add explicit members
+  members.push(...membersResult.rows.map(rowToProjectMemberWithUser));
+
+  // Sort: owner first, then by role (lead, member, viewer), then by joinedAt
+  const roleOrder: Record<ProjectMemberRole, number> = {
+    owner: 0,
+    lead: 1,
+    member: 2,
+    viewer: 3,
+  };
+
+  members.sort((a, b) => {
+    const roleComparison = roleOrder[a.role] - roleOrder[b.role];
+    if (roleComparison !== 0) return roleComparison;
+    return new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime();
+  });
+
+  return members;
 }
