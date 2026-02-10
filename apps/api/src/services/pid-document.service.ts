@@ -227,3 +227,125 @@ export async function documentBelongsToProject(
 
   return result.rows[0]?.exists ?? false;
 }
+
+/**
+ * Filters for listing project documents.
+ */
+export interface ListDocumentsFilters {
+  status?: PIDDocumentStatus;
+  search?: string;
+}
+
+/**
+ * Pagination options for listing project documents.
+ */
+export interface ListDocumentsPagination {
+  page?: number;
+  limit?: number;
+  sortBy?: 'created_at' | 'uploaded_at' | 'filename' | 'status' | 'file_size';
+  sortOrder?: 'asc' | 'desc';
+}
+
+/**
+ * Result of listing project documents.
+ */
+export interface ListDocumentsResult {
+  documents: PIDDocumentWithUploader[];
+  total: number;
+}
+
+/**
+ * List all P&ID documents for a project with pagination and filtering.
+ *
+ * @param projectId - The project ID
+ * @param filters - Optional filters (status, search)
+ * @param pagination - Optional pagination options
+ * @returns Paginated list of documents with uploader info
+ */
+export async function listProjectDocuments(
+  projectId: string,
+  filters: ListDocumentsFilters = {},
+  pagination: ListDocumentsPagination = {}
+): Promise<ListDocumentsResult> {
+  const pool = getPool();
+
+  // Set defaults for pagination
+  const page = pagination.page ?? 1;
+  const limit = pagination.limit ?? 20;
+  const sortBy = pagination.sortBy ?? 'uploaded_at';
+  const sortOrder = pagination.sortOrder ?? 'desc';
+  const offset = (page - 1) * limit;
+
+  // Build WHERE clause conditions
+  const conditions: string[] = ['d.project_id = $1'];
+  const params: (string | number)[] = [projectId];
+  let paramIndex = 2;
+
+  // Filter by status
+  if (filters.status) {
+    conditions.push(`d.status = $${paramIndex}`);
+    params.push(filters.status);
+    paramIndex++;
+  }
+
+  // Filter by search (filename)
+  if (filters.search) {
+    conditions.push(`d.filename ILIKE $${paramIndex}`);
+    params.push(`%${filters.search}%`);
+    paramIndex++;
+  }
+
+  const whereClause = conditions.join(' AND ');
+
+  // Validate and map sort column
+  const sortColumnMap: Record<string, string> = {
+    created_at: 'd.created_at',
+    uploaded_at: 'd.uploaded_at',
+    filename: 'd.filename',
+    status: 'd.status',
+    file_size: 'd.file_size',
+  };
+  const sortColumn = sortColumnMap[sortBy] || 'd.uploaded_at';
+  const order = sortOrder === 'asc' ? 'ASC' : 'DESC';
+
+  // Count total matching documents
+  const countResult = await pool.query<{ count: string }>(
+    `SELECT COUNT(*) as count
+     FROM hazop.pid_documents d
+     WHERE ${whereClause}`,
+    params
+  );
+  const total = parseInt(countResult.rows[0]?.count ?? '0', 10);
+
+  // Fetch paginated documents with uploader info
+  const result = await pool.query<PIDDocumentRowWithUploader>(
+    `SELECT
+       d.id,
+       d.project_id,
+       d.filename,
+       d.storage_path,
+       d.mime_type,
+       d.file_size,
+       d.status,
+       d.error_message,
+       d.width,
+       d.height,
+       d.uploaded_by_id,
+       d.uploaded_at,
+       d.processed_at,
+       d.created_at,
+       d.updated_at,
+       u.name AS uploaded_by_name,
+       u.email AS uploaded_by_email
+     FROM hazop.pid_documents d
+     INNER JOIN hazop.users u ON d.uploaded_by_id = u.id
+     WHERE ${whereClause}
+     ORDER BY ${sortColumn} ${order}
+     LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+    [...params, limit, offset]
+  );
+
+  const documents = result.rows.map(rowToDocumentWithUploader);
+
+  return { documents, total };
+}

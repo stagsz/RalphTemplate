@@ -2,6 +2,7 @@
  * Documents controller for handling P&ID document operations.
  *
  * Handles:
+ * - GET /projects/:id/documents - List P&ID documents for a project
  * - POST /projects/:id/documents - Upload a P&ID document
  */
 
@@ -11,9 +12,246 @@ import {
   getUserProjectRole,
   findProjectById as findProjectByIdService,
 } from '../services/project.service.js';
-import { createPIDDocument } from '../services/pid-document.service.js';
+import { createPIDDocument, listProjectDocuments } from '../services/pid-document.service.js';
 import { uploadFile, generateStoragePath } from '../services/storage.service.js';
 import { getUploadedFileBuffer, getUploadMeta } from '../middleware/upload.middleware.js';
+import { PID_DOCUMENT_STATUSES } from '@hazop/types';
+import type { PIDDocumentStatus } from '@hazop/types';
+
+/**
+ * Validation error for a specific field.
+ */
+interface FieldError {
+  field: string;
+  message: string;
+  code?: string;
+}
+
+/**
+ * Query parameters for listing documents.
+ */
+interface ListDocumentsQuery {
+  page?: string;
+  limit?: string;
+  sortBy?: string;
+  sortOrder?: string;
+  search?: string;
+  status?: string;
+}
+
+/**
+ * Valid sort fields for documents.
+ */
+const validDocumentSortFields = ['created_at', 'uploaded_at', 'filename', 'status', 'file_size'];
+
+/**
+ * Validate list documents query parameters.
+ * Returns an array of field errors if validation fails.
+ */
+function validateListDocumentsQuery(query: ListDocumentsQuery): FieldError[] {
+  const errors: FieldError[] = [];
+
+  // Validate page
+  if (query.page !== undefined) {
+    const page = parseInt(query.page, 10);
+    if (isNaN(page) || page < 1) {
+      errors.push({
+        field: 'page',
+        message: 'Page must be a positive integer',
+        code: 'INVALID_VALUE',
+      });
+    }
+  }
+
+  // Validate limit
+  if (query.limit !== undefined) {
+    const limit = parseInt(query.limit, 10);
+    if (isNaN(limit) || limit < 1 || limit > 100) {
+      errors.push({
+        field: 'limit',
+        message: 'Limit must be between 1 and 100',
+        code: 'INVALID_VALUE',
+      });
+    }
+  }
+
+  // Validate sortBy
+  if (query.sortBy !== undefined && !validDocumentSortFields.includes(query.sortBy)) {
+    errors.push({
+      field: 'sortBy',
+      message: `sortBy must be one of: ${validDocumentSortFields.join(', ')}`,
+      code: 'INVALID_VALUE',
+    });
+  }
+
+  // Validate sortOrder
+  if (query.sortOrder !== undefined && !['asc', 'desc'].includes(query.sortOrder)) {
+    errors.push({
+      field: 'sortOrder',
+      message: 'sortOrder must be "asc" or "desc"',
+      code: 'INVALID_VALUE',
+    });
+  }
+
+  // Validate status filter
+  if (query.status !== undefined && !PID_DOCUMENT_STATUSES.includes(query.status as PIDDocumentStatus)) {
+    errors.push({
+      field: 'status',
+      message: `status must be one of: ${PID_DOCUMENT_STATUSES.join(', ')}`,
+      code: 'INVALID_VALUE',
+    });
+  }
+
+  return errors;
+}
+
+/**
+ * GET /projects/:id/documents
+ * List P&ID documents for a project with pagination and filtering.
+ * All project members can view documents.
+ *
+ * Path parameters:
+ * - id: string (required) - Project UUID
+ *
+ * Query parameters:
+ * - page: number (1-based, default 1)
+ * - limit: number (default 20, max 100)
+ * - sortBy: 'created_at' | 'uploaded_at' | 'filename' | 'status' | 'file_size' (default 'uploaded_at')
+ * - sortOrder: 'asc' | 'desc' (default 'desc')
+ * - search: string (searches filename)
+ * - status: PIDDocumentStatus (filter by status)
+ *
+ * Returns:
+ * - 200: Paginated list of documents
+ * - 400: Validation error
+ * - 401: Not authenticated
+ * - 403: Not authorized to access this project
+ * - 404: Project not found
+ * - 500: Internal server error
+ */
+export async function listDocuments(req: Request, res: Response): Promise<void> {
+  try {
+    const { id: projectId } = req.params;
+    const query = req.query as ListDocumentsQuery;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(projectId)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid project ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Project ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Validate query parameters
+    const validationErrors = validateListDocumentsQuery(query);
+    if (validationErrors.length > 0) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid query parameters',
+          errors: validationErrors,
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project
+    const hasAccess = await userHasProjectAccess(userId, projectId);
+    if (!hasAccess) {
+      // Check if project exists to return appropriate error
+      const project = await findProjectByIdService(projectId);
+      if (!project) {
+        res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Project not found',
+          },
+        });
+        return;
+      }
+
+      // Project exists but user doesn't have access
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this project',
+        },
+      });
+      return;
+    }
+
+    // Parse query parameters
+    const page = query.page ? parseInt(query.page, 10) : undefined;
+    const limit = query.limit ? parseInt(query.limit, 10) : undefined;
+    const sortBy = query.sortBy as 'created_at' | 'uploaded_at' | 'filename' | 'status' | 'file_size' | undefined;
+    const sortOrder = query.sortOrder as 'asc' | 'desc' | undefined;
+    const search = query.search;
+    const status = query.status as PIDDocumentStatus | undefined;
+
+    // Fetch documents
+    const result = await listProjectDocuments(
+      projectId,
+      { status, search },
+      { page, limit, sortBy, sortOrder }
+    );
+
+    // Calculate pagination metadata
+    const currentPage = page ?? 1;
+    const currentLimit = limit ?? 20;
+    const totalPages = Math.ceil(result.total / currentLimit);
+
+    res.status(200).json({
+      success: true,
+      data: result.documents,
+      meta: {
+        page: currentPage,
+        limit: currentLimit,
+        total: result.total,
+        totalPages,
+        hasNextPage: currentPage < totalPages,
+        hasPrevPage: currentPage > 1,
+      },
+    });
+  } catch (error) {
+    console.error('List documents error:', error);
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
 
 /**
  * POST /projects/:id/documents

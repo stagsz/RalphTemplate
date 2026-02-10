@@ -12,7 +12,7 @@
 import { Router } from 'express';
 import { authenticate, requireAuth } from '../middleware/auth.middleware.js';
 import { listProjects, createProject, getProjectById, updateProject, deleteProject, addMember, removeMember, listMembers } from '../controllers/projects.controller.js';
-import { uploadDocument } from '../controllers/documents.controller.js';
+import { listDocuments, uploadDocument } from '../controllers/documents.controller.js';
 import { uploadPID, handleMulterError, validatePIDUpload } from '../middleware/upload.middleware.js';
 
 const router = Router();
@@ -131,6 +131,25 @@ router.post('/:id/members', authenticate, requireAuth, addMember);
  * Returns success confirmation.
  */
 router.delete('/:id/members/:userId', authenticate, requireAuth, removeMember);
+
+/**
+ * GET /projects/:id/documents
+ * List P&ID documents for a project.
+ *
+ * Path parameters:
+ * - id: string (required) - Project UUID
+ *
+ * Query parameters:
+ * - page: number (1-based, default 1)
+ * - limit: number (default 20, max 100)
+ * - sortBy: 'created_at' | 'uploaded_at' | 'filename' | 'status' | 'file_size'
+ * - sortOrder: 'asc' | 'desc'
+ * - search: string (searches filename)
+ * - status: PIDDocumentStatus (filter by status)
+ *
+ * Returns paginated list of documents with uploader info.
+ */
+router.get('/:id/documents', authenticate, requireAuth, listDocuments);
 
 /**
  * POST /projects/:id/documents
