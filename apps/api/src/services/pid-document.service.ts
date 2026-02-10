@@ -351,6 +351,95 @@ export async function listProjectDocuments(
 }
 
 /**
+ * Payload for updating document processing status.
+ */
+export interface UpdateDocumentStatusData {
+  /** New processing status */
+  status: PIDDocumentStatus;
+  /** Error message (required if status is 'failed') */
+  errorMessage?: string;
+  /** Document width in pixels (set when status is 'processed') */
+  width?: number;
+  /** Document height in pixels (set when status is 'processed') */
+  height?: number;
+  /** Processing completion timestamp (set when status is 'processed') */
+  processedAt?: Date;
+}
+
+/**
+ * Update a P&ID document's processing status and metadata.
+ * Used by the metadata extraction service after processing.
+ *
+ * @param documentId - The document ID
+ * @param data - Status update data
+ * @returns The updated document, or null if not found
+ */
+export async function updatePIDDocumentStatus(
+  documentId: string,
+  data: UpdateDocumentStatusData
+): Promise<PIDDocument | null> {
+  const pool = getPool();
+
+  // Build dynamic SET clause
+  const setClauses: string[] = ['status = $2', 'updated_at = NOW()'];
+  const params: (string | number | Date | null)[] = [documentId, data.status];
+  let paramIndex = 3;
+
+  if (data.errorMessage !== undefined) {
+    setClauses.push(`error_message = $${paramIndex}`);
+    params.push(data.errorMessage);
+    paramIndex++;
+  }
+
+  if (data.width !== undefined) {
+    setClauses.push(`width = $${paramIndex}`);
+    params.push(data.width);
+    paramIndex++;
+  }
+
+  if (data.height !== undefined) {
+    setClauses.push(`height = $${paramIndex}`);
+    params.push(data.height);
+    paramIndex++;
+  }
+
+  if (data.processedAt !== undefined) {
+    setClauses.push(`processed_at = $${paramIndex}`);
+    params.push(data.processedAt);
+    paramIndex++;
+  }
+
+  const result = await pool.query<PIDDocumentRow>(
+    `UPDATE hazop.pid_documents
+     SET ${setClauses.join(', ')}
+     WHERE id = $1
+     RETURNING
+       id,
+       project_id,
+       filename,
+       storage_path,
+       mime_type,
+       file_size,
+       status,
+       error_message,
+       width,
+       height,
+       uploaded_by_id,
+       uploaded_at,
+       processed_at,
+       created_at,
+       updated_at`,
+    params
+  );
+
+  if (!result.rows[0]) {
+    return null;
+  }
+
+  return rowToDocument(result.rows[0]);
+}
+
+/**
  * Delete a P&ID document by ID.
  * Returns the deleted document (for cleanup operations like file deletion).
  *
