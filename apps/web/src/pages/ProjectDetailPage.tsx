@@ -5,6 +5,7 @@ import { useAuthStore, selectUser } from '../store/auth.store';
 import { authService } from '../services/auth.service';
 import { projectsService, type ProjectListItem } from '../services/projects.service';
 import { TeamMemberPanel } from '../components/projects/TeamMemberPanel';
+import { ProjectSettingsPanel } from '../components/projects/ProjectSettingsPanel';
 import type { ProjectStatus, ProjectMemberRole, ApiError } from '@hazop/types';
 
 /**
@@ -344,6 +345,7 @@ export function ProjectDetailPage() {
               <Tabs.Tab value="documents">Documents</Tabs.Tab>
               <Tabs.Tab value="analysis">Analysis</Tabs.Tab>
               <Tabs.Tab value="team">Team</Tabs.Tab>
+              <Tabs.Tab value="settings">Settings</Tabs.Tab>
             </Tabs.List>
 
             {/* Overview Tab */}
@@ -469,6 +471,11 @@ export function ProjectDetailPage() {
             {/* Team Tab */}
             <Tabs.Panel value="team">
               <TeamMemberPanel project={project} onMembersChange={fetchProject} />
+            </Tabs.Panel>
+
+            {/* Settings Tab */}
+            <Tabs.Panel value="settings">
+              <ProjectSettingsPanel project={project} onProjectUpdate={fetchProject} />
             </Tabs.Panel>
           </Tabs>
         </div>
