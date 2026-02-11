@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { createServer } from 'http';
 import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.routes.js';
@@ -17,6 +18,7 @@ import preparedRecommendationsRoutes from './routes/prepared-recommendations.rou
 import analysesRoutes from './routes/analyses.routes.js';
 import entriesRoutes from './routes/entries.routes.js';
 import { configurePassport, initializePassport } from './config/passport.config.js';
+import { getWebSocketService } from './services/websocket.service.js';
 
 // Load .env from project root (two levels up from this file)
 const __filename = fileURLToPath(import.meta.url);
@@ -94,12 +96,32 @@ app.use('/analyses', analysesRoutes);
 // Entries routes
 app.use('/entries', entriesRoutes);
 
-// Only start the server when this file is run directly (not imported for testing)
-const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
-if (isMainModule) {
-  app.listen(port, () => {
+// Create HTTP server from Express app (required for Socket.io)
+const httpServer = createServer(app);
+
+// Initialize WebSocket server when running as main module
+async function startServer() {
+  // Initialize WebSocket service with JWT authentication
+  if (process.env.JWT_PRIVATE_KEY && process.env.JWT_PUBLIC_KEY) {
+    const wsService = getWebSocketService();
+    await wsService.initialize(httpServer);
+    console.log('WebSocket server attached to HTTP server');
+  }
+
+  httpServer.listen(port, () => {
     console.log(`API server running on port ${port}`);
   });
 }
 
+// Only start the server when this file is run directly (not imported for testing)
+const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
+if (isMainModule) {
+  startServer().catch((error) => {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  });
+}
+
+// Export both app and httpServer for testing
 export default app;
+export { httpServer };
