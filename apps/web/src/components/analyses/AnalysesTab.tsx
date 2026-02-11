@@ -7,9 +7,14 @@ import {
   type ListAnalysesSortOptions,
   type AnalysisListItem,
 } from '../../services/analyses.service';
-import type { AnalysisStatus, ApiError } from '@hazop/types';
+import {
+  complianceService,
+  type AnalysisComplianceStatus,
+} from '../../services/compliance.service';
+import type { AnalysisStatus, ApiError, ComplianceStatus } from '@hazop/types';
 import { ANALYSIS_STATUS_LABELS } from '@hazop/types';
 import { NewAnalysisModal } from './NewAnalysisModal';
+import { ComplianceStatusCompact } from '../compliance';
 
 /**
  * Analysis status badge colors.
@@ -87,6 +92,11 @@ export function AnalysesTab({ projectId }: AnalysesTabProps) {
   // Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // Compliance status cache (analysisId -> status)
+  const [complianceStatuses, setComplianceStatuses] = useState<
+    Record<string, { status: ComplianceStatus; percentage: number } | null>
+  >({});
+
   /**
    * Debounce search query.
    */
@@ -137,6 +147,63 @@ export function AnalysesTab({ projectId }: AnalysesTabProps) {
   useEffect(() => {
     fetchAnalyses();
   }, [fetchAnalyses]);
+
+  /**
+   * Fetch compliance status for visible analyses.
+   * Only fetches for analyses that have entries (entryCount > 0).
+   */
+  useEffect(() => {
+    const fetchComplianceStatuses = async () => {
+      // Only fetch for analyses with entries that we haven't cached yet
+      const analysesToFetch = analyses.filter(
+        (a) => a.entryCount > 0 && complianceStatuses[a.id] === undefined
+      );
+
+      if (analysesToFetch.length === 0) return;
+
+      // Initialize as null (loading) for these analyses
+      setComplianceStatuses((prev) => {
+        const next = { ...prev };
+        analysesToFetch.forEach((a) => {
+          if (next[a.id] === undefined) {
+            next[a.id] = null;
+          }
+        });
+        return next;
+      });
+
+      // Fetch compliance status for each analysis (in parallel, limited to 5 at a time)
+      const batchSize = 5;
+      for (let i = 0; i < analysesToFetch.length; i += batchSize) {
+        const batch = analysesToFetch.slice(i, i + batchSize);
+        const results = await Promise.all(
+          batch.map(async (analysis) => {
+            const result = await complianceService.getAnalysisCompliance(analysis.id);
+            if (result.success && result.data?.data) {
+              return {
+                id: analysis.id,
+                status: result.data.data.overallStatus,
+                percentage: result.data.data.overallPercentage,
+              };
+            }
+            return { id: analysis.id, status: null, percentage: 0 };
+          })
+        );
+
+        setComplianceStatuses((prev) => {
+          const next = { ...prev };
+          results.forEach((r) => {
+            if (r.status !== null) {
+              next[r.id] = { status: r.status, percentage: r.percentage };
+            }
+          });
+          return next;
+        });
+      }
+    };
+
+    fetchComplianceStatuses();
+  }, [analyses]);
 
   /**
    * Format date for display.
@@ -352,10 +419,10 @@ export function AnalysesTab({ projectId }: AnalysesTabProps) {
             <Table.Tr className="bg-slate-50">
               <Table.Th className="font-medium text-slate-700">Name</Table.Th>
               <Table.Th className="font-medium text-slate-700">Status</Table.Th>
+              <Table.Th className="font-medium text-slate-700">Compliance</Table.Th>
               <Table.Th className="font-medium text-slate-700">Document</Table.Th>
               <Table.Th className="font-medium text-slate-700">Lead Analyst</Table.Th>
               <Table.Th className="font-medium text-slate-700">Entries</Table.Th>
-              <Table.Th className="font-medium text-slate-700">Created</Table.Th>
               <Table.Th className="font-medium text-slate-700">Updated</Table.Th>
               <Table.Th className="font-medium text-slate-700 text-right">Actions</Table.Th>
             </Table.Tr>
@@ -393,6 +460,21 @@ export function AnalysesTab({ projectId }: AnalysesTabProps) {
                       {ANALYSIS_STATUS_LABELS[analysis.status]}
                     </span>
                   </Table.Td>
+                  <Table.Td>
+                    {analysis.entryCount === 0 ? (
+                      <span className="text-xs text-slate-400">No entries</span>
+                    ) : complianceStatuses[analysis.id] === undefined ? (
+                      <span className="text-xs text-slate-400">-</span>
+                    ) : complianceStatuses[analysis.id] === null ? (
+                      <span className="text-xs text-slate-400">Loading...</span>
+                    ) : (
+                      <ComplianceStatusCompact
+                        status={complianceStatuses[analysis.id]!.status}
+                        percentage={complianceStatuses[analysis.id]!.percentage}
+                        size="sm"
+                      />
+                    )}
+                  </Table.Td>
                   <Table.Td className="text-slate-600">
                     <div className="text-sm truncate max-w-[150px]">{analysis.documentName}</div>
                   </Table.Td>
@@ -406,9 +488,6 @@ export function AnalysesTab({ projectId }: AnalysesTabProps) {
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">
                       {analysis.entryCount} {analysis.entryCount === 1 ? 'entry' : 'entries'}
                     </span>
-                  </Table.Td>
-                  <Table.Td className="text-slate-500 text-sm">
-                    {formatDate(analysis.createdAt)}
                   </Table.Td>
                   <Table.Td className="text-slate-500 text-sm">
                     {formatDate(analysis.updatedAt)}
