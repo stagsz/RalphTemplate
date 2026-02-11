@@ -8,12 +8,13 @@ import { documentsService } from '../services/documents.service';
 import { nodesService } from '../services/nodes.service';
 import { PIDViewer } from '../components/documents/PIDViewer';
 import { NodeOverlay } from '../components/documents/NodeOverlay';
-import { GuideWordSelector } from '../components/analyses';
+import { GuideWordSelector, DeviationInputForm } from '../components/analyses';
 import type {
   ApiError,
   HazopsAnalysisWithDetails,
   PIDDocumentWithUploader,
   AnalysisNodeWithCreator,
+  AnalysisEntry,
   GuideWord,
 } from '@hazop/types';
 import {
@@ -204,6 +205,15 @@ export function AnalysisWorkspacePage() {
     setSelectedNodeId(node.id);
     // Reset guide word selection when changing nodes
     setSelectedGuideWord(null);
+  }, []);
+
+  /**
+   * Handle successful creation of an analysis entry.
+   */
+  const handleEntryCreated = useCallback((entry: AnalysisEntry) => {
+    // Entry created successfully - could add notification or update state here
+    // For now, we just log it and keep the form ready for the next entry
+    console.log('Analysis entry created:', entry.id);
   }, []);
 
   /**
@@ -470,16 +480,18 @@ export function AnalysisWorkspacePage() {
                   disabled={analysis.status !== 'draft'}
                 />
 
-                {/* Analysis Form Placeholder */}
+                {/* Deviation Input Form */}
                 {selectedGuideWord && (
-                  <div className="bg-blue-50 border border-blue-200 rounded p-4">
-                    <p className="text-sm text-blue-800">
-                      Analysis entry form for{' '}
-                      <span className="font-semibold">{selectedNode.nodeId}</span> with guide word{' '}
-                      <span className="font-semibold">{GUIDE_WORD_LABELS[selectedGuideWord]}</span>{' '}
-                      will be implemented in upcoming tasks (HAZOP-21 through HAZOP-25).
-                    </p>
-                  </div>
+                  <DeviationInputForm
+                    analysisId={analysis.id}
+                    nodeId={selectedNode.id}
+                    nodeIdentifier={selectedNode.nodeId}
+                    nodeEquipmentType={selectedNode.equipmentType}
+                    guideWord={selectedGuideWord}
+                    disabled={analysis.status !== 'draft'}
+                    onEntryCreated={handleEntryCreated}
+                    onClear={() => setSelectedGuideWord(null)}
+                  />
                 )}
               </div>
             )}

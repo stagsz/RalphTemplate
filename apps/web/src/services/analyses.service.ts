@@ -1,6 +1,8 @@
 import type {
   HazopsAnalysisWithDetails,
+  AnalysisEntry,
   AnalysisStatus,
+  GuideWord,
   ApiResult,
   PaginationMeta,
   CreateHazopsAnalysisPayload,
@@ -43,6 +45,28 @@ export interface CreateAnalysisResponse {
  */
 export interface CompleteAnalysisResponse {
   analysis: HazopsAnalysisWithDetails;
+}
+
+/**
+ * Response type for creating an analysis entry.
+ */
+export interface CreateAnalysisEntryResponse {
+  entry: AnalysisEntry;
+}
+
+/**
+ * Payload for creating an analysis entry.
+ */
+export interface CreateAnalysisEntryPayload {
+  nodeId: string;
+  guideWord: GuideWord;
+  parameter: string;
+  deviation: string;
+  causes?: string[];
+  consequences?: string[];
+  safeguards?: string[];
+  recommendations?: string[];
+  notes?: string;
 }
 
 /**
@@ -191,5 +215,19 @@ export const analysesService = {
    */
   async completeAnalysis(analysisId: string): Promise<ApiResult<CompleteAnalysisResponse>> {
     return api.post<CompleteAnalysisResponse>(`/analyses/${analysisId}/complete`);
+  },
+
+  /**
+   * Create a new analysis entry for a node/guide word combination.
+   *
+   * @param analysisId - The ID of the analysis
+   * @param data - Entry creation data (nodeId, guideWord, parameter, deviation, etc.)
+   * @returns Promise resolving to the API result with created entry
+   */
+  async createAnalysisEntry(
+    analysisId: string,
+    data: CreateAnalysisEntryPayload
+  ): Promise<ApiResult<CreateAnalysisEntryResponse>> {
+    return api.post<CreateAnalysisEntryResponse>(`/analyses/${analysisId}/entries`, data);
   },
 };
