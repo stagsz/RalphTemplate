@@ -10,6 +10,7 @@
  * - POST /analyses/:id/complete - Complete/approve an analysis
  * - POST /analyses/:id/entries - Create analysis entry
  * - GET /analyses/:id/entries - List analysis entries
+ * - GET /analyses/:id/risk-summary - Get risk aggregation for an analysis
  */
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
@@ -86,6 +87,92 @@ interface ListEntriesResult {
   total: number;
 }
 
+// Risk aggregation types for testing
+interface RiskDistribution {
+  low: number;
+  medium: number;
+  high: number;
+}
+
+interface ScorePercentiles {
+  p25: number;
+  p50: number;
+  p75: number;
+  p90: number;
+  p95: number;
+}
+
+interface RiskStatistics {
+  totalEntries: number;
+  assessedEntries: number;
+  unassessedEntries: number;
+  highRiskCount: number;
+  mediumRiskCount: number;
+  lowRiskCount: number;
+  averageRiskScore: number | null;
+  maxRiskScore: number | null;
+  minRiskScore: number | null;
+}
+
+interface NodeRiskSummary {
+  nodeId: string;
+  nodeIdentifier: string;
+  nodeDescription: string | null;
+  equipmentType: string;
+  entryCount: number;
+  assessedCount: number;
+  highRiskCount: number;
+  mediumRiskCount: number;
+  lowRiskCount: number;
+  averageRiskScore: number | null;
+  maxRiskScore: number | null;
+  overallRiskLevel: RiskLevel | null;
+}
+
+interface GuideWordRiskSummary {
+  guideWord: GuideWord;
+  entryCount: number;
+  assessedCount: number;
+  highRiskCount: number;
+  mediumRiskCount: number;
+  lowRiskCount: number;
+  averageRiskScore: number | null;
+  maxRiskScore: number | null;
+}
+
+interface RiskRanking {
+  severity: 1 | 2 | 3 | 4 | 5;
+  likelihood: 1 | 2 | 3 | 4 | 5;
+  detectability: 1 | 2 | 3 | 4 | 5;
+  riskScore: number;
+  riskLevel: RiskLevel;
+}
+
+interface HighRiskEntry {
+  entryId: string;
+  nodeId: string;
+  nodeIdentifier: string;
+  guideWord: GuideWord;
+  parameter: string;
+  riskRanking: RiskRanking;
+}
+
+interface RiskThresholdConfig {
+  lowMax: number;
+  mediumMax: number;
+}
+
+interface AnalysisRiskAggregation {
+  analysisId: string;
+  statistics: RiskStatistics;
+  distribution: RiskDistribution | null;
+  percentiles: ScorePercentiles | null;
+  byNode: NodeRiskSummary[];
+  byGuideWord: GuideWordRiskSummary[];
+  highestRiskEntries: HighRiskEntry[];
+  thresholds: RiskThresholdConfig;
+}
+
 // Mock implementations - must be declared before jest.unstable_mockModule
 let mockFindAnalysisById: jest.Mock<() => Promise<HazopAnalysisWithDetails | null>>;
 let mockFindAnalysisByIdWithProgress: jest.Mock<
@@ -99,6 +186,9 @@ let mockCreateAnalysisEntry: jest.Mock<() => Promise<AnalysisEntry>>;
 let mockListAnalysisEntries: jest.Mock<() => Promise<ListEntriesResult>>;
 let mockCreateAnalysis: jest.Mock<() => Promise<HazopAnalysisWithDetails>>;
 let mockDocumentBelongsToProject: jest.Mock<() => Promise<boolean>>;
+
+// Risk aggregation service mocks
+let mockGetAnalysisRiskAggregation: jest.Mock<() => Promise<AnalysisRiskAggregation | null>>;
 
 // Project service mocks
 let mockUserHasProjectAccess: jest.Mock<() => Promise<boolean>>;
@@ -150,6 +240,14 @@ jest.unstable_mockModule('../services/project.service.js', () => {
     userHasProjectAccess: mockUserHasProjectAccess,
     findProjectById: mockFindProjectById,
     getUserProjectRole: mockGetUserProjectRole,
+  };
+});
+
+jest.unstable_mockModule('../services/risk-aggregation.service.js', () => {
+  mockGetAnalysisRiskAggregation = jest.fn<() => Promise<AnalysisRiskAggregation | null>>();
+
+  return {
+    getAnalysisRiskAggregation: mockGetAnalysisRiskAggregation,
   };
 });
 
@@ -1877,6 +1975,322 @@ describe('Project Analyses Routes API Tests', () => {
         mockListProjectAnalyses.mockRejectedValue(new Error('Database error'));
 
         const response = await request(app).get(`/projects/${validProjectId}/analyses`);
+
+        expect(response.status).toBe(500);
+        expect(response.body.error.code).toBe('INTERNAL_ERROR');
+      });
+    });
+  });
+
+  describe('GET /analyses/:id/risk-summary', () => {
+    const validAnalysisId = '550e8400-e29b-41d4-a716-446655440001';
+
+    /**
+     * Create a mock risk aggregation for testing.
+     */
+    function createMockRiskAggregation(
+      overrides?: Partial<AnalysisRiskAggregation>
+    ): AnalysisRiskAggregation {
+      return {
+        analysisId: validAnalysisId,
+        statistics: {
+          totalEntries: 10,
+          assessedEntries: 8,
+          unassessedEntries: 2,
+          highRiskCount: 2,
+          mediumRiskCount: 3,
+          lowRiskCount: 3,
+          averageRiskScore: 45.5,
+          maxRiskScore: 100,
+          minRiskScore: 5,
+        },
+        distribution: {
+          low: 37.5,
+          medium: 37.5,
+          high: 25,
+        },
+        percentiles: {
+          p25: 15,
+          p50: 35,
+          p75: 65,
+          p90: 85,
+          p95: 95,
+        },
+        byNode: [
+          {
+            nodeId: 'node-1',
+            nodeIdentifier: 'P-101',
+            nodeDescription: 'Main pump',
+            equipmentType: 'pump',
+            entryCount: 5,
+            assessedCount: 4,
+            highRiskCount: 1,
+            mediumRiskCount: 2,
+            lowRiskCount: 1,
+            averageRiskScore: 50,
+            maxRiskScore: 100,
+            overallRiskLevel: 'high',
+          },
+        ],
+        byGuideWord: [
+          {
+            guideWord: 'no',
+            entryCount: 3,
+            assessedCount: 3,
+            highRiskCount: 1,
+            mediumRiskCount: 1,
+            lowRiskCount: 1,
+            averageRiskScore: 40,
+            maxRiskScore: 80,
+          },
+        ],
+        highestRiskEntries: [
+          {
+            entryId: 'entry-1',
+            nodeId: 'node-1',
+            nodeIdentifier: 'P-101',
+            guideWord: 'no',
+            parameter: 'flow',
+            riskRanking: {
+              severity: 5,
+              likelihood: 4,
+              detectability: 5,
+              riskScore: 100,
+              riskLevel: 'high',
+            },
+          },
+        ],
+        thresholds: {
+          lowMax: 20,
+          mediumMax: 60,
+        },
+        ...overrides,
+      };
+    }
+
+    describe('successful retrieval', () => {
+      it('should return risk summary with status 200', async () => {
+        const mockAggregation = createMockRiskAggregation();
+
+        mockFindAnalysisById.mockResolvedValue(
+          createMockAnalysis({ id: validAnalysisId, projectId: '550e8400-e29b-41d4-a716-446655440000' })
+        );
+        mockUserHasProjectAccess.mockResolvedValue(true);
+        mockGetAnalysisRiskAggregation.mockResolvedValue(mockAggregation);
+
+        const response = await request(app).get(`/analyses/${validAnalysisId}/risk-summary`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toBeDefined();
+        expect(response.body.data.analysisId).toBe(validAnalysisId);
+        expect(response.body.data.statistics).toBeDefined();
+        expect(response.body.data.statistics.totalEntries).toBe(10);
+        expect(response.body.data.statistics.assessedEntries).toBe(8);
+        expect(response.body.data.statistics.highRiskCount).toBe(2);
+      });
+
+      it('should return correct distribution percentages', async () => {
+        const mockAggregation = createMockRiskAggregation();
+
+        mockFindAnalysisById.mockResolvedValue(
+          createMockAnalysis({ id: validAnalysisId, projectId: '550e8400-e29b-41d4-a716-446655440000' })
+        );
+        mockUserHasProjectAccess.mockResolvedValue(true);
+        mockGetAnalysisRiskAggregation.mockResolvedValue(mockAggregation);
+
+        const response = await request(app).get(`/analyses/${validAnalysisId}/risk-summary`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.distribution).toBeDefined();
+        expect(response.body.data.distribution.low).toBe(37.5);
+        expect(response.body.data.distribution.medium).toBe(37.5);
+        expect(response.body.data.distribution.high).toBe(25);
+      });
+
+      it('should return correct score percentiles', async () => {
+        const mockAggregation = createMockRiskAggregation();
+
+        mockFindAnalysisById.mockResolvedValue(
+          createMockAnalysis({ id: validAnalysisId, projectId: '550e8400-e29b-41d4-a716-446655440000' })
+        );
+        mockUserHasProjectAccess.mockResolvedValue(true);
+        mockGetAnalysisRiskAggregation.mockResolvedValue(mockAggregation);
+
+        const response = await request(app).get(`/analyses/${validAnalysisId}/risk-summary`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.percentiles).toBeDefined();
+        expect(response.body.data.percentiles.p25).toBe(15);
+        expect(response.body.data.percentiles.p50).toBe(35);
+        expect(response.body.data.percentiles.p75).toBe(65);
+        expect(response.body.data.percentiles.p90).toBe(85);
+        expect(response.body.data.percentiles.p95).toBe(95);
+      });
+
+      it('should return breakdown by node', async () => {
+        const mockAggregation = createMockRiskAggregation();
+
+        mockFindAnalysisById.mockResolvedValue(
+          createMockAnalysis({ id: validAnalysisId, projectId: '550e8400-e29b-41d4-a716-446655440000' })
+        );
+        mockUserHasProjectAccess.mockResolvedValue(true);
+        mockGetAnalysisRiskAggregation.mockResolvedValue(mockAggregation);
+
+        const response = await request(app).get(`/analyses/${validAnalysisId}/risk-summary`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.byNode).toBeDefined();
+        expect(response.body.data.byNode).toHaveLength(1);
+        expect(response.body.data.byNode[0].nodeIdentifier).toBe('P-101');
+        expect(response.body.data.byNode[0].overallRiskLevel).toBe('high');
+      });
+
+      it('should return breakdown by guide word', async () => {
+        const mockAggregation = createMockRiskAggregation();
+
+        mockFindAnalysisById.mockResolvedValue(
+          createMockAnalysis({ id: validAnalysisId, projectId: '550e8400-e29b-41d4-a716-446655440000' })
+        );
+        mockUserHasProjectAccess.mockResolvedValue(true);
+        mockGetAnalysisRiskAggregation.mockResolvedValue(mockAggregation);
+
+        const response = await request(app).get(`/analyses/${validAnalysisId}/risk-summary`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.byGuideWord).toBeDefined();
+        expect(response.body.data.byGuideWord).toHaveLength(1);
+        expect(response.body.data.byGuideWord[0].guideWord).toBe('no');
+      });
+
+      it('should return highest risk entries', async () => {
+        const mockAggregation = createMockRiskAggregation();
+
+        mockFindAnalysisById.mockResolvedValue(
+          createMockAnalysis({ id: validAnalysisId, projectId: '550e8400-e29b-41d4-a716-446655440000' })
+        );
+        mockUserHasProjectAccess.mockResolvedValue(true);
+        mockGetAnalysisRiskAggregation.mockResolvedValue(mockAggregation);
+
+        const response = await request(app).get(`/analyses/${validAnalysisId}/risk-summary`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.highestRiskEntries).toBeDefined();
+        expect(response.body.data.highestRiskEntries).toHaveLength(1);
+        expect(response.body.data.highestRiskEntries[0].entryId).toBe('entry-1');
+        expect(response.body.data.highestRiskEntries[0].riskRanking.riskScore).toBe(100);
+      });
+
+      it('should return threshold configuration', async () => {
+        const mockAggregation = createMockRiskAggregation();
+
+        mockFindAnalysisById.mockResolvedValue(
+          createMockAnalysis({ id: validAnalysisId, projectId: '550e8400-e29b-41d4-a716-446655440000' })
+        );
+        mockUserHasProjectAccess.mockResolvedValue(true);
+        mockGetAnalysisRiskAggregation.mockResolvedValue(mockAggregation);
+
+        const response = await request(app).get(`/analyses/${validAnalysisId}/risk-summary`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.thresholds).toBeDefined();
+        expect(response.body.data.thresholds.lowMax).toBe(20);
+        expect(response.body.data.thresholds.mediumMax).toBe(60);
+      });
+
+      it('should handle analysis with no assessed entries (null distribution)', async () => {
+        const mockAggregation = createMockRiskAggregation({
+          statistics: {
+            totalEntries: 5,
+            assessedEntries: 0,
+            unassessedEntries: 5,
+            highRiskCount: 0,
+            mediumRiskCount: 0,
+            lowRiskCount: 0,
+            averageRiskScore: null,
+            maxRiskScore: null,
+            minRiskScore: null,
+          },
+          distribution: null,
+          percentiles: null,
+          highestRiskEntries: [],
+        });
+
+        mockFindAnalysisById.mockResolvedValue(
+          createMockAnalysis({ id: validAnalysisId, projectId: '550e8400-e29b-41d4-a716-446655440000' })
+        );
+        mockUserHasProjectAccess.mockResolvedValue(true);
+        mockGetAnalysisRiskAggregation.mockResolvedValue(mockAggregation);
+
+        const response = await request(app).get(`/analyses/${validAnalysisId}/risk-summary`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.statistics.assessedEntries).toBe(0);
+        expect(response.body.data.distribution).toBeNull();
+        expect(response.body.data.percentiles).toBeNull();
+        expect(response.body.data.highestRiskEntries).toHaveLength(0);
+      });
+    });
+
+    describe('validation errors', () => {
+      it('should return 400 for invalid UUID format', async () => {
+        const response = await request(app).get('/analyses/invalid-uuid/risk-summary');
+
+        expect(response.status).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+        expect(response.body.error.errors).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ field: 'id', code: 'INVALID_FORMAT' }),
+          ])
+        );
+      });
+    });
+
+    describe('authorization', () => {
+      it('should return 404 when analysis does not exist', async () => {
+        mockFindAnalysisById.mockResolvedValue(null);
+
+        const response = await request(app).get(`/analyses/${validAnalysisId}/risk-summary`);
+
+        expect(response.status).toBe(404);
+        expect(response.body.error.code).toBe('NOT_FOUND');
+        expect(response.body.error.message).toBe('Analysis not found');
+      });
+
+      it('should return 403 when user does not have project access', async () => {
+        mockFindAnalysisById.mockResolvedValue(
+          createMockAnalysis({ id: validAnalysisId, projectId: '550e8400-e29b-41d4-a716-446655440000' })
+        );
+        mockUserHasProjectAccess.mockResolvedValue(false);
+
+        const response = await request(app).get(`/analyses/${validAnalysisId}/risk-summary`);
+
+        expect(response.status).toBe(403);
+        expect(response.body.error.code).toBe('FORBIDDEN');
+      });
+    });
+
+    describe('authentication', () => {
+      it('should return 401 when not authenticated', async () => {
+        mockCurrentUser = null;
+
+        const response = await request(app).get(`/analyses/${validAnalysisId}/risk-summary`);
+
+        expect(response.status).toBe(401);
+        expect(response.body.error.code).toBe('AUTHENTICATION_ERROR');
+      });
+    });
+
+    describe('error handling', () => {
+      it('should return 500 on database errors', async () => {
+        mockFindAnalysisById.mockResolvedValue(
+          createMockAnalysis({ id: validAnalysisId, projectId: '550e8400-e29b-41d4-a716-446655440000' })
+        );
+        mockUserHasProjectAccess.mockResolvedValue(true);
+        mockGetAnalysisRiskAggregation.mockRejectedValue(new Error('Database error'));
+
+        const response = await request(app).get(`/analyses/${validAnalysisId}/risk-summary`);
 
         expect(response.status).toBe(500);
         expect(response.body.error.code).toBe('INTERNAL_ERROR');
