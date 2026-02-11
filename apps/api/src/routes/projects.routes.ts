@@ -212,6 +212,7 @@ router.post(
   '/:id/documents',
   authenticate,
   requireAuth,
+  // @ts-expect-error - Type mismatch between multer and express types in test environment
   uploadPID.single('file'),
   handleMulterError,
   validatePIDUpload,
