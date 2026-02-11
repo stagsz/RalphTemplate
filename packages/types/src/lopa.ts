@@ -17,7 +17,7 @@
  * - CCPS Guidelines for Initiating Events and Independent Protection Layers
  */
 
-import type { SeverityLevel, LikelihoodLevel, RiskLevel } from './hazop-analysis.js';
+import type { SeverityLevel, RiskLevel } from './hazop-analysis.js';
 
 // ============================================================================
 // Safety Integrity Level (SIL)

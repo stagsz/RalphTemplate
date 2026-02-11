@@ -36,7 +36,6 @@ import {
   type LOPATriggerConfig,
   type LOPATriggerResult,
   type SeverityLevel,
-  type RiskLevel,
   type RiskRanking,
   SAFETY_INTEGRITY_LEVELS,
   SIL_PFD_RANGES,
@@ -46,7 +45,6 @@ import {
   INITIATING_EVENT_CATEGORIES,
   SEVERITY_TO_TARGET_FREQUENCY,
   DEFAULT_LOPA_TRIGGER_CONFIG,
-  RISK_THRESHOLDS,
 } from '@hazop/types';
 
 // ============================================================================
