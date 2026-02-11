@@ -11,7 +11,7 @@
 
 import { Router } from 'express';
 import { authenticate, requireAuth } from '../middleware/auth.middleware.js';
-import { listProjects, createProject, getProjectById, updateProject, deleteProject, addMember, removeMember, listMembers, getProjectRiskDashboardController } from '../controllers/projects.controller.js';
+import { listProjects, createProject, getProjectById, updateProject, deleteProject, addMember, removeMember, listMembers, getProjectRiskDashboardController, getProjectComplianceController } from '../controllers/projects.controller.js';
 import { listDocuments, uploadDocument } from '../controllers/documents.controller.js';
 import { createAnalysis, listAnalyses } from '../controllers/analyses.controller.js';
 import { uploadPID, handleMulterError, validatePIDUpload } from '../middleware/upload.middleware.js';
@@ -121,6 +121,27 @@ router.get('/:id/members', authenticate, requireAuth, listMembers);
  * Only accessible to project members.
  */
 router.get('/:id/risk-dashboard', authenticate, requireAuth, getProjectRiskDashboardController);
+
+/**
+ * GET /projects/:id/compliance
+ * Get project-level compliance status validated against regulatory standards.
+ *
+ * Path parameters:
+ * - id: string (required) - Project UUID
+ *
+ * Query parameters:
+ * - standards: string (optional) - Comma-separated list of regulatory standard IDs
+ *   Defaults to all available standards if not specified.
+ *   Valid values: IEC_61511, ISO_31000, ISO_9001, ATEX_DSEAR, PED, OSHA_PSM, EPA_RMP, SEVESO_III
+ *
+ * Returns compliance status including:
+ * - Overall compliance status and percentage
+ * - Summary per regulatory standard
+ * - Entry and LOPA counts
+ *
+ * Only accessible to project members.
+ */
+router.get('/:id/compliance', authenticate, requireAuth, getProjectComplianceController);
 
 /**
  * POST /projects/:id/members

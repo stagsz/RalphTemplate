@@ -8,13 +8,14 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll, jest } from '@jest/globals';
 import request from 'supertest';
 import express, { type Express, type Request, type Response, type NextFunction } from 'express';
-import type { UserRole, ProjectStatus, ProjectMemberRole, RiskLevel, GuideWord } from '@hazop/types';
+import type { UserRole, ProjectStatus, ProjectMemberRole, RiskLevel, GuideWord, ComplianceStatus, RegulatoryStandardId, StandardComplianceSummary } from '@hazop/types';
 import type {
   ListProjectsResult,
   ProjectWithCreator,
   ProjectWithMembership,
   ProjectMemberWithUser,
 } from '../services/project.service.js';
+import type { ProjectComplianceStatus } from '../services/project-compliance.service.js';
 
 // Project risk dashboard types for testing
 interface RiskDistribution {
@@ -142,6 +143,9 @@ let mockListProjectMembers: jest.Mock<() => Promise<ProjectMemberWithUser[]>>;
 // Risk aggregation service mock
 let mockGetProjectRiskDashboard: jest.Mock<() => Promise<ProjectRiskDashboard | null>>;
 
+// Project compliance service mock
+let mockGetProjectComplianceStatus: jest.Mock<() => Promise<ProjectComplianceStatus | null>>;
+
 // Current authenticated user for tests
 let mockCurrentUser: { id: string; email: string; role: UserRole; organization: string } | null =
   null;
@@ -206,6 +210,15 @@ jest.unstable_mockModule('../services/risk-aggregation.service.js', () => {
 
   return {
     getProjectRiskDashboard: mockGetProjectRiskDashboard,
+  };
+});
+
+// Mock project-compliance service
+jest.unstable_mockModule('../services/project-compliance.service.js', () => {
+  mockGetProjectComplianceStatus = jest.fn<() => Promise<ProjectComplianceStatus | null>>();
+
+  return {
+    getProjectComplianceStatus: mockGetProjectComplianceStatus,
   };
 });
 
@@ -1669,6 +1682,235 @@ describe('Project Routes API Tests', () => {
         mockGetProjectRiskDashboard.mockRejectedValue(new Error('Database error'));
 
         const response = await request(app).get(`/projects/${validProjectId}/risk-dashboard`);
+
+        expect(response.status).toBe(500);
+        expect(response.body.error.code).toBe('INTERNAL_ERROR');
+      });
+    });
+  });
+
+  describe('GET /projects/:id/compliance', () => {
+    const validProjectId = '550e8400-e29b-41d4-a716-446655440000';
+
+    /**
+     * Create a mock project compliance status for testing.
+     */
+    function createMockComplianceStatus(overrides?: Partial<ProjectComplianceStatus>): ProjectComplianceStatus {
+      const mockSummary: StandardComplianceSummary = {
+        standardId: 'IEC_61511' as RegulatoryStandardId,
+        standardName: 'IEC 61511',
+        totalClauses: 10,
+        compliantCount: 7,
+        partiallyCompliantCount: 2,
+        nonCompliantCount: 1,
+        notApplicableCount: 0,
+        notAssessedCount: 0,
+        compliancePercentage: 80,
+        overallStatus: 'partially_compliant' as ComplianceStatus,
+      };
+
+      return {
+        projectId: validProjectId,
+        projectName: 'Test Project',
+        analysisCount: 3,
+        entryCount: 25,
+        hasLOPA: true,
+        lopaCount: 5,
+        standardsChecked: ['IEC_61511', 'ISO_31000'] as RegulatoryStandardId[],
+        overallStatus: 'partially_compliant' as ComplianceStatus,
+        overallPercentage: 75,
+        summaries: [mockSummary],
+        checkedAt: new Date('2025-01-01T00:00:00Z'),
+        ...overrides,
+      };
+    }
+
+    describe('successful retrieval', () => {
+      it('should return compliance status with status 200', async () => {
+        const mockComplianceStatus = createMockComplianceStatus();
+
+        mockUserHasProjectAccess.mockResolvedValue(true);
+        mockGetProjectComplianceStatus.mockResolvedValue(mockComplianceStatus);
+
+        const response = await request(app).get(`/projects/${validProjectId}/compliance`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.success).toBe(true);
+        expect(response.body.data).toBeDefined();
+        expect(response.body.data.projectId).toBe(validProjectId);
+        expect(response.body.data.projectName).toBe('Test Project');
+      });
+
+      it('should return correct compliance data', async () => {
+        const mockComplianceStatus = createMockComplianceStatus();
+
+        mockUserHasProjectAccess.mockResolvedValue(true);
+        mockGetProjectComplianceStatus.mockResolvedValue(mockComplianceStatus);
+
+        const response = await request(app).get(`/projects/${validProjectId}/compliance`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.analysisCount).toBe(3);
+        expect(response.body.data.entryCount).toBe(25);
+        expect(response.body.data.hasLOPA).toBe(true);
+        expect(response.body.data.lopaCount).toBe(5);
+        expect(response.body.data.overallStatus).toBe('partially_compliant');
+        expect(response.body.data.overallPercentage).toBe(75);
+      });
+
+      it('should return standard summaries', async () => {
+        const mockComplianceStatus = createMockComplianceStatus();
+
+        mockUserHasProjectAccess.mockResolvedValue(true);
+        mockGetProjectComplianceStatus.mockResolvedValue(mockComplianceStatus);
+
+        const response = await request(app).get(`/projects/${validProjectId}/compliance`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.summaries).toBeDefined();
+        expect(response.body.data.summaries).toHaveLength(1);
+        expect(response.body.data.summaries[0].standardId).toBe('IEC_61511');
+        expect(response.body.data.summaries[0].compliancePercentage).toBe(80);
+      });
+
+      it('should filter by specific standards when provided', async () => {
+        const mockComplianceStatus = createMockComplianceStatus({
+          standardsChecked: ['ISO_31000'] as RegulatoryStandardId[],
+        });
+
+        mockUserHasProjectAccess.mockResolvedValue(true);
+        mockGetProjectComplianceStatus.mockResolvedValue(mockComplianceStatus);
+
+        const response = await request(app)
+          .get(`/projects/${validProjectId}/compliance`)
+          .query({ standards: 'ISO_31000' });
+
+        expect(response.status).toBe(200);
+        expect(mockGetProjectComplianceStatus).toHaveBeenCalledWith(
+          validProjectId,
+          ['ISO_31000']
+        );
+      });
+
+      it('should accept multiple standards as comma-separated list', async () => {
+        const mockComplianceStatus = createMockComplianceStatus();
+
+        mockUserHasProjectAccess.mockResolvedValue(true);
+        mockGetProjectComplianceStatus.mockResolvedValue(mockComplianceStatus);
+
+        const response = await request(app)
+          .get(`/projects/${validProjectId}/compliance`)
+          .query({ standards: 'IEC_61511,ISO_31000,OSHA_PSM' });
+
+        expect(response.status).toBe(200);
+        expect(mockGetProjectComplianceStatus).toHaveBeenCalledWith(
+          validProjectId,
+          ['IEC_61511', 'ISO_31000', 'OSHA_PSM']
+        );
+      });
+
+      it('should handle project with no entries (not_assessed status)', async () => {
+        const mockComplianceStatus = createMockComplianceStatus({
+          analysisCount: 0,
+          entryCount: 0,
+          hasLOPA: false,
+          lopaCount: 0,
+          overallStatus: 'not_assessed' as ComplianceStatus,
+          overallPercentage: 0,
+          summaries: [],
+        });
+
+        mockUserHasProjectAccess.mockResolvedValue(true);
+        mockGetProjectComplianceStatus.mockResolvedValue(mockComplianceStatus);
+
+        const response = await request(app).get(`/projects/${validProjectId}/compliance`);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.entryCount).toBe(0);
+        expect(response.body.data.overallStatus).toBe('not_assessed');
+        expect(response.body.data.summaries).toHaveLength(0);
+      });
+    });
+
+    describe('validation errors', () => {
+      it('should return 400 for invalid UUID format', async () => {
+        const response = await request(app).get('/projects/invalid-uuid/compliance');
+
+        expect(response.status).toBe(400);
+        expect(response.body.success).toBe(false);
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+        expect(response.body.error.errors).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ field: 'id', code: 'INVALID_FORMAT' }),
+          ])
+        );
+      });
+
+      it('should return 400 for invalid standard IDs', async () => {
+        const response = await request(app)
+          .get(`/projects/${validProjectId}/compliance`)
+          .query({ standards: 'INVALID_STANDARD' });
+
+        expect(response.status).toBe(400);
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+        expect(response.body.error.errors).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ field: 'standards', code: 'INVALID_VALUE' }),
+          ])
+        );
+      });
+
+      it('should return 400 when one of multiple standards is invalid', async () => {
+        const response = await request(app)
+          .get(`/projects/${validProjectId}/compliance`)
+          .query({ standards: 'IEC_61511,INVALID_STANDARD,ISO_31000' });
+
+        expect(response.status).toBe(400);
+        expect(response.body.error.code).toBe('VALIDATION_ERROR');
+        expect(response.body.error.message).toContain('Invalid regulatory standard IDs');
+      });
+    });
+
+    describe('authorization', () => {
+      it('should return 404 when project does not exist', async () => {
+        mockUserHasProjectAccess.mockResolvedValue(false);
+        mockFindProjectById.mockResolvedValue(null);
+
+        const response = await request(app).get(`/projects/${validProjectId}/compliance`);
+
+        expect(response.status).toBe(404);
+        expect(response.body.error.code).toBe('NOT_FOUND');
+        expect(response.body.error.message).toBe('Project not found');
+      });
+
+      it('should return 403 when user does not have project access', async () => {
+        mockUserHasProjectAccess.mockResolvedValue(false);
+        mockFindProjectById.mockResolvedValue(createMockProject());
+
+        const response = await request(app).get(`/projects/${validProjectId}/compliance`);
+
+        expect(response.status).toBe(403);
+        expect(response.body.error.code).toBe('FORBIDDEN');
+      });
+    });
+
+    describe('authentication', () => {
+      it('should return 401 when not authenticated', async () => {
+        mockCurrentUser = null;
+
+        const response = await request(app).get(`/projects/${validProjectId}/compliance`);
+
+        expect(response.status).toBe(401);
+        expect(response.body.error.code).toBe('AUTHENTICATION_ERROR');
+      });
+    });
+
+    describe('error handling', () => {
+      it('should return 500 on database errors', async () => {
+        mockUserHasProjectAccess.mockResolvedValue(true);
+        mockGetProjectComplianceStatus.mockRejectedValue(new Error('Database error'));
+
+        const response = await request(app).get(`/projects/${validProjectId}/compliance`);
 
         expect(response.status).toBe(500);
         expect(response.body.error.code).toBe('INTERNAL_ERROR');

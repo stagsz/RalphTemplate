@@ -26,8 +26,9 @@ import {
   listProjectMembers as listProjectMembersService,
 } from '../services/project.service.js';
 import { getProjectRiskDashboard } from '../services/risk-aggregation.service.js';
-import type { ProjectStatus, ProjectMemberRole } from '@hazop/types';
-import { PROJECT_STATUSES, PROJECT_MEMBER_ROLES } from '@hazop/types';
+import { getProjectComplianceStatus } from '../services/project-compliance.service.js';
+import type { ProjectStatus, ProjectMemberRole, RegulatoryStandardId } from '@hazop/types';
+import { PROJECT_STATUSES, PROJECT_MEMBER_ROLES, REGULATORY_STANDARD_IDS } from '@hazop/types';
 
 /**
  * Validation error for a specific field.
@@ -1457,6 +1458,151 @@ export async function getProjectRiskDashboardController(req: Request, res: Respo
     });
   } catch (error) {
     console.error('Get project risk dashboard error:', error);
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+/**
+ * GET /projects/:id/compliance
+ * Get project-level compliance status validated against regulatory standards.
+ * Returns compliance validation results across all analysis entries in the project.
+ *
+ * Path parameters:
+ * - id: string (required) - Project UUID
+ *
+ * Query parameters:
+ * - standards: string (optional) - Comma-separated list of regulatory standard IDs to check
+ *   Defaults to all available standards if not specified.
+ *   Valid values: IEC_61511, ISO_31000, ISO_9001, ATEX_DSEAR, PED, OSHA_PSM, EPA_RMP, SEVESO_III
+ *
+ * Returns:
+ * - 200: Project compliance status with standard-by-standard breakdown
+ * - 400: Invalid UUID format or invalid standard IDs
+ * - 401: Not authenticated
+ * - 403: Not authorized to access this project
+ * - 404: Project not found
+ * - 500: Internal server error
+ */
+export async function getProjectComplianceController(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid project ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Project ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Parse and validate standards query parameter
+    let standardsToCheck: RegulatoryStandardId[] | undefined;
+    const standardsQuery = req.query.standards as string | undefined;
+
+    if (standardsQuery) {
+      const requestedStandards = standardsQuery.split(',').map((s) => s.trim());
+      const validStandards = REGULATORY_STANDARD_IDS as readonly string[];
+      const invalidStandards = requestedStandards.filter((s) => !validStandards.includes(s));
+
+      if (invalidStandards.length > 0) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid regulatory standard IDs',
+            errors: [
+              {
+                field: 'standards',
+                message: `Invalid standard IDs: ${invalidStandards.join(', ')}. Valid values are: ${REGULATORY_STANDARD_IDS.join(', ')}`,
+                code: 'INVALID_VALUE',
+              },
+            ],
+          },
+        });
+        return;
+      }
+
+      standardsToCheck = requestedStandards as RegulatoryStandardId[];
+    }
+
+    // Check if user has access to the project
+    const hasAccess = await userHasProjectAccess(userId, id);
+    if (!hasAccess) {
+      // Check if project exists to return appropriate error
+      const project = await findProjectByIdService(id);
+      if (!project) {
+        res.status(404).json({
+          success: false,
+          error: {
+            code: 'NOT_FOUND',
+            message: 'Project not found',
+          },
+        });
+        return;
+      }
+
+      // Project exists but user doesn't have access
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this project',
+        },
+      });
+      return;
+    }
+
+    // Get the project compliance status
+    const complianceStatus = await getProjectComplianceStatus(id, standardsToCheck);
+    if (!complianceStatus) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Project not found',
+        },
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: complianceStatus,
+    });
+  } catch (error) {
+    console.error('Get project compliance error:', error);
 
     res.status(500).json({
       success: false,
