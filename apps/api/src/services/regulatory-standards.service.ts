@@ -1192,6 +1192,670 @@ const PED: RegulatoryStandard = {
 };
 
 // ============================================================================
+// OSHA PSM - Process Safety Management
+// ============================================================================
+
+/**
+ * OSHA PSM (29 CFR 1910.119) clauses relevant to HazOps analysis.
+ *
+ * OSHA's Process Safety Management standard applies to processes involving
+ * highly hazardous chemicals (HHCs) above threshold quantities. It is the
+ * primary US federal regulation for process safety and specifically requires
+ * Process Hazard Analysis (PHA) such as HazOps.
+ *
+ * Key coverage areas:
+ * - Employee participation
+ * - Process Safety Information (PSI)
+ * - Process Hazard Analysis (PHA)
+ * - Operating procedures
+ * - Training
+ * - Contractors
+ * - Pre-startup safety review
+ * - Mechanical integrity
+ * - Hot work permit
+ * - Management of change (MOC)
+ * - Incident investigation
+ * - Emergency planning
+ * - Compliance audits
+ * - Trade secrets
+ *
+ * Task: COMP-04
+ */
+const OSHA_PSM_CLAUSES: RegulatoryClause[] = [
+  // Scope and Application
+  {
+    id: 'PSM-1910.119(a)',
+    title: 'Application',
+    description:
+      'This standard applies to processes involving a chemical at or above threshold quantities ' +
+      'specified in Appendix A, processes involving flammable liquids or gases on site in one location ' +
+      'in quantities of 10,000 pounds or more, and processes involving highly hazardous chemicals.',
+    keywords: ['scope', 'application', 'threshold quantity', 'highly hazardous chemicals', 'HHC', 'flammable'],
+    mandatory: true,
+    hazopsRelevance: ['methodology', 'hazard_identification'],
+  },
+  // Employee Participation
+  {
+    id: 'PSM-1910.119(c)',
+    title: 'Employee participation',
+    description:
+      'Employers shall develop a written plan of action regarding employee participation and shall ' +
+      'consult with employees and their representatives on the conduct and development of process hazard ' +
+      'analyses and other elements of process safety management.',
+    keywords: ['employee participation', 'consultation', 'representatives', 'involvement'],
+    mandatory: true,
+    hazopsRelevance: ['team_composition', 'methodology'],
+  },
+  {
+    id: 'PSM-1910.119(c)(1)',
+    title: 'Written plan for employee participation',
+    description:
+      'Employers shall develop a written plan of action regarding the implementation of the employee ' +
+      'participation required by this standard.',
+    keywords: ['written plan', 'employee participation', 'action plan'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(c)',
+    hazopsRelevance: ['documentation', 'team_composition'],
+  },
+  {
+    id: 'PSM-1910.119(c)(2)',
+    title: 'Employee access to PHA information',
+    description:
+      'Employers shall provide employees and their representatives access to process hazard analyses ' +
+      'and to all other information required to be developed under this standard.',
+    keywords: ['access', 'PHA', 'information', 'employees', 'representatives'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(c)',
+    hazopsRelevance: ['documentation'],
+  },
+  // Process Safety Information (PSI)
+  {
+    id: 'PSM-1910.119(d)',
+    title: 'Process Safety Information',
+    description:
+      'The employer shall complete a compilation of written process safety information before conducting ' +
+      'any process hazard analysis. The compilation shall include information pertaining to the hazards ' +
+      'of highly hazardous chemicals, technology of the process, and equipment in the process.',
+    keywords: ['PSI', 'process safety information', 'compilation', 'hazards', 'technology', 'equipment'],
+    mandatory: true,
+    hazopsRelevance: ['documentation', 'hazard_identification', 'methodology'],
+  },
+  {
+    id: 'PSM-1910.119(d)(1)',
+    title: 'PSI - Hazards of highly hazardous chemicals',
+    description:
+      'Process safety information shall include information on the hazards of the highly hazardous chemicals ' +
+      'used or produced by the process: toxicity, permissible exposure limits, physical data, reactivity data, ' +
+      'corrosivity data, thermal and chemical stability, and hazardous effects of inadvertent mixing.',
+    keywords: ['chemical hazards', 'toxicity', 'PEL', 'reactivity', 'corrosivity', 'stability', 'mixing hazards'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(d)',
+    hazopsRelevance: ['hazard_identification'],
+  },
+  {
+    id: 'PSM-1910.119(d)(2)',
+    title: 'PSI - Technology of the process',
+    description:
+      'Process safety information shall include information concerning the technology of the process: ' +
+      'block flow diagram or simplified process flow diagram, process chemistry, maximum intended inventory, ' +
+      'safe upper and lower limits for temperature, pressure, flow, and composition, and consequences of deviation.',
+    keywords: ['process technology', 'PFD', 'block diagram', 'chemistry', 'inventory', 'safe limits', 'deviation'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(d)',
+    hazopsRelevance: ['hazard_identification', 'methodology'],
+  },
+  {
+    id: 'PSM-1910.119(d)(3)',
+    title: 'PSI - Equipment in the process',
+    description:
+      'Process safety information shall include information on equipment in the process: materials of construction, ' +
+      'P&IDs, electrical classification, relief system design and design basis, ventilation system design, ' +
+      'design codes and standards employed, material and energy balances, and safety systems.',
+    keywords: ['equipment', 'P&ID', 'materials of construction', 'relief system', 'electrical classification', 'safety systems'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(d)',
+    hazopsRelevance: ['hazard_identification', 'safeguards', 'documentation'],
+  },
+  // Process Hazard Analysis (PHA) - Core HazOps Requirements
+  {
+    id: 'PSM-1910.119(e)',
+    title: 'Process Hazard Analysis',
+    description:
+      'The employer shall perform an initial process hazard analysis (PHA) on processes covered by this standard. ' +
+      'The PHA shall be appropriate to the complexity of the process and shall identify, evaluate, and control ' +
+      'the hazards involved in the process.',
+    keywords: ['PHA', 'process hazard analysis', 'HAZOP', 'hazard identification', 'risk assessment'],
+    mandatory: true,
+    hazopsRelevance: ['hazard_identification', 'risk_assessment', 'methodology'],
+  },
+  {
+    id: 'PSM-1910.119(e)(1)',
+    title: 'PHA priority order',
+    description:
+      'The employer shall determine and document the priority order for conducting process hazard analyses ' +
+      'based on: extent of the process hazards, number of potentially affected employees, age of the process, ' +
+      'and operating history of the process.',
+    keywords: ['priority', 'scheduling', 'hazard extent', 'affected employees', 'process age', 'operating history'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(e)',
+    hazopsRelevance: ['methodology'],
+  },
+  {
+    id: 'PSM-1910.119(e)(2)',
+    title: 'PHA methodology selection',
+    description:
+      'The employer shall use one or more of the following methods: What-If, Checklist, What-If/Checklist, ' +
+      'Hazard and Operability Study (HAZOP), Failure Mode and Effects Analysis (FMEA), Fault Tree Analysis, ' +
+      'or an appropriate equivalent methodology.',
+    keywords: ['HAZOP', 'What-If', 'checklist', 'FMEA', 'fault tree', 'methodology selection'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(e)',
+    hazopsRelevance: ['methodology'],
+  },
+  {
+    id: 'PSM-1910.119(e)(3)',
+    title: 'PHA required content',
+    description:
+      'The PHA shall address: the hazards of the process, identification of previous incidents with likely ' +
+      'potential for catastrophic consequences, engineering and administrative controls applicable to the hazards, ' +
+      'consequences of failure of engineering and administrative controls, facility siting, human factors, and ' +
+      'a qualitative evaluation of possible safety and health effects on employees.',
+    keywords: ['hazards', 'incidents', 'engineering controls', 'administrative controls', 'consequences', 'facility siting', 'human factors'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(e)',
+    hazopsRelevance: ['hazard_identification', 'risk_assessment', 'safeguards'],
+  },
+  {
+    id: 'PSM-1910.119(e)(4)',
+    title: 'PHA team requirements',
+    description:
+      'The PHA shall be performed by a team with expertise in engineering and process operations, and shall ' +
+      'include at least one employee who has experience and knowledge specific to the process being evaluated, ' +
+      'and one member who is knowledgeable in the specific PHA methodology being used.',
+    keywords: ['team', 'expertise', 'engineering', 'operations', 'process knowledge', 'methodology knowledge'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(e)',
+    hazopsRelevance: ['team_composition'],
+  },
+  {
+    id: 'PSM-1910.119(e)(5)',
+    title: 'PHA recommendations and resolution',
+    description:
+      'The employer shall establish a system to promptly address the team\'s findings and recommendations; ' +
+      'assure that the recommendations are resolved in a timely manner and that the resolution is documented; ' +
+      'document what actions are to be taken; complete actions as soon as possible; and communicate the actions ' +
+      'to operating, maintenance, and other employees whose work assignments are in the process.',
+    keywords: ['recommendations', 'resolution', 'action tracking', 'documentation', 'communication', 'timely manner'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(e)',
+    hazopsRelevance: ['recommendations', 'follow_up', 'documentation'],
+  },
+  {
+    id: 'PSM-1910.119(e)(6)',
+    title: 'PHA update and revalidation',
+    description:
+      'At least every five (5) years after the initial process hazard analysis, the PHA shall be updated ' +
+      'and revalidated by a team meeting the team requirements to assure that the PHA is consistent with ' +
+      'the current process.',
+    keywords: ['update', 'revalidation', 'five years', 'periodic review', 'current process'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(e)',
+    hazopsRelevance: ['follow_up', 'methodology'],
+  },
+  {
+    id: 'PSM-1910.119(e)(7)',
+    title: 'PHA documentation retention',
+    description:
+      'Employers shall retain process hazard analyses and updates or revalidations for each process covered ' +
+      'by this standard, as well as the documented resolution of recommendations, for the life of the process.',
+    keywords: ['retention', 'documentation', 'life of process', 'records', 'resolution documentation'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(e)',
+    hazopsRelevance: ['documentation'],
+  },
+  // Operating Procedures
+  {
+    id: 'PSM-1910.119(f)',
+    title: 'Operating procedures',
+    description:
+      'The employer shall develop and implement written operating procedures that provide clear instructions ' +
+      'for safely conducting activities involved in each covered process. The procedures shall address steps ' +
+      'for each operating phase, operating limits, safety and health considerations, and safety systems.',
+    keywords: ['operating procedures', 'SOPs', 'instructions', 'operating limits', 'safety systems'],
+    mandatory: true,
+    hazopsRelevance: ['safeguards', 'documentation'],
+  },
+  {
+    id: 'PSM-1910.119(f)(1)',
+    title: 'Operating procedures content',
+    description:
+      'Operating procedures shall include steps for initial startup, normal operations, temporary operations, ' +
+      'emergency shutdown (including conditions requiring shutdown and assignment of shutdown responsibility), ' +
+      'emergency operations, normal shutdown, and startup following turnaround or emergency shutdown.',
+    keywords: ['startup', 'shutdown', 'emergency', 'normal operations', 'temporary operations', 'turnaround'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(f)',
+    hazopsRelevance: ['safeguards', 'methodology'],
+  },
+  {
+    id: 'PSM-1910.119(f)(2)',
+    title: 'Operating limits',
+    description:
+      'Operating procedures shall include operating limits covering consequences of deviation, steps to correct ' +
+      'or avoid deviation, and safety systems and their functions.',
+    keywords: ['operating limits', 'deviation', 'consequences', 'correction', 'safety systems'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(f)',
+    hazopsRelevance: ['hazard_identification', 'safeguards'],
+  },
+  {
+    id: 'PSM-1910.119(f)(3)',
+    title: 'Safety and health considerations',
+    description:
+      'Operating procedures shall address safety and health considerations including properties and hazards of ' +
+      'chemicals, precautions to prevent exposure, control measures, quality control, and any special or unique hazards.',
+    keywords: ['safety', 'health', 'chemical hazards', 'exposure', 'precautions', 'control measures'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(f)',
+    hazopsRelevance: ['safeguards', 'hazard_identification'],
+  },
+  {
+    id: 'PSM-1910.119(f)(4)',
+    title: 'Operating procedures review',
+    description:
+      'The employer shall certify annually that the operating procedures are current and accurate. ' +
+      'Operating procedures shall be readily accessible to employees who work in or maintain a process.',
+    keywords: ['annual certification', 'current', 'accurate', 'accessible', 'review'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(f)',
+    hazopsRelevance: ['follow_up', 'documentation'],
+  },
+  // Training
+  {
+    id: 'PSM-1910.119(g)',
+    title: 'Training',
+    description:
+      'Initial training: Each employee presently involved in operating a process, and each new employee shall ' +
+      'be trained in an overview of the process and in the operating procedures. The training shall include ' +
+      'emphasis on specific safety and health hazards, emergency operations, and safe work practices.',
+    keywords: ['training', 'initial training', 'operating procedures', 'safety hazards', 'emergency operations'],
+    mandatory: true,
+    hazopsRelevance: ['team_composition', 'safeguards'],
+  },
+  {
+    id: 'PSM-1910.119(g)(1)',
+    title: 'Refresher training',
+    description:
+      'Refresher training shall be provided at least every three years, and more often if necessary, to each ' +
+      'employee involved in operating a process to assure that the employee understands and adheres to the ' +
+      'current operating procedures of the process.',
+    keywords: ['refresher training', 'three years', 'periodic', 'current procedures'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(g)',
+    hazopsRelevance: ['follow_up', 'team_composition'],
+  },
+  {
+    id: 'PSM-1910.119(g)(3)',
+    title: 'Training documentation',
+    description:
+      'The employer shall prepare a record containing the identity of the employee, date of training, and ' +
+      'means used to verify that the employee understood the training.',
+    keywords: ['training records', 'documentation', 'verification', 'employee identity'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(g)',
+    hazopsRelevance: ['documentation'],
+  },
+  // Contractors
+  {
+    id: 'PSM-1910.119(h)',
+    title: 'Contractors',
+    description:
+      'Applies to contractors performing maintenance, repair, turnaround, major renovation, or specialty work ' +
+      'on or adjacent to a covered process. The employer shall inform contract employers of known potential ' +
+      'fire, explosion, or toxic release hazards and applicable provisions of the emergency action plan.',
+    keywords: ['contractors', 'maintenance', 'repair', 'turnaround', 'hazard information', 'emergency plan'],
+    mandatory: true,
+    hazopsRelevance: ['team_composition', 'safeguards'],
+  },
+  {
+    id: 'PSM-1910.119(h)(2)',
+    title: 'Contract employer responsibilities',
+    description:
+      'Contract employers shall assure their employees are trained in work practices necessary to safely ' +
+      'perform their jobs, instructed in known potential hazards, and follow safety rules of the facility.',
+    keywords: ['contract employer', 'training', 'work practices', 'hazards', 'safety rules'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(h)',
+    hazopsRelevance: ['team_composition'],
+  },
+  // Pre-Startup Safety Review (PSSR)
+  {
+    id: 'PSM-1910.119(i)',
+    title: 'Pre-startup safety review',
+    description:
+      'The employer shall perform a pre-startup safety review for new facilities and for modified facilities ' +
+      'when the modification is significant enough to require a change in the process safety information. ' +
+      'The PSSR shall confirm that construction and equipment are in accordance with design specifications.',
+    keywords: ['PSSR', 'pre-startup', 'safety review', 'new facilities', 'modifications', 'design specifications'],
+    mandatory: true,
+    hazopsRelevance: ['follow_up', 'safeguards'],
+  },
+  {
+    id: 'PSM-1910.119(i)(2)',
+    title: 'PSSR content requirements',
+    description:
+      'The pre-startup safety review shall confirm that: construction and equipment are in accordance with design ' +
+      'specifications; safety, operating, maintenance, and emergency procedures are in place and adequate; ' +
+      'a PHA has been performed for new facilities and recommendations resolved; and training is complete.',
+    keywords: ['PSSR checklist', 'design verification', 'procedures in place', 'PHA complete', 'training complete'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(i)',
+    hazopsRelevance: ['follow_up', 'methodology'],
+  },
+  // Mechanical Integrity
+  {
+    id: 'PSM-1910.119(j)',
+    title: 'Mechanical integrity',
+    description:
+      'The employer shall establish and implement written procedures to maintain the ongoing integrity of ' +
+      'process equipment. Equipment covered includes pressure vessels and storage tanks, piping systems, ' +
+      'relief and vent systems, emergency shutdown systems, controls and pumps.',
+    keywords: ['mechanical integrity', 'equipment', 'pressure vessels', 'piping', 'relief systems', 'controls'],
+    mandatory: true,
+    hazopsRelevance: ['safeguards', 'follow_up'],
+  },
+  {
+    id: 'PSM-1910.119(j)(2)',
+    title: 'Written procedures for mechanical integrity',
+    description:
+      'The employer shall establish and implement written procedures to maintain the ongoing integrity of ' +
+      'process equipment covering training for process maintenance activities, inspection and testing ' +
+      'procedures, and equipment deficiencies.',
+    keywords: ['maintenance procedures', 'inspection', 'testing', 'deficiencies', 'written procedures'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(j)',
+    hazopsRelevance: ['documentation', 'follow_up'],
+  },
+  {
+    id: 'PSM-1910.119(j)(4)',
+    title: 'Inspection and testing',
+    description:
+      'Inspections and tests shall be performed on process equipment using procedures that follow recognized ' +
+      'and generally accepted good engineering practices. The frequency of inspections and tests shall be ' +
+      'consistent with applicable manufacturers\' recommendations, good engineering practices, and prior ' +
+      'operating experience.',
+    keywords: ['inspection', 'testing', 'frequency', 'manufacturers recommendations', 'good engineering practices'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(j)',
+    hazopsRelevance: ['safeguards', 'follow_up'],
+  },
+  {
+    id: 'PSM-1910.119(j)(5)',
+    title: 'Equipment deficiencies',
+    description:
+      'The employer shall correct deficiencies in equipment that are outside acceptable limits before further ' +
+      'use, or in a safe and timely manner when necessary means are taken to assure safe operation.',
+    keywords: ['deficiencies', 'correction', 'acceptable limits', 'safe operation', 'timely'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(j)',
+    hazopsRelevance: ['safeguards', 'recommendations'],
+  },
+  {
+    id: 'PSM-1910.119(j)(6)',
+    title: 'Quality assurance for equipment',
+    description:
+      'In construction of new plants and equipment, the employer shall assure that equipment as fabricated ' +
+      'is suitable for the process application. Appropriate checks and inspections shall be performed.',
+    keywords: ['quality assurance', 'fabrication', 'suitability', 'new plants', 'equipment verification'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(j)',
+    hazopsRelevance: ['safeguards'],
+  },
+  // Hot Work Permit
+  {
+    id: 'PSM-1910.119(k)',
+    title: 'Hot work permit',
+    description:
+      'The employer shall issue a hot work permit for hot work operations conducted on or near a covered process. ' +
+      'The permit shall document that fire prevention and protection requirements in 29 CFR 1910.252(a) have ' +
+      'been implemented prior to beginning the hot work operations.',
+    keywords: ['hot work', 'permit', 'fire prevention', 'welding', 'cutting', 'burning'],
+    mandatory: true,
+    hazopsRelevance: ['safeguards', 'hazard_identification'],
+  },
+  // Management of Change (MOC)
+  {
+    id: 'PSM-1910.119(l)',
+    title: 'Management of change',
+    description:
+      'The employer shall establish and implement written procedures to manage changes (except replacement in kind) ' +
+      'to process chemicals, technology, equipment, and procedures; and changes to facilities that affect a ' +
+      'covered process.',
+    keywords: ['MOC', 'management of change', 'change management', 'procedures', 'technology', 'equipment'],
+    mandatory: true,
+    hazopsRelevance: ['management_of_change'],
+  },
+  {
+    id: 'PSM-1910.119(l)(2)',
+    title: 'MOC procedures content',
+    description:
+      'Procedures shall assure that the following considerations are addressed prior to any change: the technical ' +
+      'basis for the proposed change; impact of change on safety and health; modifications to operating procedures; ' +
+      'necessary time period for the change; and authorization requirements for the proposed change.',
+    keywords: ['technical basis', 'safety impact', 'health impact', 'operating procedures', 'authorization'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(l)',
+    hazopsRelevance: ['management_of_change', 'risk_assessment'],
+  },
+  {
+    id: 'PSM-1910.119(l)(3)',
+    title: 'MOC training and communication',
+    description:
+      'Employees involved in operating a process and maintenance and contract employees whose job tasks will be ' +
+      'affected by a change in the process shall be informed of, and trained in, the change prior to startup ' +
+      'of the process or affected part of the process.',
+    keywords: ['training', 'communication', 'affected employees', 'change notification', 'startup'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(l)',
+    hazopsRelevance: ['management_of_change', 'team_composition'],
+  },
+  {
+    id: 'PSM-1910.119(l)(4)',
+    title: 'MOC documentation updates',
+    description:
+      'If a change covered by this paragraph results in a change in process safety information, operating procedures, ' +
+      'or practices, such information shall be updated accordingly.',
+    keywords: ['documentation update', 'PSI update', 'procedures update', 'change impact'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(l)',
+    hazopsRelevance: ['management_of_change', 'documentation'],
+  },
+  // Incident Investigation
+  {
+    id: 'PSM-1910.119(m)',
+    title: 'Incident investigation',
+    description:
+      'The employer shall investigate each incident which resulted in, or could reasonably have resulted in, ' +
+      'a catastrophic release of highly hazardous chemical in the workplace. An incident investigation shall ' +
+      'be initiated as promptly as possible, but not later than 48 hours following the incident.',
+    keywords: ['incident investigation', 'catastrophic release', '48 hours', 'near miss', 'investigation'],
+    mandatory: true,
+    hazopsRelevance: ['follow_up', 'hazard_identification'],
+  },
+  {
+    id: 'PSM-1910.119(m)(3)',
+    title: 'Incident investigation team',
+    description:
+      'An incident investigation team shall be established and consist of at least one person knowledgeable ' +
+      'in the process involved, including a contract employee if the incident involved work of the contractor, ' +
+      'and other persons with appropriate knowledge and experience to thoroughly investigate and analyze the incident.',
+    keywords: ['investigation team', 'process knowledge', 'contractor involvement', 'expertise'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(m)',
+    hazopsRelevance: ['team_composition'],
+  },
+  {
+    id: 'PSM-1910.119(m)(4)',
+    title: 'Incident investigation report',
+    description:
+      'A report shall be prepared at the conclusion of the investigation including: date of incident, date ' +
+      'investigation began, description of incident, factors that contributed to the incident, and any ' +
+      'recommendations resulting from the investigation.',
+    keywords: ['incident report', 'contributing factors', 'recommendations', 'investigation report'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(m)',
+    hazopsRelevance: ['documentation', 'recommendations'],
+  },
+  {
+    id: 'PSM-1910.119(m)(6)',
+    title: 'Incident investigation follow-up',
+    description:
+      'The employer shall establish a system to promptly address and resolve the incident report findings and ' +
+      'recommendations. Resolutions and corrective actions shall be documented.',
+    keywords: ['follow-up', 'resolution', 'corrective actions', 'recommendations tracking'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(m)',
+    hazopsRelevance: ['follow_up', 'recommendations'],
+  },
+  {
+    id: 'PSM-1910.119(m)(7)',
+    title: 'Incident investigation retention',
+    description:
+      'The report shall be reviewed with all affected personnel whose job tasks are relevant to the incident ' +
+      'findings. Incident investigation reports shall be retained for five years.',
+    keywords: ['retention', 'five years', 'review', 'affected personnel'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(m)',
+    hazopsRelevance: ['documentation', 'follow_up'],
+  },
+  // Emergency Planning and Response
+  {
+    id: 'PSM-1910.119(n)',
+    title: 'Emergency planning and response',
+    description:
+      'The employer shall establish and implement an emergency action plan for the entire plant in accordance ' +
+      'with the provisions of 29 CFR 1910.38. The plan shall include procedures for handling small releases ' +
+      'and must address emergency medical treatment.',
+    keywords: ['emergency plan', 'emergency response', 'small releases', 'medical treatment', 'action plan'],
+    mandatory: true,
+    hazopsRelevance: ['safeguards', 'recommendations'],
+  },
+  // Compliance Audits
+  {
+    id: 'PSM-1910.119(o)',
+    title: 'Compliance audits',
+    description:
+      'Employers shall certify that they have evaluated compliance with the provisions of this section at least ' +
+      'every three years to verify that the procedures and practices developed under this standard are adequate ' +
+      'and are being followed.',
+    keywords: ['compliance audit', 'three years', 'certification', 'verification', 'evaluation'],
+    mandatory: true,
+    hazopsRelevance: ['follow_up', 'methodology'],
+  },
+  {
+    id: 'PSM-1910.119(o)(2)',
+    title: 'Compliance audit team',
+    description:
+      'The compliance audit shall be conducted by at least one person knowledgeable in the process.',
+    keywords: ['audit team', 'process knowledge', 'auditor qualifications'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(o)',
+    hazopsRelevance: ['team_composition'],
+  },
+  {
+    id: 'PSM-1910.119(o)(3)',
+    title: 'Compliance audit report and follow-up',
+    description:
+      'A report of the findings of the audit shall be developed. The employer shall promptly determine and ' +
+      'document an appropriate response to each finding, and document deficiencies that have been corrected.',
+    keywords: ['audit report', 'findings', 'response', 'deficiency correction', 'documentation'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(o)',
+    hazopsRelevance: ['documentation', 'follow_up'],
+  },
+  {
+    id: 'PSM-1910.119(o)(4)',
+    title: 'Compliance audit retention',
+    description:
+      'The employer shall retain the two most recent compliance audit reports.',
+    keywords: ['audit retention', 'two most recent', 'records'],
+    mandatory: true,
+    parentClauseId: 'PSM-1910.119(o)',
+    hazopsRelevance: ['documentation'],
+  },
+  // Trade Secrets
+  {
+    id: 'PSM-1910.119(p)',
+    title: 'Trade secrets',
+    description:
+      'Employers shall make all information necessary to comply with this section available to persons responsible ' +
+      'for compiling PSI, developing the PHA, developing operating procedures, conducting incident investigations, ' +
+      'emergency planning, and compliance audits without regard to possible trade secret status of such information.',
+    keywords: ['trade secrets', 'information access', 'confidentiality', 'disclosure'],
+    mandatory: true,
+    hazopsRelevance: ['documentation', 'methodology'],
+  },
+  // HazOps-specific Guidance
+  {
+    id: 'PSM-HazOps-1',
+    title: 'OSHA PSM HazOps requirements summary',
+    description:
+      'When conducting HazOps under OSHA PSM: use an appropriate methodology (HAZOP explicitly listed), include ' +
+      'team members with process-specific knowledge and methodology expertise, address hazards, previous incidents, ' +
+      'engineering/administrative controls, consequences of control failure, facility siting, and human factors.',
+    keywords: ['HazOps', 'HAZOP', 'PSM requirements', 'team composition', 'methodology', 'content requirements'],
+    mandatory: false,
+    hazopsRelevance: ['hazard_identification', 'methodology', 'team_composition'],
+  },
+  {
+    id: 'PSM-HazOps-2',
+    title: 'PSM safeguards documentation',
+    description:
+      'Typical safeguards identified during PSM HazOps include: safety instrumented systems (SIS), basic process ' +
+      'control systems (BPCS), relief devices, mechanical interlocks, administrative controls, operating procedures, ' +
+      'emergency shutdown systems, alarms, and human intervention.',
+    keywords: ['safeguards', 'SIS', 'BPCS', 'relief', 'interlocks', 'ESD', 'alarms'],
+    mandatory: false,
+    hazopsRelevance: ['safeguards', 'recommendations'],
+  },
+  {
+    id: 'PSM-HazOps-3',
+    title: 'PSM deviation scenarios',
+    description:
+      'Common deviation scenarios to consider in PSM HazOps: loss of containment, runaway reactions, overpressure, ' +
+      'underpressure/vacuum, high/low temperature, high/low flow, reverse flow, composition upset, utility failures, ' +
+      'and loss of cooling or heating.',
+    keywords: ['deviation', 'loss of containment', 'runaway reaction', 'overpressure', 'flow upset', 'utility failure'],
+    mandatory: false,
+    hazopsRelevance: ['hazard_identification', 'risk_assessment'],
+  },
+];
+
+/**
+ * OSHA PSM standard definition.
+ */
+const OSHA_PSM: RegulatoryStandard = {
+  id: 'OSHA_PSM',
+  name: 'OSHA PSM',
+  title: 'Process Safety Management of Highly Hazardous Chemicals (29 CFR 1910.119)',
+  description:
+    'US federal OSHA standard for preventing or minimizing consequences of catastrophic releases ' +
+    'of highly hazardous chemicals. Applies to processes involving chemicals at or above threshold ' +
+    'quantities listed in Appendix A, or flammable liquids/gases in quantities of 10,000 pounds or more. ' +
+    'Requires comprehensive process safety management including Process Hazard Analysis (PHA) using ' +
+    'methods such as HAZOP, management of change, mechanical integrity, and incident investigation.',
+  category: 'process_safety',
+  jurisdiction: 'united_states',
+  version: '1992 (amended)',
+  year: 1992,
+  issuingBody: 'Occupational Safety and Health Administration (OSHA)',
+  url: 'https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.119',
+  mandatory: true,
+  relatedStandards: ['IEC_61511', 'EPA_RMP', 'ISO_31000'],
+  relevantClauses: OSHA_PSM_CLAUSES,
+};
+
+// ============================================================================
 // Standards Database
 // ============================================================================
 
@@ -1204,6 +1868,7 @@ const REGULATORY_STANDARDS_DATABASE: Map<RegulatoryStandardId, RegulatoryStandar
   ['ISO_9001', ISO_9001],
   ['ATEX_DSEAR', ATEX_DSEAR],
   ['PED', PED],
+  ['OSHA_PSM', OSHA_PSM],
 ]);
 
 // ============================================================================
