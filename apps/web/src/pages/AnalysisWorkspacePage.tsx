@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
-import { Button, Alert, Loader, Select } from '@mantine/core';
+import { Button, Alert, Loader } from '@mantine/core';
 import { useAuthStore, selectUser } from '../store/auth.store';
 import { authService } from '../services/auth.service';
 import { analysesService } from '../services/analyses.service';
@@ -8,6 +8,7 @@ import { documentsService } from '../services/documents.service';
 import { nodesService } from '../services/nodes.service';
 import { PIDViewer } from '../components/documents/PIDViewer';
 import { NodeOverlay } from '../components/documents/NodeOverlay';
+import { GuideWordSelector } from '../components/analyses';
 import type {
   ApiError,
   HazopsAnalysisWithDetails,
@@ -16,9 +17,7 @@ import type {
   GuideWord,
 } from '@hazop/types';
 import {
-  GUIDE_WORDS,
   GUIDE_WORD_LABELS,
-  GUIDE_WORD_DESCRIPTIONS,
   ANALYSIS_STATUS_LABELS,
 } from '@hazop/types';
 
@@ -465,29 +464,11 @@ export function AnalysisWorkspacePage() {
                 </div>
 
                 {/* Guide Word Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Guide Word
-                  </label>
-                  <Select
-                    placeholder="Select a guide word"
-                    value={selectedGuideWord}
-                    onChange={(value) => setSelectedGuideWord(value as GuideWord | null)}
-                    data={GUIDE_WORDS.map((gw) => ({
-                      value: gw,
-                      label: GUIDE_WORD_LABELS[gw],
-                    }))}
-                    styles={{
-                      input: { borderRadius: '4px' },
-                      dropdown: { borderRadius: '4px' },
-                    }}
-                  />
-                  {selectedGuideWord && (
-                    <p className="text-xs text-slate-500 mt-2">
-                      {GUIDE_WORD_DESCRIPTIONS[selectedGuideWord]}
-                    </p>
-                  )}
-                </div>
+                <GuideWordSelector
+                  value={selectedGuideWord}
+                  onChange={setSelectedGuideWord}
+                  disabled={analysis.status !== 'draft'}
+                />
 
                 {/* Analysis Form Placeholder */}
                 {selectedGuideWord && (
