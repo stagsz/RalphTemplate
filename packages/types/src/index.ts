@@ -264,3 +264,41 @@ export {
   LOPA_GAP_STATUS_COLORS,
   DEFAULT_LOPA_TRIGGER_CONFIG,
 } from './lopa.js';
+
+// Compliance and Regulatory Standards types
+export type {
+  RegulatoryStandardId,
+  RegulatoryCategory,
+  RegulatoryJurisdiction,
+  RegulatoryStandard,
+  RegulatoryClause,
+  HazopsRelevanceArea,
+  ComplianceStatus,
+  ComplianceCheckResult,
+  StandardComplianceSummary,
+  ComplianceReport,
+  ComplianceGap,
+  ComplianceValidationInput,
+  ComplianceValidationResult,
+  ListRegulatoryStandardsQuery,
+  ComplianceStatusQuery,
+  ComplianceStatusResponse,
+} from './compliance.js';
+
+export {
+  REGULATORY_STANDARD_IDS,
+  REGULATORY_STANDARD_NAMES,
+  REGULATORY_STANDARD_TITLES,
+  REGULATORY_STANDARD_DESCRIPTIONS,
+  REGULATORY_CATEGORIES,
+  REGULATORY_CATEGORY_LABELS,
+  REGULATORY_STANDARD_CATEGORIES,
+  REGULATORY_JURISDICTIONS,
+  REGULATORY_JURISDICTION_LABELS,
+  REGULATORY_STANDARD_JURISDICTIONS,
+  HAZOPS_RELEVANCE_AREAS,
+  HAZOPS_RELEVANCE_AREA_LABELS,
+  COMPLIANCE_STATUSES,
+  COMPLIANCE_STATUS_LABELS,
+  COMPLIANCE_STATUS_COLORS,
+} from './compliance.js';
