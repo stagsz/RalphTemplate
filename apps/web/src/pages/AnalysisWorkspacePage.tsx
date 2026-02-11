@@ -8,7 +8,7 @@ import { documentsService } from '../services/documents.service';
 import { nodesService } from '../services/nodes.service';
 import { PIDViewer } from '../components/documents/PIDViewer';
 import { NodeOverlay } from '../components/documents/NodeOverlay';
-import { GuideWordSelector, DeviationInputForm } from '../components/analyses';
+import { GuideWordSelector, DeviationInputForm, CausesInput } from '../components/analyses';
 import type {
   ApiError,
   HazopsAnalysisWithDetails,
@@ -77,6 +77,10 @@ export function AnalysisWorkspacePage() {
   // Node selection state
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedGuideWord, setSelectedGuideWord] = useState<GuideWord | null>(null);
+
+  // Current entry state (for editing causes after entry creation)
+  const [currentEntry, setCurrentEntry] = useState<AnalysisEntry | null>(null);
+  const [entryCauses, setEntryCauses] = useState<string[]>([]);
 
   // Split-pane state
   const [leftPaneWidth, setLeftPaneWidth] = useState<number | null>(null);
@@ -203,17 +207,55 @@ export function AnalysisWorkspacePage() {
    */
   const handleNodeClick = useCallback((node: AnalysisNodeWithCreator) => {
     setSelectedNodeId(node.id);
-    // Reset guide word selection when changing nodes
+    // Reset guide word and current entry when changing nodes
     setSelectedGuideWord(null);
+    setCurrentEntry(null);
+    setEntryCauses([]);
   }, []);
 
   /**
    * Handle successful creation of an analysis entry.
+   * After an entry is created, show the CausesInput for adding causes.
    */
   const handleEntryCreated = useCallback((entry: AnalysisEntry) => {
-    // Entry created successfully - could add notification or update state here
-    // For now, we just log it and keep the form ready for the next entry
-    console.log('Analysis entry created:', entry.id);
+    // Set the current entry so we can show CausesInput
+    setCurrentEntry(entry);
+    setEntryCauses(entry.causes || []);
+  }, []);
+
+  /**
+   * Handle changes to entry causes.
+   * Updates the entry on the server when causes change.
+   */
+  const handleCausesChange = useCallback(
+    async (causes: string[]) => {
+      if (!currentEntry) return;
+
+      // Optimistically update local state
+      setEntryCauses(causes);
+
+      // Update entry on the server
+      const result = await analysesService.updateAnalysisEntry(currentEntry.id, { causes });
+
+      if (result.success && result.data) {
+        // Update current entry with server response
+        setCurrentEntry(result.data.entry);
+      } else {
+        // Revert on error - restore previous causes
+        setEntryCauses(currentEntry.causes || []);
+        console.error('Failed to update causes:', result.error);
+      }
+    },
+    [currentEntry]
+  );
+
+  /**
+   * Clear the current entry and allow creating a new one.
+   */
+  const handleClearEntry = useCallback(() => {
+    setCurrentEntry(null);
+    setEntryCauses([]);
+    setSelectedGuideWord(null);
   }, []);
 
   /**
@@ -480,8 +522,8 @@ export function AnalysisWorkspacePage() {
                   disabled={analysis.status !== 'draft'}
                 />
 
-                {/* Deviation Input Form */}
-                {selectedGuideWord && (
+                {/* Deviation Input Form - shown when guide word selected but no entry created yet */}
+                {selectedGuideWord && !currentEntry && (
                   <DeviationInputForm
                     analysisId={analysis.id}
                     nodeId={selectedNode.id}
@@ -492,6 +534,44 @@ export function AnalysisWorkspacePage() {
                     onEntryCreated={handleEntryCreated}
                     onClear={() => setSelectedGuideWord(null)}
                   />
+                )}
+
+                {/* Causes Input - shown after an entry is created */}
+                {currentEntry && selectedGuideWord && (
+                  <div className="space-y-4">
+                    {/* Entry Summary */}
+                    <div className="bg-green-50 border border-green-200 rounded p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-medium text-green-700 uppercase tracking-wide">
+                            Entry Created
+                          </span>
+                          <div className="text-sm font-medium text-slate-900 mt-1">
+                            {currentEntry.parameter}: {currentEntry.deviation}
+                          </div>
+                        </div>
+                        <Button
+                          variant="subtle"
+                          color="gray"
+                          size="xs"
+                          onClick={handleClearEntry}
+                          styles={{ root: { borderRadius: '4px' } }}
+                        >
+                          New Entry
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Causes Input */}
+                    <CausesInput
+                      nodeIdentifier={selectedNode.nodeId}
+                      equipmentType={selectedNode.equipmentType}
+                      guideWord={selectedGuideWord}
+                      value={entryCauses}
+                      onChange={handleCausesChange}
+                      disabled={analysis.status !== 'draft'}
+                    />
+                  </div>
                 )}
               </div>
             )}

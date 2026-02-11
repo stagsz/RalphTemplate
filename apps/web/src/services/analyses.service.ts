@@ -55,6 +55,13 @@ export interface CreateAnalysisEntryResponse {
 }
 
 /**
+ * Response type for updating an analysis entry.
+ */
+export interface UpdateAnalysisEntryResponse {
+  entry: AnalysisEntry;
+}
+
+/**
  * Payload for creating an analysis entry.
  */
 export interface CreateAnalysisEntryPayload {
@@ -67,6 +74,19 @@ export interface CreateAnalysisEntryPayload {
   safeguards?: string[];
   recommendations?: string[];
   notes?: string;
+}
+
+/**
+ * Payload for updating an analysis entry.
+ * All fields are optional - only provided fields are updated.
+ */
+export interface UpdateAnalysisEntryPayload {
+  deviation?: string;
+  causes?: string[];
+  consequences?: string[];
+  safeguards?: string[];
+  recommendations?: string[];
+  notes?: string | null;
 }
 
 /**
@@ -229,5 +249,19 @@ export const analysesService = {
     data: CreateAnalysisEntryPayload
   ): Promise<ApiResult<CreateAnalysisEntryResponse>> {
     return api.post<CreateAnalysisEntryResponse>(`/analyses/${analysisId}/entries`, data);
+  },
+
+  /**
+   * Update an existing analysis entry.
+   *
+   * @param entryId - The ID of the entry to update
+   * @param data - Update data (deviation, causes, consequences, safeguards, recommendations, notes)
+   * @returns Promise resolving to the API result with updated entry
+   */
+  async updateAnalysisEntry(
+    entryId: string,
+    data: UpdateAnalysisEntryPayload
+  ): Promise<ApiResult<UpdateAnalysisEntryResponse>> {
+    return api.put<UpdateAnalysisEntryResponse>(`/entries/${entryId}`, data);
   },
 };
