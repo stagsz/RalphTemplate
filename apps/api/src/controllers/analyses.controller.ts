@@ -36,6 +36,7 @@ import {
   calculateRiskRanking,
   validateRiskFactors,
 } from '../services/risk-calculation.service.js';
+import { getWebSocketService } from '../services/websocket.service.js';
 import {
   userHasProjectAccess,
   findProjectById,
@@ -1568,6 +1569,10 @@ export async function createAnalysisEntry(req: Request, res: Response): Promise<
       notes: typeof body.notes === 'string' ? body.notes : undefined,
     });
 
+    // Broadcast entry creation to all users in the collaboration room
+    const wsService = getWebSocketService();
+    wsService.broadcastEntryCreated(analysisId, entry as unknown as Record<string, unknown>, userId);
+
     res.status(201).json({
       success: true,
       data: { entry },
@@ -2056,6 +2061,15 @@ export async function updateEntry(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    // Broadcast entry update to all users in the collaboration room
+    const wsService = getWebSocketService();
+    wsService.broadcastEntryUpdate(
+      existingEntry.analysisId,
+      entryId,
+      updateData as Record<string, unknown>,
+      userId
+    );
+
     res.status(200).json({
       success: true,
       data: { entry: updatedEntry },
@@ -2195,6 +2209,10 @@ export async function deleteEntry(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    // Broadcast entry deletion to all users in the collaboration room
+    const wsService = getWebSocketService();
+    wsService.broadcastEntryDeleted(existingEntry.analysisId, entryId, userId);
+
     res.status(200).json({
       success: true,
       data: {
@@ -2333,6 +2351,10 @@ export async function updateEntryRisk(req: Request, res: Response): Promise<void
         return;
       }
 
+      // Broadcast risk cleared to all users in the collaboration room
+      const wsService = getWebSocketService();
+      wsService.broadcastRiskUpdate(existingEntry.analysisId, entryId, {}, userId);
+
       res.status(200).json({
         success: true,
         data: { entry: clearedEntry },
@@ -2457,6 +2479,21 @@ export async function updateEntryRisk(req: Request, res: Response): Promise<void
       });
       return;
     }
+
+    // Broadcast risk update to all users in the collaboration room
+    const wsService = getWebSocketService();
+    wsService.broadcastRiskUpdate(
+      existingEntry.analysisId,
+      entryId,
+      {
+        severity: riskRanking.severity,
+        likelihood: riskRanking.likelihood,
+        detectability: riskRanking.detectability,
+        riskScore: riskRanking.riskScore,
+        riskLevel: riskRanking.riskLevel,
+      },
+      userId
+    );
 
     res.status(200).json({
       success: true,
