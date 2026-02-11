@@ -1,11 +1,10 @@
 /**
- * Project Compliance Service.
+ * Compliance Service.
  *
- * Provides functions for retrieving project-level compliance status
- * by aggregating all analysis entries and validating against regulatory
- * standards.
+ * Provides functions for retrieving project-level and analysis-level compliance status
+ * by aggregating analysis entries and validating against regulatory standards.
  *
- * Task: COMP-10
+ * Task: COMP-10, COMP-11
  */
 
 import { getPool } from '../config/database.config.js';
@@ -315,6 +314,228 @@ export async function getProjectComplianceReport(
   return generateComplianceReport(
     projectId,
     undefined, // No specific analysis - project-level
+    entries,
+    standardsToCheck,
+    userId,
+    { hasLOPA }
+  );
+}
+
+// ============================================================================
+// Analysis-Level Compliance Types
+// ============================================================================
+
+/**
+ * Analysis-level compliance status response.
+ */
+export interface AnalysisComplianceStatus {
+  /** Analysis ID */
+  analysisId: string;
+
+  /** Analysis name */
+  analysisName: string;
+
+  /** Project ID */
+  projectId: string;
+
+  /** Analysis status */
+  analysisStatus: string;
+
+  /** Total number of entries in the analysis */
+  entryCount: number;
+
+  /** Whether any entries have LOPA analysis */
+  hasLOPA: boolean;
+
+  /** Number of entries with LOPA */
+  lopaCount: number;
+
+  /** Standards that were checked */
+  standardsChecked: RegulatoryStandardId[];
+
+  /** Overall compliance status */
+  overallStatus: ComplianceStatus;
+
+  /** Overall compliance percentage (0-100) */
+  overallPercentage: number;
+
+  /** Summary per regulatory standard */
+  summaries: StandardComplianceSummary[];
+
+  /** Timestamp of compliance check */
+  checkedAt: Date;
+}
+
+// ============================================================================
+// Analysis-Level Compliance Functions
+// ============================================================================
+
+/**
+ * Get analysis compliance status by validating all entries against regulatory standards.
+ *
+ * Fetches all entries for a specific analysis session, checks LOPA coverage, and
+ * validates against the specified regulatory standards.
+ *
+ * @param analysisId - Analysis ID
+ * @param standards - Standards to validate against (defaults to all available)
+ * @returns Analysis compliance status, or null if analysis not found
+ */
+export async function getAnalysisComplianceStatus(
+  analysisId: string,
+  standards?: RegulatoryStandardId[]
+): Promise<AnalysisComplianceStatus | null> {
+  const pool = getPool();
+
+  // Check if analysis exists and get its details
+  const analysisResult = await pool.query<{
+    id: string;
+    name: string;
+    project_id: string;
+    status: string;
+  }>(
+    `SELECT id, name, project_id, status
+     FROM hazop.hazop_analyses
+     WHERE id = $1`,
+    [analysisId]
+  );
+
+  if (analysisResult.rows.length === 0) {
+    return null;
+  }
+
+  const analysis = analysisResult.rows[0];
+
+  // Execute queries in parallel for efficiency
+  const [entriesResult, lopaCountResult] = await Promise.all([
+    // Get all entries for this analysis
+    pool.query<AnalysisEntryRow>(
+      `SELECT *
+       FROM hazop.analysis_entries
+       WHERE analysis_id = $1
+       ORDER BY created_at`,
+      [analysisId]
+    ),
+
+    // Count entries with LOPA analyses
+    pool.query<LOPACountRow>(
+      `SELECT COUNT(*) AS count
+       FROM hazop.lopa_analyses la
+       JOIN hazop.analysis_entries ae ON la.analysis_entry_id = ae.id
+       WHERE ae.analysis_id = $1`,
+      [analysisId]
+    ),
+  ]);
+
+  const entries = entriesResult.rows.map(rowToAnalysisEntry);
+  const lopaCount = parseInt(lopaCountResult.rows[0].count, 10);
+  const hasLOPA = lopaCount > 0;
+
+  // Default to all available standards if not specified
+  const standardsToCheck = standards ?? [...REGULATORY_STANDARD_IDS];
+
+  // Handle empty entries case
+  if (entries.length === 0) {
+    return {
+      analysisId,
+      analysisName: analysis.name,
+      projectId: analysis.project_id,
+      analysisStatus: analysis.status,
+      entryCount: 0,
+      hasLOPA: false,
+      lopaCount: 0,
+      standardsChecked: standardsToCheck,
+      overallStatus: 'not_assessed',
+      overallPercentage: 0,
+      summaries: [],
+      checkedAt: new Date(),
+    };
+  }
+
+  // Validate compliance against standards
+  const validationResult = validateCompliance(entries, standardsToCheck, {
+    includeRecommendations: true,
+    hasLOPA,
+  });
+
+  return {
+    analysisId,
+    analysisName: analysis.name,
+    projectId: analysis.project_id,
+    analysisStatus: analysis.status,
+    entryCount: entries.length,
+    hasLOPA,
+    lopaCount,
+    standardsChecked: standardsToCheck,
+    overallStatus: validationResult.overallStatus,
+    overallPercentage: validationResult.summaries.length > 0
+      ? Math.round(
+          validationResult.summaries.reduce((sum, s) => sum + s.compliancePercentage, 0) /
+            validationResult.summaries.length
+        )
+      : 0,
+    summaries: validationResult.summaries,
+    checkedAt: new Date(),
+  };
+}
+
+/**
+ * Get detailed compliance report for an analysis.
+ *
+ * Generates a comprehensive compliance report with check results,
+ * critical gaps, and remediation recommendations.
+ *
+ * @param analysisId - Analysis ID
+ * @param userId - ID of user generating the report
+ * @param standards - Standards to validate against (defaults to all available)
+ * @returns Compliance report, or null if analysis not found
+ */
+export async function getAnalysisComplianceReport(
+  analysisId: string,
+  userId: string,
+  standards?: RegulatoryStandardId[]
+): Promise<ReturnType<typeof generateComplianceReport> | null> {
+  const pool = getPool();
+
+  // Check if analysis exists
+  const analysisResult = await pool.query<{ id: string; project_id: string }>(
+    `SELECT id, project_id FROM hazop.hazop_analyses WHERE id = $1`,
+    [analysisId]
+  );
+
+  if (analysisResult.rows.length === 0) {
+    return null;
+  }
+
+  const projectId = analysisResult.rows[0].project_id;
+
+  // Get all entries for this analysis
+  const entriesResult = await pool.query<AnalysisEntryRow>(
+    `SELECT *
+     FROM hazop.analysis_entries
+     WHERE analysis_id = $1
+     ORDER BY created_at`,
+    [analysisId]
+  );
+
+  const entries = entriesResult.rows.map(rowToAnalysisEntry);
+
+  // Check for LOPA
+  const lopaResult = await pool.query<{ count: string }>(
+    `SELECT COUNT(*) AS count
+     FROM hazop.lopa_analyses la
+     JOIN hazop.analysis_entries ae ON la.analysis_entry_id = ae.id
+     WHERE ae.analysis_id = $1`,
+    [analysisId]
+  );
+  const hasLOPA = parseInt(lopaResult.rows[0].count, 10) > 0;
+
+  // Default to all available standards if not specified
+  const standardsToCheck = standards ?? [...REGULATORY_STANDARD_IDS];
+
+  // Generate compliance report
+  return generateComplianceReport(
+    projectId,
+    analysisId,
     entries,
     standardsToCheck,
     userId,

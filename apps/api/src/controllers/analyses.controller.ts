@@ -3315,3 +3315,154 @@ export async function getEntryLOPA(req: Request, res: Response): Promise<void> {
     });
   }
 }
+
+// ============================================================================
+// Analysis Compliance
+// ============================================================================
+
+import { getAnalysisComplianceStatus } from '../services/project-compliance.service.js';
+import { REGULATORY_STANDARD_IDS } from '@hazop/types';
+import type { RegulatoryStandardId } from '@hazop/types';
+
+/**
+ * GET /analyses/:id/compliance
+ * Get compliance status for a HazOps analysis validated against regulatory standards.
+ * Returns compliance validation results across all entries in the analysis.
+ *
+ * Path parameters:
+ * - id: string (required) - Analysis UUID
+ *
+ * Query parameters:
+ * - standards: string (optional) - Comma-separated list of regulatory standard IDs to check
+ *   Defaults to all available standards if not specified.
+ *   Valid values: IEC_61511, ISO_31000, ISO_9001, ATEX_DSEAR, PED, OSHA_PSM, EPA_RMP, SEVESO_III
+ *
+ * Returns:
+ * - 200: Analysis compliance status with standard-by-standard breakdown
+ * - 400: Invalid UUID format or invalid standard IDs
+ * - 401: Not authenticated
+ * - 403: Not authorized to access this analysis
+ * - 404: Analysis not found
+ * - 500: Internal server error
+ */
+export async function getAnalysisCompliance(req: Request, res: Response): Promise<void> {
+  try {
+    const { id: analysisId } = req.params;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format
+    if (!UUID_REGEX.test(analysisId)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid analysis ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Analysis ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Parse and validate standards query parameter
+    let standardsToCheck: RegulatoryStandardId[] | undefined;
+    const standardsQuery = req.query.standards as string | undefined;
+
+    if (standardsQuery) {
+      const requestedStandards = standardsQuery.split(',').map((s) => s.trim());
+      const validStandards = REGULATORY_STANDARD_IDS as readonly string[];
+      const invalidStandards = requestedStandards.filter((s) => !validStandards.includes(s));
+
+      if (invalidStandards.length > 0) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid regulatory standard IDs',
+            errors: [
+              {
+                field: 'standards',
+                message: `Invalid standard IDs: ${invalidStandards.join(', ')}. Valid values are: ${REGULATORY_STANDARD_IDS.join(', ')}`,
+                code: 'INVALID_VALUE',
+              },
+            ],
+          },
+        });
+        return;
+      }
+
+      standardsToCheck = requestedStandards as RegulatoryStandardId[];
+    }
+
+    // Check if analysis exists
+    const existingAnalysis = await findAnalysisById(analysisId);
+    if (!existingAnalysis) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Analysis not found',
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project that owns this analysis
+    const hasAccess = await userHasProjectAccess(userId, existingAnalysis.projectId);
+    if (!hasAccess) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this analysis',
+        },
+      });
+      return;
+    }
+
+    // Get the analysis compliance status
+    const complianceStatus = await getAnalysisComplianceStatus(analysisId, standardsToCheck);
+    if (!complianceStatus) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Analysis not found',
+        },
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: complianceStatus,
+    });
+  } catch (error) {
+    console.error('Get analysis compliance error:', error);
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}

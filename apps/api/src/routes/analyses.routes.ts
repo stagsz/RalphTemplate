@@ -4,15 +4,18 @@
  * Provides endpoints for HazOps analysis session operations:
  * - GET /analyses/:id - Get analysis session details with progress metrics
  * - PUT /analyses/:id - Update analysis session metadata
+ * - POST /analyses/:id/complete - Finalize/complete an analysis
  * - POST /analyses/:id/entries - Create analysis entry for node/guideword
  * - GET /analyses/:id/entries - List analysis entries with filtering/pagination
+ * - GET /analyses/:id/risk-summary - Get aggregated risk summary
+ * - GET /analyses/:id/compliance - Get compliance status against regulatory standards
  *
  * All routes require authentication.
  */
 
 import { Router } from 'express';
 import { authenticate, requireAuth } from '../middleware/auth.middleware.js';
-import { getAnalysisById, updateAnalysis, createAnalysisEntry, listEntries, completeAnalysis, getRiskSummary } from '../controllers/analyses.controller.js';
+import { getAnalysisById, updateAnalysis, createAnalysisEntry, listEntries, completeAnalysis, getRiskSummary, getAnalysisCompliance } from '../controllers/analyses.controller.js';
 
 const router = Router();
 
@@ -129,5 +132,35 @@ router.get('/:id/entries', authenticate, requireAuth, listEntries);
  * Only accessible if the user is a member of the project that owns the analysis.
  */
 router.get('/:id/risk-summary', authenticate, requireAuth, getRiskSummary);
+
+/**
+ * GET /analyses/:id/compliance
+ * Get compliance status for a HazOps analysis validated against regulatory standards.
+ *
+ * Path parameters:
+ * - id: string (required) - Analysis UUID
+ *
+ * Query parameters:
+ * - standards: string (optional) - Comma-separated list of regulatory standard IDs to check
+ *   Defaults to all available standards if not specified.
+ *   Valid values: IEC_61511, ISO_31000, ISO_9001, ATEX_DSEAR, PED, OSHA_PSM, EPA_RMP, SEVESO_III
+ *
+ * Returns:
+ * - analysisId: Analysis ID
+ * - analysisName: Analysis name
+ * - projectId: Parent project ID
+ * - analysisStatus: Current analysis status
+ * - entryCount: Total entries in analysis
+ * - hasLOPA: Whether any entries have LOPA analysis
+ * - lopaCount: Number of entries with LOPA
+ * - standardsChecked: Standards that were validated against
+ * - overallStatus: Overall compliance status (compliant, non_compliant, partial_compliance, not_assessed)
+ * - overallPercentage: Overall compliance percentage (0-100)
+ * - summaries: Compliance summary per regulatory standard
+ * - checkedAt: Timestamp of compliance check
+ *
+ * Only accessible if the user is a member of the project that owns the analysis.
+ */
+router.get('/:id/compliance', authenticate, requireAuth, getAnalysisCompliance);
 
 export default router;
