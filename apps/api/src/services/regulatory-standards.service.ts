@@ -810,6 +810,388 @@ const ATEX_DSEAR: RegulatoryStandard = {
 };
 
 // ============================================================================
+// PED - Pressure Equipment Directive
+// ============================================================================
+
+/**
+ * PED (Pressure Equipment Directive 2014/68/EU) clauses relevant to HazOps analysis.
+ *
+ * The PED applies to the design, manufacture, and conformity assessment of
+ * pressure equipment and assemblies with a maximum allowable pressure greater
+ * than 0.5 bar. It is critical for HazOps in process industries involving
+ * pressure vessels, piping, safety accessories, and pressure accessories.
+ *
+ * Key aspects covered:
+ * - Classification of pressure equipment by category (I-IV)
+ * - Essential Safety Requirements (ESR)
+ * - Conformity assessment procedures
+ * - Materials requirements
+ * - Safety devices
+ * - Documentation and CE marking
+ */
+const PED_CLAUSES: RegulatoryClause[] = [
+  // Scope and Classification
+  {
+    id: 'PED-Art-1',
+    title: 'Subject matter and scope',
+    description:
+      'The directive applies to the design, manufacture, and conformity assessment of pressure equipment ' +
+      'and assemblies with a maximum allowable pressure (PS) greater than 0.5 bar. Includes vessels, piping, ' +
+      'safety accessories, and pressure accessories.',
+    keywords: ['scope', 'pressure equipment', 'maximum allowable pressure', 'PS', 'assemblies'],
+    mandatory: true,
+    hazopsRelevance: ['methodology', 'hazard_identification'],
+  },
+  {
+    id: 'PED-Art-4',
+    title: 'Classification of pressure equipment',
+    description:
+      'Pressure equipment shall be classified into categories I, II, III, or IV according to ascending ' +
+      'level of hazard. Classification is based on maximum allowable pressure, volume (for vessels) or ' +
+      'nominal size (for piping), and group of fluids (Group 1: dangerous, Group 2: other).',
+    keywords: ['classification', 'category', 'hazard level', 'Group 1', 'Group 2', 'fluid group'],
+    mandatory: true,
+    hazopsRelevance: ['risk_ranking', 'hazard_identification'],
+  },
+  {
+    id: 'PED-Art-4.1',
+    title: 'Fluid groups',
+    description:
+      'Fluids are divided into two groups. Group 1 comprises dangerous fluids: explosives, extremely flammable, ' +
+      'highly flammable, flammable (under certain conditions), very toxic, toxic, and oxidizing. ' +
+      'Group 2 comprises all other fluids not referred to in Group 1.',
+    keywords: ['fluid group', 'dangerous fluids', 'flammable', 'toxic', 'oxidizing', 'Group 1', 'Group 2'],
+    mandatory: true,
+    parentClauseId: 'PED-Art-4',
+    hazopsRelevance: ['hazard_identification', 'risk_ranking'],
+  },
+  {
+    id: 'PED-Art-4.2',
+    title: 'Category determination tables',
+    description:
+      'Annex II provides conformity assessment tables based on equipment type (vessels, piping), fluid group, ' +
+      'and the product of PS × V (for vessels) or PS × DN (for piping). Higher categories require more ' +
+      'stringent conformity assessment procedures.',
+    keywords: ['Annex II', 'conformity assessment', 'PS×V', 'PS×DN', 'category tables'],
+    mandatory: true,
+    parentClauseId: 'PED-Art-4',
+    hazopsRelevance: ['risk_ranking', 'methodology'],
+  },
+  // Essential Safety Requirements (Annex I)
+  {
+    id: 'PED-Annex-I',
+    title: 'Essential Safety Requirements (ESR)',
+    description:
+      'Annex I sets out the essential safety requirements that must be met by pressure equipment and assemblies. ' +
+      'Manufacturers must analyze hazards, design and construct to eliminate or reduce hazards, apply protective ' +
+      'measures, and inform users of residual hazards.',
+    keywords: ['ESR', 'essential safety requirements', 'Annex I', 'hazard analysis', 'protective measures'],
+    mandatory: true,
+    hazopsRelevance: ['hazard_identification', 'safeguards', 'risk_assessment'],
+  },
+  {
+    id: 'PED-Annex-I-1',
+    title: 'General - Hazard analysis',
+    description:
+      'The manufacturer shall carry out a suitable hazard analysis to identify all hazards applicable to the ' +
+      'equipment due to pressure. The equipment shall then be designed and constructed taking into account ' +
+      'the analysis.',
+    keywords: ['hazard analysis', 'pressure hazards', 'design', 'construction'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I',
+    hazopsRelevance: ['hazard_identification', 'risk_assessment'],
+  },
+  {
+    id: 'PED-Annex-I-2.1',
+    title: 'Design for adequate strength',
+    description:
+      'Pressure equipment shall be designed for loadings appropriate to intended use and reasonably foreseeable ' +
+      'conditions. Factors include internal/external pressure, ambient and operational temperatures, static ' +
+      'pressure and mass of contents, traffic, wind and earthquake loads, reaction forces, and fatigue.',
+    keywords: ['design', 'strength', 'loadings', 'pressure', 'temperature', 'fatigue', 'earthquake'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I',
+    hazopsRelevance: ['hazard_identification', 'safeguards'],
+  },
+  {
+    id: 'PED-Annex-I-2.2',
+    title: 'Design for safe handling and operation',
+    description:
+      'Provisions must be made for safe handling during manufacture, transport, and installation. Equipment shall ' +
+      'have adequate vents and drains, allow access for inspection, and have means for safe operation throughout ' +
+      'its life cycle.',
+    keywords: ['safe handling', 'operation', 'vents', 'drains', 'inspection access', 'maintenance'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I',
+    hazopsRelevance: ['safeguards', 'methodology'],
+  },
+  {
+    id: 'PED-Annex-I-2.3',
+    title: 'Means of examination',
+    description:
+      'Pressure equipment shall be designed so that all necessary examinations can be carried out to ensure ' +
+      'safety. Internal inspections must be possible. Where appropriate, other means must be provided to ' +
+      'ensure safe condition.',
+    keywords: ['examination', 'inspection', 'internal inspection', 'condition monitoring'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I',
+    hazopsRelevance: ['safeguards', 'follow_up'],
+  },
+  {
+    id: 'PED-Annex-I-2.4',
+    title: 'Means of draining and venting',
+    description:
+      'Adequate means shall be provided for draining and venting of pressure equipment where necessary to ' +
+      'avoid harmful effects such as water hammer, vacuum collapse, corrosion, and uncontrolled chemical reactions.',
+    keywords: ['draining', 'venting', 'water hammer', 'vacuum', 'corrosion', 'chemical reactions'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I',
+    hazopsRelevance: ['safeguards', 'hazard_identification'],
+  },
+  {
+    id: 'PED-Annex-I-2.5',
+    title: 'Protection against exceeding allowable limits',
+    description:
+      'Where operating conditions could exceed allowable limits, pressure equipment shall be fitted with ' +
+      'or provision made for protective devices, unless the equipment is protected by other protective ' +
+      'devices within an assembly.',
+    keywords: ['overpressure protection', 'allowable limits', 'protective devices', 'safety devices'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I',
+    hazopsRelevance: ['safeguards', 'risk_assessment'],
+  },
+  // Safety Accessories
+  {
+    id: 'PED-Annex-I-2.10',
+    title: 'Safety accessories',
+    description:
+      'Safety accessories shall be designed and constructed to be reliable and suitable for intended use. ' +
+      'They must take account of maintenance and testing requirements where relevant.',
+    keywords: ['safety accessories', 'reliability', 'maintenance', 'testing'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I',
+    hazopsRelevance: ['safeguards', 'follow_up'],
+  },
+  {
+    id: 'PED-Annex-I-2.11.1',
+    title: 'Pressure limiting devices',
+    description:
+      'Pressure limiting devices shall be designed so that pressure will not permanently exceed the maximum ' +
+      'allowable pressure (PS). However, a short duration pressure surge is permissible where appropriate, ' +
+      'limited to 10% of PS.',
+    keywords: ['pressure limiting', 'pressure relief', 'PS', 'surge', 'overpressure'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I-2.10',
+    hazopsRelevance: ['safeguards'],
+  },
+  {
+    id: 'PED-Annex-I-2.11.2',
+    title: 'Temperature monitoring devices',
+    description:
+      'Temperature monitoring devices must have adequate response time for safety, taking account of the ' +
+      'design of the pressure equipment.',
+    keywords: ['temperature monitoring', 'response time', 'safety instruments'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I-2.10',
+    hazopsRelevance: ['safeguards'],
+  },
+  // External Fire
+  {
+    id: 'PED-Annex-I-2.12',
+    title: 'External fire',
+    description:
+      'Where necessary, pressure equipment shall be designed and, where appropriate, equipped with suitable ' +
+      'accessories or provision made for them, to meet damage limitation requirements in the event of ' +
+      'external fire, having particular regard to intended use.',
+    keywords: ['external fire', 'fire protection', 'damage limitation', 'fire relief'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I',
+    hazopsRelevance: ['safeguards', 'hazard_identification'],
+  },
+  // Materials
+  {
+    id: 'PED-Annex-I-4',
+    title: 'Materials',
+    description:
+      'Materials used in the manufacture of pressure equipment shall be suitable for such application during ' +
+      'the foreseeable life of the equipment. Materials must have appropriate properties, adequate chemical ' +
+      'resistance, not be significantly affected by ageing, and be suitable for intended processing procedures.',
+    keywords: ['materials', 'suitability', 'chemical resistance', 'ageing', 'processing'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I',
+    hazopsRelevance: ['safeguards', 'hazard_identification'],
+  },
+  {
+    id: 'PED-Annex-I-4.1',
+    title: 'Material properties',
+    description:
+      'The material shall have properties appropriate to all reasonably foreseeable operating conditions and ' +
+      'test conditions. It shall be sufficiently ductile and tough, chemically resistant to the fluid, and ' +
+      'not significantly affected by ageing.',
+    keywords: ['ductility', 'toughness', 'chemical resistance', 'operating conditions', 'material selection'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I-4',
+    hazopsRelevance: ['hazard_identification', 'safeguards'],
+  },
+  // Manufacture and Assembly
+  {
+    id: 'PED-Annex-I-3',
+    title: 'Manufacturing',
+    description:
+      'The manufacturer shall ensure that the provisions made at the design stage are properly implemented ' +
+      'and adequate manufacturing techniques and procedures are used. Includes welding, heat treatment, ' +
+      'and traceability.',
+    keywords: ['manufacturing', 'welding', 'heat treatment', 'traceability', 'quality control'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I',
+    hazopsRelevance: ['methodology', 'safeguards'],
+  },
+  {
+    id: 'PED-Annex-I-3.1.2',
+    title: 'Permanent joints',
+    description:
+      'Permanent joints and adjacent zones shall be free from surface and internal defects detrimental to ' +
+      'equipment safety. Welded joints shall be made by suitably qualified welders using approved procedures.',
+    keywords: ['permanent joints', 'welding', 'defects', 'qualified welders', 'welding procedures'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I-3',
+    hazopsRelevance: ['safeguards', 'methodology'],
+  },
+  {
+    id: 'PED-Annex-I-3.1.3',
+    title: 'Non-destructive tests',
+    description:
+      'Non-destructive tests of permanent joints shall be carried out by suitably qualified personnel. ' +
+      'For pressure equipment in categories III and IV, the personnel shall have been approved by a ' +
+      'third-party organization.',
+    keywords: ['NDT', 'non-destructive testing', 'qualification', 'third party', 'inspection'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I-3',
+    hazopsRelevance: ['methodology', 'follow_up'],
+  },
+  // Final Assessment and Testing
+  {
+    id: 'PED-Annex-I-3.2',
+    title: 'Final assessment',
+    description:
+      'Pressure equipment shall undergo final assessment including examination of internal and external ' +
+      'surfaces, review of documentation, and a proof test (normally hydrostatic) at a pressure ' +
+      'corresponding to 1.25 to 1.43 times PS.',
+    keywords: ['final assessment', 'proof test', 'hydrostatic test', 'visual examination'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I-3',
+    hazopsRelevance: ['methodology', 'follow_up'],
+  },
+  // Documentation
+  {
+    id: 'PED-Annex-I-3.3',
+    title: 'Marking and labelling',
+    description:
+      'Pressure equipment shall bear CE marking and information including manufacturer identification, year ' +
+      'of manufacture, equipment identification, essential maximum/minimum allowable limits, pressure (PS), ' +
+      'temperature limits, volume/nominal size.',
+    keywords: ['CE marking', 'labelling', 'identification', 'traceability', 'nameplate'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I-3',
+    hazopsRelevance: ['documentation'],
+  },
+  {
+    id: 'PED-Annex-I-3.4',
+    title: 'Operating instructions',
+    description:
+      'Pressure equipment shall be accompanied by instructions containing all necessary safety information ' +
+      'for putting into service, use, maintenance, inspection, adjustment, and dismantling.',
+    keywords: ['operating instructions', 'safety information', 'maintenance', 'user manual'],
+    mandatory: true,
+    parentClauseId: 'PED-Annex-I-3',
+    hazopsRelevance: ['documentation', 'follow_up'],
+  },
+  // Technical Documentation
+  {
+    id: 'PED-Annex-III',
+    title: 'Technical documentation',
+    description:
+      'The manufacturer shall draw up technical documentation enabling conformity assessment and including: ' +
+      'general description, design and manufacturing drawings, calculations, descriptions of solutions adopted ' +
+      'to meet ESR, test reports, and relevant elements of the quality assurance system.',
+    keywords: ['technical documentation', 'design drawings', 'calculations', 'test reports', 'conformity'],
+    mandatory: true,
+    hazopsRelevance: ['documentation'],
+  },
+  // Conformity Assessment
+  {
+    id: 'PED-Art-14',
+    title: 'Conformity assessment procedures',
+    description:
+      'Pressure equipment shall be subject to conformity assessment procedures per Annex III. Category I ' +
+      'allows self-certification; Categories II-IV require increasing involvement of Notified Bodies ' +
+      '(module combinations A2, B+D, B+F, G, H, H1).',
+    keywords: ['conformity assessment', 'Notified Body', 'modules', 'certification', 'category'],
+    mandatory: true,
+    hazopsRelevance: ['methodology', 'documentation'],
+  },
+  // Assemblies
+  {
+    id: 'PED-Art-2.6',
+    title: 'Assemblies',
+    description:
+      'An assembly is several pieces of pressure equipment assembled by a manufacturer to constitute an ' +
+      'integrated and functional whole. Assemblies must be designed so the various elements are suitably ' +
+      'integrated and safe, with at least one item of equipment subject to PED.',
+    keywords: ['assembly', 'integration', 'functional whole', 'system'],
+    mandatory: true,
+    hazopsRelevance: ['methodology', 'hazard_identification'],
+  },
+  // HazOps-specific Requirements
+  {
+    id: 'PED-HazOps-1',
+    title: 'Pressure hazard identification in HazOps',
+    description:
+      'During HazOps analysis of pressure equipment, systematically consider: overpressure scenarios, ' +
+      'vacuum conditions, thermal expansion, blocked outlets, loss of cooling, runaway reactions, ' +
+      'hydraulic hammer, and external fire exposure.',
+    keywords: ['HazOps', 'overpressure', 'vacuum', 'thermal expansion', 'blocked outlet', 'runaway reaction'],
+    mandatory: false,
+    hazopsRelevance: ['hazard_identification', 'risk_assessment'],
+  },
+  {
+    id: 'PED-HazOps-2',
+    title: 'Safeguards for pressure equipment',
+    description:
+      'Typical safeguards for pressure equipment hazards include: pressure relief valves (PRVs), ' +
+      'rupture discs, pressure indicators, level indicators, temperature indicators, high-pressure ' +
+      'interlocks, process control systems, and emergency shutdown systems.',
+    keywords: ['PRV', 'rupture disc', 'pressure relief', 'interlock', 'safeguards', 'ESD'],
+    mandatory: false,
+    hazopsRelevance: ['safeguards', 'recommendations'],
+  },
+];
+
+/**
+ * PED standard definition.
+ */
+const PED: RegulatoryStandard = {
+  id: 'PED',
+  name: 'Pressure Equipment Directive (PED)',
+  title: 'Pressure Equipment Directive 2014/68/EU',
+  description:
+    'European directive for pressure equipment and assemblies with maximum allowable ' +
+    'pressure > 0.5 bar. Covers design, manufacture, and conformity assessment of ' +
+    'pressure vessels, piping, safety accessories, and pressure accessories. ' +
+    'Equipment is categorized I-IV based on hazard level, with conformity assessment ' +
+    'procedures ranging from self-certification to full Notified Body involvement.',
+  category: 'pressure_equipment',
+  jurisdiction: 'european_union',
+  version: '2014/68/EU',
+  year: 2014,
+  issuingBody: 'European Parliament and Council',
+  url: 'https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32014L0068',
+  mandatory: true,
+  relatedStandards: ['IEC_61511', 'ATEX_DSEAR', 'SEVESO_III'],
+  relevantClauses: PED_CLAUSES,
+};
+
+// ============================================================================
 // Standards Database
 // ============================================================================
 
@@ -821,6 +1203,7 @@ const REGULATORY_STANDARDS_DATABASE: Map<RegulatoryStandardId, RegulatoryStandar
   ['ISO_31000', ISO_31000],
   ['ISO_9001', ISO_9001],
   ['ATEX_DSEAR', ATEX_DSEAR],
+  ['PED', PED],
 ]);
 
 // ============================================================================
