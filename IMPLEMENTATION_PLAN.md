@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 7 - LOPA & Compliance
-**Progress**: Phase 7 started - 1/23 tasks complete
-**Last Completed**: LOPA-01 - Create LOPA calculation engine (bc63dfe)
-**Next Task**: LOPA-02 - Implement independent protection layer (IPL) validation
+**Progress**: Phase 7 in progress - 2/23 tasks complete
+**Last Completed**: LOPA-02 - Implement IPL validation service (e74a385)
+**Next Task**: LOPA-03 - Create LOPA recommendation trigger
 
 ---
 
@@ -257,7 +257,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 
 ### LOPA Analysis Service
 - [x] LOPA-01: Create LOPA calculation engine (target mitigated event likelihood) (bc63dfe)
-- [ ] LOPA-02: Implement independent protection layer (IPL) validation
+- [x] LOPA-02: Implement independent protection layer (IPL) validation (e74a385)
 - [ ] LOPA-03: Create LOPA recommendation trigger (when risk exceeds threshold)
 - [ ] LOPA-04: Implement risk reduction factor calculation
 
@@ -547,3 +547,4 @@ _No blockers currently._
 | RISK-15: Add unit tests for risk calculation logic | 5db21bf | 2026-02-11 |
 | RISK-16: Add API tests for risk endpoints | b8f4374 | 2026-02-11 |
 | LOPA-01: Create LOPA calculation engine | bc63dfe | 2026-02-11 |
+| LOPA-02: Implement IPL validation service | e74a385 | 2026-02-11 |
