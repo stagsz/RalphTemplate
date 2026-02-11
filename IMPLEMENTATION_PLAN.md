@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 6 - Risk Assessment
-**Progress**: Phase 6 (Risk Assessment) in progress - 5/16 tasks complete
-**Last Completed**: RISK-05 - Create PUT /entries/:id/risk endpoint (update risk ranking) (2ad5107)
-**Next Task**: RISK-06 - Create GET /analyses/:id/risk-summary endpoint (aggregated risk view)
+**Progress**: Phase 6 (Risk Assessment) in progress - 6/16 tasks complete
+**Last Completed**: RISK-06 - Create GET /analyses/:id/risk-summary endpoint (aggregated risk view) (355c549)
+**Next Task**: RISK-07 - Create GET /projects/:id/risk-dashboard endpoint (project-level risk metrics)
 
 ---
 
@@ -235,7 +235,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 
 ### Backend API
 - [x] RISK-05: Create PUT /entries/:id/risk endpoint (update risk ranking) (2ad5107)
-- [ ] RISK-06: Create GET /analyses/:id/risk-summary endpoint (aggregated risk view)
+- [x] RISK-06: Create GET /analyses/:id/risk-summary endpoint (aggregated risk view) (355c549)
 - [ ] RISK-07: Create GET /projects/:id/risk-dashboard endpoint (project-level risk metrics)
 
 ### Frontend Risk Assessment
@@ -535,3 +535,4 @@ _No blockers currently._
 | RISK-03: Create risk level threshold configuration | 4e33b9b | 2026-02-11 |
 | RISK-04: Implement risk score aggregation for analysis sessions | 42b0668 | 2026-02-11 |
 | RISK-05: Create PUT /entries/:id/risk endpoint (update risk ranking) | 2ad5107 | 2026-02-11 |
+| RISK-06: Create GET /analyses/:id/risk-summary endpoint (aggregated risk view) | 355c549 | 2026-02-11 |
