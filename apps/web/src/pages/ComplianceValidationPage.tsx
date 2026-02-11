@@ -580,6 +580,15 @@ export function ComplianceValidationPage() {
             >
               Refresh
             </Button>
+            <Link to={`/projects/${projectId}/compliance-dashboard`}>
+              <Button
+                variant="outline"
+                size="sm"
+                styles={{ root: { borderRadius: '4px' } }}
+              >
+                Dashboard View
+              </Button>
+            </Link>
           </div>
         </div>
 

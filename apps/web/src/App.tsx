@@ -13,6 +13,7 @@ import {
   AnalysisWorkspacePage,
   RiskDashboardPage,
   ComplianceValidationPage,
+  ComplianceDashboardPage,
 } from './pages';
 import { ProtectedRoute, PublicRoute } from './components/auth';
 
@@ -139,6 +140,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ComplianceValidationPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/:projectId/compliance-dashboard"
+          element={
+            <ProtectedRoute>
+              <ComplianceDashboardPage />
             </ProtectedRoute>
           }
         />
