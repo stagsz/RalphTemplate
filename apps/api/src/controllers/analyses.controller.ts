@@ -50,6 +50,7 @@ import {
   getActiveParticipants,
   listSessionsForAnalysis,
   findActiveSessionForAnalysis,
+  findSessionById,
   type CollaborationSessionWithDetails,
   type SessionParticipantWithDetails,
   type CollaborationSessionStatus,
@@ -4393,6 +4394,190 @@ export async function inviteToCollaboration(req: Request, res: Response): Promis
           error: {
             code: 'VALIDATION_ERROR',
             message: 'Invalid reference: analysis or user does not exist',
+          },
+        });
+        return;
+      }
+    }
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+// ============================================================================
+// POST /sessions/:id/join - Join a collaboration session
+// ============================================================================
+
+/**
+ * Response format for joining a collaboration session.
+ */
+interface JoinSessionParticipantResponse {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  joinedAt: string;
+  isActive: boolean;
+  cursorPosition: unknown | null;
+  lastActivityAt: string;
+}
+
+/**
+ * POST /sessions/:id/join
+ * Join a collaboration session.
+ *
+ * Allows an authenticated user to join an existing collaboration session.
+ * The user must have access to the project that owns the analysis associated
+ * with the session.
+ *
+ * Path parameters:
+ * - id: string (required) - Session UUID
+ *
+ * Returns:
+ * - 200: Successfully joined session
+ *   - session: The collaboration session details with participants
+ *   - participant: The joining user's participant details
+ * - 400: Invalid session ID format
+ * - 401: Not authenticated
+ * - 403: Not authorized to access this session's analysis
+ * - 404: Session not found
+ * - 409: Session is not active (cannot join ended/paused sessions)
+ * - 500: Internal server error
+ */
+export async function joinCollaborationSession(req: Request, res: Response): Promise<void> {
+  try {
+    const { id: sessionId } = req.params;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format
+    if (!UUID_REGEX.test(sessionId)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid session ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Session ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Find the session
+    const session = await findSessionById(sessionId);
+    if (!session) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Session not found',
+        },
+      });
+      return;
+    }
+
+    // Check if session is active
+    if (session.status !== 'active') {
+      res.status(409).json({
+        success: false,
+        error: {
+          code: 'CONFLICT',
+          message: `Cannot join session: session is ${session.status}`,
+        },
+      });
+      return;
+    }
+
+    // Find the analysis to get the project ID
+    const analysis = await findAnalysisById(session.analysisId);
+    if (!analysis) {
+      // This shouldn't happen if data integrity is maintained, but handle it gracefully
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Analysis associated with this session not found',
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project that owns this analysis
+    const hasAccess = await userHasProjectAccess(userId, analysis.projectId);
+    if (!hasAccess) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this session',
+        },
+      });
+      return;
+    }
+
+    // Join the session (handles the case where user is already participating)
+    const participant = await joinSession(sessionId, userId);
+
+    // Get all active participants
+    const participants = await getActiveParticipants(sessionId);
+
+    // Format the participant response
+    const participantResponse: JoinSessionParticipantResponse = {
+      id: participant.id,
+      userId: participant.userId,
+      userName: participant.userName,
+      userEmail: participant.userEmail,
+      joinedAt: participant.joinedAt.toISOString(),
+      isActive: participant.isActive,
+      cursorPosition: participant.cursorPosition,
+      lastActivityAt: participant.lastActivityAt.toISOString(),
+    };
+
+    // Format the session response
+    const sessionResponse = formatCollaborationSessionResponse(session, participants);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        session: sessionResponse,
+        participant: participantResponse,
+      },
+    });
+  } catch (error) {
+    console.error('Join collaboration session error:', error);
+
+    // Handle foreign key constraint violation
+    if (error instanceof Error && 'code' in error) {
+      const dbError = error as { code: string };
+      if (dbError.code === '23503') {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid reference: session or user does not exist',
           },
         });
         return;

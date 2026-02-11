@@ -17,6 +17,7 @@ import preparedSafeguardsRoutes from './routes/prepared-safeguards.routes.js';
 import preparedRecommendationsRoutes from './routes/prepared-recommendations.routes.js';
 import analysesRoutes from './routes/analyses.routes.js';
 import entriesRoutes from './routes/entries.routes.js';
+import sessionsRoutes from './routes/sessions.routes.js';
 import { configurePassport, initializePassport } from './config/passport.config.js';
 import { getWebSocketService } from './services/websocket.service.js';
 
@@ -95,6 +96,9 @@ app.use('/analyses', analysesRoutes);
 
 // Entries routes
 app.use('/entries', entriesRoutes);
+
+// Sessions routes (collaboration)
+app.use('/sessions', sessionsRoutes);
 
 // Create HTTP server from Express app (required for Socket.io)
 const httpServer = createServer(app);
