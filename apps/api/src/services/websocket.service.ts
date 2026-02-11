@@ -3,12 +3,14 @@
  *
  * Provides Socket.io server initialization with JWT authentication,
  * room management, and event handling for collaborative HazOps analysis.
+ * Integrates with collaboration service for database-backed session persistence.
  */
 
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { getJwtService } from './jwt.service.js';
 import { loadSocketConfig } from '../config/socket.config.js';
+import * as collaborationService from './collaboration.service.js';
 import type {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -50,6 +52,8 @@ export type TypedSocket = Socket<
 interface RoomState {
   /** Users currently in the room */
   users: Map<string, UserPresence>;
+  /** Database session ID for persistence */
+  sessionId?: string;
 }
 
 /**
@@ -198,6 +202,7 @@ export class WebSocketService {
 
   /**
    * Handle user joining a collaboration room.
+   * Creates or joins a database-backed collaboration session.
    *
    * @param socket - The socket joining
    * @param analysisId - The analysis ID to join
@@ -213,11 +218,27 @@ export class WebSocketService {
     socket.data.analysisId = analysisId;
 
     // Initialize room state if needed
-    if (!this.rooms.has(roomName)) {
-      this.rooms.set(roomName, { users: new Map() });
+    let roomState = this.rooms.get(roomName);
+    if (!roomState) {
+      roomState = { users: new Map() };
+      this.rooms.set(roomName, roomState);
     }
 
-    const roomState = this.rooms.get(roomName)!;
+    // Get or create a database-backed collaboration session
+    try {
+      const session = await collaborationService.getOrCreateActiveSession(
+        analysisId,
+        user.id
+      );
+      roomState.sessionId = session.id;
+      socket.data.sessionId = session.id;
+
+      // Join the session in the database
+      await collaborationService.joinSession(session.id, user.id);
+    } catch (error) {
+      // Database persistence failed - log but continue with in-memory room
+      console.error('Failed to persist collaboration session:', error);
+    }
 
     // Create user presence
     const presence: UserPresence = {
@@ -241,6 +262,7 @@ export class WebSocketService {
 
   /**
    * Handle user leaving a collaboration room.
+   * Updates the database session participant record.
    *
    * @param socket - The socket leaving
    * @param analysisId - The analysis ID to leave
@@ -248,21 +270,33 @@ export class WebSocketService {
   private async handleLeaveRoom(socket: TypedSocket, analysisId: string): Promise<void> {
     const user = socket.data.user;
     const roomName = `analysis:${analysisId}`;
+    const sessionId = socket.data.sessionId;
 
     // Leave the Socket.io room
     await socket.leave(roomName);
 
     // Clear room context on socket
     socket.data.analysisId = undefined;
+    socket.data.sessionId = undefined;
+
+    // Update database session participant record
+    if (sessionId) {
+      try {
+        await collaborationService.leaveSession(sessionId, user.id);
+      } catch (error) {
+        console.error('Failed to update session participant:', error);
+      }
+    }
 
     // Remove user from room state
     const roomState = this.rooms.get(roomName);
     if (roomState) {
       roomState.users.delete(user.id);
 
-      // Clean up empty rooms
+      // Clean up empty rooms and optionally end database session
       if (roomState.users.size === 0) {
         this.rooms.delete(roomName);
+        // Don't auto-end the session - let it stay active for users to rejoin
       }
     }
 
@@ -274,6 +308,7 @@ export class WebSocketService {
 
   /**
    * Handle cursor position update from a user.
+   * Updates both in-memory state and database record.
    *
    * @param socket - The socket sending the update
    * @param position - The new cursor position
@@ -281,6 +316,7 @@ export class WebSocketService {
   private handleCursorUpdate(socket: TypedSocket, position: CursorPosition): void {
     const user = socket.data.user;
     const analysisId = socket.data.analysisId;
+    const sessionId = socket.data.sessionId;
 
     if (!analysisId) {
       return;
@@ -298,6 +334,13 @@ export class WebSocketService {
       }
     }
 
+    // Update cursor position in database (fire and forget - don't await)
+    if (sessionId) {
+      collaborationService.updateParticipantCursor(sessionId, user.id, position).catch((error) => {
+        console.error('Failed to update cursor in database:', error);
+      });
+    }
+
     // Broadcast cursor position to other users in the room
     socket.to(roomName).emit('cursor:moved', {
       userId: user.id,
@@ -307,6 +350,7 @@ export class WebSocketService {
 
   /**
    * Handle socket disconnect.
+   * Updates the database session participant record.
    *
    * @param socket - The disconnected socket
    * @param reason - The disconnect reason
@@ -314,8 +358,16 @@ export class WebSocketService {
   private handleDisconnect(socket: TypedSocket, reason: string): void {
     const user = socket.data.user;
     const analysisId = socket.data.analysisId;
+    const sessionId = socket.data.sessionId;
 
     console.log(`User disconnected: ${user.email} (reason: ${reason})`);
+
+    // Update database session participant record
+    if (sessionId) {
+      collaborationService.leaveSession(sessionId, user.id).catch((error) => {
+        console.error('Failed to update session participant on disconnect:', error);
+      });
+    }
 
     if (analysisId) {
       const roomName = `analysis:${analysisId}`;
@@ -458,6 +510,57 @@ export class WebSocketService {
     const roomName = `analysis:${analysisId}`;
     const roomState = this.rooms.get(roomName);
     return roomState ? roomState.users.size > 0 : false;
+  }
+
+  /**
+   * Get the collaboration session ID for an analysis room.
+   *
+   * @param analysisId - The analysis ID
+   * @returns The session ID or undefined if not found
+   */
+  getRoomSessionId(analysisId: string): string | undefined {
+    const roomName = `analysis:${analysisId}`;
+    const roomState = this.rooms.get(roomName);
+    return roomState?.sessionId;
+  }
+
+  /**
+   * End a collaboration session explicitly.
+   * This marks all participants as inactive and ends the session.
+   *
+   * @param analysisId - The analysis ID
+   * @returns True if the session was ended
+   */
+  async endCollaborationSession(analysisId: string): Promise<boolean> {
+    const roomName = `analysis:${analysisId}`;
+    const roomState = this.rooms.get(roomName);
+
+    if (!roomState?.sessionId) {
+      return false;
+    }
+
+    try {
+      // Mark all participants as inactive
+      await collaborationService.markAllParticipantsInactive(roomState.sessionId);
+      // End the session
+      await collaborationService.endSession(roomState.sessionId);
+
+      // Notify all users in the room that the session ended
+      if (this.io) {
+        this.io.to(roomName).emit('error', {
+          code: 'INTERNAL_ERROR',
+          message: 'Collaboration session ended',
+        });
+      }
+
+      // Clean up room state
+      this.rooms.delete(roomName);
+
+      return true;
+    } catch (error) {
+      console.error('Failed to end collaboration session:', error);
+      return false;
+    }
   }
 
   /**
