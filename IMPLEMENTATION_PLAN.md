@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 6 - Risk Assessment
-**Progress**: Phase 6 (Risk Assessment) in progress - 13/16 tasks complete
-**Last Completed**: RISK-13 - Create risk dashboard page with charts and metrics (625c2f6)
-**Next Task**: RISK-14 - Add risk filtering to analysis entry table
+**Progress**: Phase 6 (Risk Assessment) in progress - 14/16 tasks complete
+**Last Completed**: RISK-14 - Add risk filtering to analysis entry table (dd38e31)
+**Next Task**: RISK-15 - Add unit tests for risk calculation logic
 
 ---
 
@@ -245,7 +245,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] RISK-11: Create risk score display component (color-coded badge) (2a5a12b)
 - [x] RISK-12: Create interactive 5x5 risk matrix visualization (bce10fe)
 - [x] RISK-13: Create risk dashboard page with charts and metrics (625c2f6)
-- [ ] RISK-14: Add risk filtering to analysis entry table
+- [x] RISK-14: Add risk filtering to analysis entry table (dd38e31)
 
 ### Risk Testing
 - [ ] RISK-15: Add unit tests for risk calculation logic
@@ -543,3 +543,4 @@ _No blockers currently._
 | RISK-11: Create risk score display component (color-coded badge) | 2a5a12b | 2026-02-11 |
 | RISK-12: Create interactive 5x5 risk matrix visualization | bce10fe | 2026-02-11 |
 | RISK-13: Create risk dashboard page with charts and metrics | 625c2f6 | 2026-02-11 |
+| RISK-14: Add risk filtering to analysis entry table | dd38e31 | 2026-02-11 |
