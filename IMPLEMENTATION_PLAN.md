@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 5 - Core HazOps Analysis Workflow
-**Progress**: Analysis entry summary table complete
-**Last Completed**: HAZOP-27 - Create analysis entry summary table (0237edc)
-**Next Task**: HAZOP-28 - Add unit tests for guide word validation logic
+**Progress**: Guide word unit tests verified complete
+**Last Completed**: HAZOP-28 - Add unit tests for guide word validation logic (edc343c)
+**Next Task**: HAZOP-29 - Add API tests for analysis CRUD endpoints
 
 ---
 
@@ -219,7 +219,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] HAZOP-27: Create analysis entry summary table (0237edc)
 
 ### HazOps Testing
-- [ ] HAZOP-28: Add unit tests for guide word validation logic
+- [x] HAZOP-28: Add unit tests for guide word validation logic (edc343c)
 - [ ] HAZOP-29: Add API tests for analysis CRUD endpoints
 - [ ] HAZOP-30: Add E2E tests for complete analysis workflow
 
@@ -527,3 +527,4 @@ _No blockers currently._
 | HAZOP-25: Create recommendations input with prepared answer menu (multi-select) | 74dff69 | 2026-02-11 |
 | HAZOP-26: Create analysis progress tracker (nodes completed/total) | 70a110a | 2026-02-11 |
 | HAZOP-27: Create analysis entry summary table | 0237edc | 2026-02-11 |
+| HAZOP-28: Add unit tests for guide word validation logic | edc343c | 2026-02-11 |
