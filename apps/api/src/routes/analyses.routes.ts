@@ -11,13 +11,14 @@
  * - GET /analyses/:id/compliance - Get compliance status against regulatory standards
  * - POST /analyses/:id/collaborate - Start or join a collaboration session
  * - GET /analyses/:id/collaborate - Get collaboration sessions for an analysis
+ * - POST /analyses/:id/invite - Invite a user to a collaboration session
  *
  * All routes require authentication.
  */
 
 import { Router } from 'express';
 import { authenticate, requireAuth } from '../middleware/auth.middleware.js';
-import { getAnalysisById, updateAnalysis, createAnalysisEntry, listEntries, completeAnalysis, getRiskSummary, getAnalysisCompliance, startCollaboration, getCollaborationSessions } from '../controllers/analyses.controller.js';
+import { getAnalysisById, updateAnalysis, createAnalysisEntry, listEntries, completeAnalysis, getRiskSummary, getAnalysisCompliance, startCollaboration, getCollaborationSessions, inviteToCollaboration } from '../controllers/analyses.controller.js';
 
 const router = Router();
 
@@ -224,5 +225,47 @@ router.post('/:id/collaborate', authenticate, requireAuth, startCollaboration);
  * Only accessible if the user is a member of the project that owns the analysis.
  */
 router.get('/:id/collaborate', authenticate, requireAuth, getCollaborationSessions);
+
+/**
+ * POST /analyses/:id/invite
+ * Invite a user to a collaboration session for an analysis.
+ *
+ * The invited user must:
+ * 1. Exist in the system
+ * 2. Have access to the project that owns the analysis
+ *
+ * If no active collaboration session exists, one is created.
+ * The invited user is added as a participant to the session.
+ *
+ * Path parameters:
+ * - id: string (required) - Analysis UUID
+ *
+ * Request body (one of the following required):
+ * - userEmail: string - Email of the user to invite
+ * - userId: string - UUID of the user to invite
+ *
+ * Returns:
+ * - session: The collaboration session with updated participants
+ *   - id: Session UUID
+ *   - analysisId: Analysis UUID
+ *   - name: Session name (if provided)
+ *   - status: 'active'
+ *   - createdById: Creator's user UUID
+ *   - createdByName: Creator's name
+ *   - createdByEmail: Creator's email
+ *   - createdAt: ISO timestamp
+ *   - updatedAt: ISO timestamp
+ *   - participants: Array of active participants with user details
+ * - invitedUser: The invited user's participant details
+ *   - id: Participant UUID
+ *   - userId: User UUID
+ *   - userName: User's name
+ *   - userEmail: User's email
+ *   - joinedAt: ISO timestamp
+ *   - isActive: true
+ *
+ * Only accessible if the user is a member of the project that owns the analysis.
+ */
+router.post('/:id/invite', authenticate, requireAuth, inviteToCollaboration);
 
 export default router;

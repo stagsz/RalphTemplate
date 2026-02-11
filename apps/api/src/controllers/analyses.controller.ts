@@ -49,10 +49,12 @@ import {
   joinSession,
   getActiveParticipants,
   listSessionsForAnalysis,
+  findActiveSessionForAnalysis,
   type CollaborationSessionWithDetails,
   type SessionParticipantWithDetails,
   type CollaborationSessionStatus,
 } from '../services/collaboration.service.js';
+import { findUserByEmail, findUserById } from '../services/user.service.js';
 import { ANALYSIS_STATUSES, GUIDE_WORDS, RISK_LEVEL_FILTER_OPTIONS } from '@hazop/types';
 import type { AnalysisStatus, GuideWord, RiskLevelFilter } from '@hazop/types';
 
@@ -4047,6 +4049,355 @@ export async function getCollaborationSessions(req: Request, res: Response): Pro
     });
   } catch (error) {
     console.error('Get collaboration sessions error:', error);
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+// ============================================================================
+// POST /analyses/:id/invite - Invite user to collaboration
+// ============================================================================
+
+/**
+ * Request body for inviting a user to collaboration.
+ */
+interface InviteToCollaborationBody {
+  userEmail?: unknown;
+  userId?: unknown;
+}
+
+/**
+ * Validate invite to collaboration request body.
+ * Returns an array of field errors if validation fails.
+ */
+function validateInviteToCollaborationRequest(body: InviteToCollaborationBody): FieldError[] {
+  const errors: FieldError[] = [];
+
+  // Must provide either userEmail or userId, but not both
+  const hasEmail = body.userEmail !== undefined && body.userEmail !== null;
+  const hasUserId = body.userId !== undefined && body.userId !== null;
+
+  if (!hasEmail && !hasUserId) {
+    errors.push({
+      field: 'userEmail',
+      message: 'Either userEmail or userId must be provided',
+      code: 'REQUIRED',
+    });
+    return errors;
+  }
+
+  if (hasEmail && hasUserId) {
+    errors.push({
+      field: 'userEmail',
+      message: 'Provide either userEmail or userId, not both',
+      code: 'INVALID_VALUE',
+    });
+    return errors;
+  }
+
+  // Validate userEmail if provided
+  if (hasEmail) {
+    if (typeof body.userEmail !== 'string') {
+      errors.push({
+        field: 'userEmail',
+        message: 'User email must be a string',
+        code: 'INVALID_TYPE',
+      });
+    } else {
+      const trimmedEmail = body.userEmail.trim();
+      if (trimmedEmail.length === 0) {
+        errors.push({
+          field: 'userEmail',
+          message: 'User email is required',
+          code: 'REQUIRED',
+        });
+      } else if (trimmedEmail.length > 255) {
+        errors.push({
+          field: 'userEmail',
+          message: 'User email must be 255 characters or less',
+          code: 'MAX_LENGTH',
+        });
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+        errors.push({
+          field: 'userEmail',
+          message: 'Invalid email format',
+          code: 'INVALID_FORMAT',
+        });
+      }
+    }
+  }
+
+  // Validate userId if provided
+  if (hasUserId) {
+    if (typeof body.userId !== 'string') {
+      errors.push({
+        field: 'userId',
+        message: 'User ID must be a string',
+        code: 'INVALID_TYPE',
+      });
+    } else if (!UUID_REGEX.test(body.userId)) {
+      errors.push({
+        field: 'userId',
+        message: 'User ID must be a valid UUID',
+        code: 'INVALID_FORMAT',
+      });
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Response format for invited participant.
+ */
+interface InvitedParticipantResponse {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  joinedAt: string;
+  isActive: boolean;
+}
+
+/**
+ * POST /analyses/:id/invite
+ * Invite a user to a collaboration session for an analysis.
+ *
+ * The invited user must:
+ * 1. Exist in the system
+ * 2. Have access to the project that owns the analysis
+ *
+ * If no active collaboration session exists, one is created.
+ * The invited user is added as a participant to the session.
+ *
+ * Path parameters:
+ * - id: string (required) - Analysis UUID
+ *
+ * Request body (one of the following required):
+ * - userEmail: string - Email of the user to invite
+ * - userId: string - UUID of the user to invite
+ *
+ * Returns:
+ * - 200: User invited successfully
+ *   - session: The collaboration session details
+ *   - invitedUser: The invited user's participant details
+ * - 400: Validation error (invalid UUID, email, etc.)
+ * - 401: Not authenticated
+ * - 403: Not authorized to access this analysis
+ * - 404: Analysis not found, user not found, or user doesn't have project access
+ * - 409: User is already a participant in the session
+ * - 500: Internal server error
+ */
+export async function inviteToCollaboration(req: Request, res: Response): Promise<void> {
+  try {
+    const { id: analysisId } = req.params;
+    const body = req.body as InviteToCollaborationBody;
+
+    // Get authenticated user ID
+    const invitingUserId = (req.user as { id: string } | undefined)?.id;
+    if (!invitingUserId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format
+    if (!UUID_REGEX.test(analysisId)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid analysis ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Analysis ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Validate request body
+    const validationErrors = validateInviteToCollaborationRequest(body);
+    if (validationErrors.length > 0) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Validation failed',
+          errors: validationErrors,
+        },
+      });
+      return;
+    }
+
+    // Find the analysis to get the project ID
+    const analysis = await findAnalysisById(analysisId);
+    if (!analysis) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Analysis not found',
+        },
+      });
+      return;
+    }
+
+    // Check if inviting user has access to the project that owns this analysis
+    const invitingUserHasAccess = await userHasProjectAccess(invitingUserId, analysis.projectId);
+    if (!invitingUserHasAccess) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this analysis',
+        },
+      });
+      return;
+    }
+
+    // Find the user to invite
+    let invitedUser;
+    if (typeof body.userEmail === 'string') {
+      const userRow = await findUserByEmail(body.userEmail.trim());
+      if (userRow) {
+        invitedUser = {
+          id: userRow.id,
+          email: userRow.email,
+          name: userRow.name,
+          isActive: userRow.is_active,
+        };
+      }
+    } else if (typeof body.userId === 'string') {
+      const user = await findUserById(body.userId);
+      if (user) {
+        invitedUser = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          isActive: user.isActive,
+        };
+      }
+    }
+
+    if (!invitedUser) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'User not found',
+        },
+      });
+      return;
+    }
+
+    // Check if invited user is active
+    if (!invitedUser.isActive) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Cannot invite inactive user',
+          errors: [
+            {
+              field: body.userEmail ? 'userEmail' : 'userId',
+              message: 'User account is not active',
+              code: 'INVALID_VALUE',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Check if invited user has access to the project
+    const invitedUserHasAccess = await userHasProjectAccess(invitedUser.id, analysis.projectId);
+    if (!invitedUserHasAccess) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'User does not have access to this project',
+        },
+      });
+      return;
+    }
+
+    // Get or create an active collaboration session
+    const session = await getOrCreateActiveSession(analysisId, invitingUserId);
+
+    // Check if user is already an active participant
+    const activeParticipants = await getActiveParticipants(session.id);
+    const existingParticipant = activeParticipants.find((p) => p.userId === invitedUser.id);
+
+    if (existingParticipant) {
+      res.status(409).json({
+        success: false,
+        error: {
+          code: 'CONFLICT',
+          message: 'User is already an active participant in this collaboration session',
+        },
+      });
+      return;
+    }
+
+    // Add the invited user as a participant
+    const participant = await joinSession(session.id, invitedUser.id);
+
+    // Get updated participants list
+    const updatedParticipants = await getActiveParticipants(session.id);
+
+    // Format the response
+    const invitedParticipant: InvitedParticipantResponse = {
+      id: participant.id,
+      userId: participant.userId,
+      userName: participant.userName,
+      userEmail: participant.userEmail,
+      joinedAt: participant.joinedAt.toISOString(),
+      isActive: participant.isActive,
+    };
+
+    const sessionResponse = formatCollaborationSessionResponse(session, updatedParticipants);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        session: sessionResponse,
+        invitedUser: invitedParticipant,
+      },
+    });
+  } catch (error) {
+    console.error('Invite to collaboration error:', error);
+
+    // Handle foreign key constraint violation
+    if (error instanceof Error && 'code' in error) {
+      const dbError = error as { code: string };
+      if (dbError.code === '23503') {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid reference: analysis or user does not exist',
+          },
+        });
+        return;
+      }
+    }
 
     res.status(500).json({
       success: false,
