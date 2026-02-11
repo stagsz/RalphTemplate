@@ -11,3 +11,8 @@ export {
   RiskLevelBadge,
   getRiskLevelFromScore,
 } from './RiskScoreBadge';
+export {
+  RiskMatrix,
+  RiskMatrixCompact,
+  RiskMatrixWithSelection,
+} from './RiskMatrix';
