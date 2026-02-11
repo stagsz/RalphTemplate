@@ -4,10 +4,10 @@
 
 ## Current Status
 
-**Phase**: 6 - Risk Assessment
-**Progress**: Phase 6 (Risk Assessment) COMPLETE - 16/16 tasks complete
-**Last Completed**: RISK-16 - Add API tests for risk endpoints (b8f4374)
-**Next Task**: LOPA-01 - Create LOPA calculation engine
+**Phase**: 7 - LOPA & Compliance
+**Progress**: Phase 7 started - 1/23 tasks complete
+**Last Completed**: LOPA-01 - Create LOPA calculation engine (bc63dfe)
+**Next Task**: LOPA-02 - Implement independent protection layer (IPL) validation
 
 ---
 
@@ -256,7 +256,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 ## Phase 7: LOPA & Compliance (Epic 3 - Part 2)
 
 ### LOPA Analysis Service
-- [ ] LOPA-01: Create LOPA calculation engine (target mitigated event likelihood)
+- [x] LOPA-01: Create LOPA calculation engine (target mitigated event likelihood) (bc63dfe)
 - [ ] LOPA-02: Implement independent protection layer (IPL) validation
 - [ ] LOPA-03: Create LOPA recommendation trigger (when risk exceeds threshold)
 - [ ] LOPA-04: Implement risk reduction factor calculation
@@ -545,3 +545,5 @@ _No blockers currently._
 | RISK-13: Create risk dashboard page with charts and metrics | 625c2f6 | 2026-02-11 |
 | RISK-14: Add risk filtering to analysis entry table | dd38e31 | 2026-02-11 |
 | RISK-15: Add unit tests for risk calculation logic | 5db21bf | 2026-02-11 |
+| RISK-16: Add API tests for risk endpoints | b8f4374 | 2026-02-11 |
+| LOPA-01: Create LOPA calculation engine | bc63dfe | 2026-02-11 |
