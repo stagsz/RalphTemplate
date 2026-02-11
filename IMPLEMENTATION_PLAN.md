@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 5 - Core HazOps Analysis Workflow
-**Progress**: Recommendations input with multi-select complete
-**Last Completed**: HAZOP-25 - Create recommendations input with prepared answer menu multi-select (74dff69)
-**Next Task**: HAZOP-26 - Create analysis progress tracker (nodes completed/total)
+**Progress**: Analysis progress tracker complete
+**Last Completed**: HAZOP-26 - Create analysis progress tracker (nodes completed/total) (70a110a)
+**Next Task**: HAZOP-27 - Create analysis entry summary table
 
 ---
 
@@ -215,7 +215,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] HAZOP-23: Create consequences input with prepared answer menu (multi-select) (49ae70a)
 - [x] HAZOP-24: Create safeguards input with prepared answer menu (multi-select) (d3dbe46)
 - [x] HAZOP-25: Create recommendations input with prepared answer menu (multi-select) (74dff69)
-- [ ] HAZOP-26: Create analysis progress tracker (nodes completed/total)
+- [x] HAZOP-26: Create analysis progress tracker (nodes completed/total) (70a110a)
 - [ ] HAZOP-27: Create analysis entry summary table
 
 ### HazOps Testing
@@ -525,3 +525,4 @@ _No blockers currently._
 | HAZOP-23: Create consequences input with prepared answer menu (multi-select) | 49ae70a | 2026-02-11 |
 | HAZOP-24: Create safeguards input with prepared answer menu (multi-select) | d3dbe46 | 2026-02-11 |
 | HAZOP-25: Create recommendations input with prepared answer menu (multi-select) | 74dff69 | 2026-02-11 |
+| HAZOP-26: Create analysis progress tracker (nodes completed/total) | 70a110a | 2026-02-11 |
