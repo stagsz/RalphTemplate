@@ -11,6 +11,7 @@
  * - GET /analyses/:id/entries - List analysis entries
  * - PUT /entries/:id - Update analysis entry
  * - DELETE /entries/:id - Delete analysis entry
+ * - POST /analyses/:id/collaborate - Start or join a collaboration session
  */
 
 import type { Request, Response } from 'express';
@@ -43,6 +44,13 @@ import {
   findProjectById,
   getUserProjectRole,
 } from '../services/project.service.js';
+import {
+  getOrCreateActiveSession,
+  joinSession,
+  getActiveParticipants,
+  type CollaborationSessionWithDetails,
+  type SessionParticipantWithDetails,
+} from '../services/collaboration.service.js';
 import { ANALYSIS_STATUSES, GUIDE_WORDS, RISK_LEVEL_FILTER_OPTIONS } from '@hazop/types';
 import type { AnalysisStatus, GuideWord, RiskLevelFilter } from '@hazop/types';
 
@@ -3574,6 +3582,261 @@ export async function getAnalysisCompliance(req: Request, res: Response): Promis
     });
   } catch (error) {
     console.error('Get analysis compliance error:', error);
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+// ============================================================================
+// Collaboration Session
+// ============================================================================
+
+/**
+ * Request body for starting a collaboration session.
+ */
+interface StartCollaborationBody {
+  name?: unknown;
+  notes?: unknown;
+}
+
+/**
+ * Validate start collaboration request body.
+ * Returns an array of field errors if validation fails.
+ */
+function validateStartCollaborationRequest(body: StartCollaborationBody): FieldError[] {
+  const errors: FieldError[] = [];
+
+  // Validate name (optional, but if provided: must be string, max 255 chars)
+  if (body.name !== undefined && body.name !== null) {
+    if (typeof body.name !== 'string') {
+      errors.push({
+        field: 'name',
+        message: 'Name must be a string',
+        code: 'INVALID_TYPE',
+      });
+    } else if (body.name.length > 255) {
+      errors.push({
+        field: 'name',
+        message: 'Name must be 255 characters or less',
+        code: 'MAX_LENGTH',
+      });
+    }
+  }
+
+  // Validate notes (optional, but if provided: must be string)
+  if (body.notes !== undefined && body.notes !== null) {
+    if (typeof body.notes !== 'string') {
+      errors.push({
+        field: 'notes',
+        message: 'Notes must be a string',
+        code: 'INVALID_TYPE',
+      });
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Response format for collaboration session with participants.
+ */
+interface CollaborationSessionResponse {
+  id: string;
+  analysisId: string;
+  name: string | null;
+  status: 'active' | 'paused' | 'ended';
+  createdById: string;
+  createdByName: string;
+  createdByEmail: string;
+  createdAt: string;
+  updatedAt: string;
+  endedAt: string | null;
+  notes: string | null;
+  participants: Array<{
+    id: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    joinedAt: string;
+    isActive: boolean;
+    cursorPosition: unknown | null;
+    lastActivityAt: string;
+  }>;
+}
+
+/**
+ * Convert session and participants to response format.
+ */
+function formatCollaborationSessionResponse(
+  session: CollaborationSessionWithDetails,
+  participants: SessionParticipantWithDetails[]
+): CollaborationSessionResponse {
+  return {
+    id: session.id,
+    analysisId: session.analysisId,
+    name: session.name,
+    status: session.status,
+    createdById: session.createdById,
+    createdByName: session.createdByName,
+    createdByEmail: session.createdByEmail,
+    createdAt: session.createdAt.toISOString(),
+    updatedAt: session.updatedAt.toISOString(),
+    endedAt: session.endedAt ? session.endedAt.toISOString() : null,
+    notes: session.notes,
+    participants: participants.map((p) => ({
+      id: p.id,
+      userId: p.userId,
+      userName: p.userName,
+      userEmail: p.userEmail,
+      joinedAt: p.joinedAt.toISOString(),
+      isActive: p.isActive,
+      cursorPosition: p.cursorPosition,
+      lastActivityAt: p.lastActivityAt.toISOString(),
+    })),
+  };
+}
+
+/**
+ * POST /analyses/:id/collaborate
+ * Start or join a real-time collaboration session for an analysis.
+ *
+ * If an active collaboration session already exists for this analysis,
+ * the user joins it. Otherwise, a new session is created.
+ *
+ * Path parameters:
+ * - id: string (required) - Analysis UUID
+ *
+ * Request body (all fields optional):
+ * - name: string - Session name (max 255 chars, only used when creating new session)
+ * - notes: string - Session notes (only used when creating new session)
+ *
+ * Returns:
+ * - 201: Created new session or joined existing session
+ * - 400: Validation error
+ * - 401: Not authenticated
+ * - 403: Not authorized to access this analysis
+ * - 404: Analysis not found
+ * - 500: Internal server error
+ */
+export async function startCollaboration(req: Request, res: Response): Promise<void> {
+  try {
+    const { id: analysisId } = req.params;
+    const body = req.body as StartCollaborationBody;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate UUID format
+    if (!UUID_REGEX.test(analysisId)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid analysis ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Analysis ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Validate request body
+    const validationErrors = validateStartCollaborationRequest(body);
+    if (validationErrors.length > 0) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Validation failed',
+          errors: validationErrors,
+        },
+      });
+      return;
+    }
+
+    // Find the analysis to get the project ID
+    const analysis = await findAnalysisById(analysisId);
+    if (!analysis) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Analysis not found',
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project that owns this analysis
+    const hasAccess = await userHasProjectAccess(userId, analysis.projectId);
+    if (!hasAccess) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this analysis',
+        },
+      });
+      return;
+    }
+
+    // Get or create an active collaboration session
+    const sessionName = typeof body.name === 'string' ? body.name.trim() || undefined : undefined;
+    const session = await getOrCreateActiveSession(analysisId, userId, sessionName);
+
+    // Add the user as a participant (joinSession handles the case where user is already participating)
+    await joinSession(session.id, userId);
+
+    // Get all active participants
+    const participants = await getActiveParticipants(session.id);
+
+    // Format the response
+    const responseData = formatCollaborationSessionResponse(session, participants);
+
+    res.status(201).json({
+      success: true,
+      data: {
+        session: responseData,
+      },
+    });
+  } catch (error) {
+    console.error('Start collaboration error:', error);
+
+    // Handle foreign key constraint violation
+    if (error instanceof Error && 'code' in error) {
+      const dbError = error as { code: string };
+      if (dbError.code === '23503') {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid reference: analysis or user does not exist',
+          },
+        });
+        return;
+      }
+    }
 
     res.status(500).json({
       success: false,

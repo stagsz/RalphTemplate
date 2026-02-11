@@ -9,13 +9,14 @@
  * - GET /analyses/:id/entries - List analysis entries with filtering/pagination
  * - GET /analyses/:id/risk-summary - Get aggregated risk summary
  * - GET /analyses/:id/compliance - Get compliance status against regulatory standards
+ * - POST /analyses/:id/collaborate - Start or join a collaboration session
  *
  * All routes require authentication.
  */
 
 import { Router } from 'express';
 import { authenticate, requireAuth } from '../middleware/auth.middleware.js';
-import { getAnalysisById, updateAnalysis, createAnalysisEntry, listEntries, completeAnalysis, getRiskSummary, getAnalysisCompliance } from '../controllers/analyses.controller.js';
+import { getAnalysisById, updateAnalysis, createAnalysisEntry, listEntries, completeAnalysis, getRiskSummary, getAnalysisCompliance, startCollaboration } from '../controllers/analyses.controller.js';
 
 const router = Router();
 
@@ -162,5 +163,36 @@ router.get('/:id/risk-summary', authenticate, requireAuth, getRiskSummary);
  * Only accessible if the user is a member of the project that owns the analysis.
  */
 router.get('/:id/compliance', authenticate, requireAuth, getAnalysisCompliance);
+
+/**
+ * POST /analyses/:id/collaborate
+ * Start or join a real-time collaboration session for an analysis.
+ *
+ * If an active collaboration session already exists for this analysis,
+ * the user joins it. Otherwise, a new session is created.
+ *
+ * Path parameters:
+ * - id: string (required) - Analysis UUID
+ *
+ * Request body (all fields optional):
+ * - name: string - Session name (max 255 chars, only used when creating new session)
+ * - notes: string - Session notes (only used when creating new session)
+ *
+ * Returns:
+ * - session: The collaboration session with active participants
+ *   - id: Session UUID
+ *   - analysisId: Analysis UUID
+ *   - name: Session name (if provided)
+ *   - status: 'active'
+ *   - createdById: Creator's user UUID
+ *   - createdByName: Creator's name
+ *   - createdByEmail: Creator's email
+ *   - createdAt: ISO timestamp
+ *   - updatedAt: ISO timestamp
+ *   - participants: Array of active participants with user details
+ *
+ * Only accessible if the user is a member of the project that owns the analysis.
+ */
+router.post('/:id/collaborate', authenticate, requireAuth, startCollaboration);
 
 export default router;
