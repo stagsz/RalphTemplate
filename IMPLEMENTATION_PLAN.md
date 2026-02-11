@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 5 - Core HazOps Analysis Workflow
-**Progress**: Guide word selector complete
-**Last Completed**: HAZOP-20 - Create guide word selector (tab or dropdown navigation) (19b0c9a)
-**Next Task**: HAZOP-21 - Create deviation input form with autocomplete
+**Progress**: Deviation input form complete
+**Last Completed**: HAZOP-21 - Create deviation input form with autocomplete (cbc99b4)
+**Next Task**: HAZOP-22 - Create causes input with prepared answer menu (multi-select)
 
 ---
 
@@ -210,7 +210,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] HAZOP-18: Create analysis workspace layout (split-pane: P&ID viewer + analysis panel) (f30b08c)
 - [x] HAZOP-19: Create node selection component (click node on P&ID to select) (f30b08c)
 - [x] HAZOP-20: Create guide word selector (tab or dropdown navigation) (19b0c9a)
-- [ ] HAZOP-21: Create deviation input form with autocomplete
+- [x] HAZOP-21: Create deviation input form with autocomplete (cbc99b4)
 - [ ] HAZOP-22: Create causes input with prepared answer menu (multi-select)
 - [ ] HAZOP-23: Create consequences input with prepared answer menu (multi-select)
 - [ ] HAZOP-24: Create safeguards input with prepared answer menu (multi-select)
@@ -520,3 +520,4 @@ _No blockers currently._
 | HAZOP-18: Create analysis workspace layout (split-pane) | f30b08c | 2026-02-11 |
 | HAZOP-19: Create node selection component | f30b08c | 2026-02-11 |
 | HAZOP-20: Create guide word selector (tab navigation) | 19b0c9a | 2026-02-11 |
+| HAZOP-21: Create deviation input form with autocomplete | cbc99b4 | 2026-02-11 |
