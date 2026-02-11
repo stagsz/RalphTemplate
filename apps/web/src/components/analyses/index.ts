@@ -9,3 +9,4 @@ export { RecommendationsInput } from './RecommendationsInput';
 export { AnalysisProgressTracker } from './AnalysisProgressTracker';
 export { AnalysisEntrySummaryTable } from './AnalysisEntrySummaryTable';
 export { LOPAInputForm } from './LOPAInputForm';
+export { LOPAResultsDisplay, LOPAStatusBadge, LOPASummaryCard } from './LOPAResultsDisplay';
