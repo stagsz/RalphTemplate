@@ -221,6 +221,32 @@ export const RISK_LEVEL_LABELS: Record<RiskLevel, string> = {
 };
 
 /**
+ * Risk level filter options for filtering analysis entries.
+ * Extends RiskLevel with 'not_assessed' for entries without risk ranking.
+ */
+export type RiskLevelFilter = RiskLevel | 'not_assessed';
+
+/**
+ * All risk level filter options as a constant array.
+ */
+export const RISK_LEVEL_FILTER_OPTIONS: readonly RiskLevelFilter[] = [
+  'low',
+  'medium',
+  'high',
+  'not_assessed',
+] as const;
+
+/**
+ * Human-readable labels for risk level filter options.
+ */
+export const RISK_LEVEL_FILTER_LABELS: Record<RiskLevelFilter, string> = {
+  low: 'Low Risk',
+  medium: 'Medium Risk',
+  high: 'High Risk',
+  not_assessed: 'Not Assessed',
+};
+
+/**
  * Risk level thresholds.
  * Score 1-20: Low, 21-60: Medium, 61-125: High
  */

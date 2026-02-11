@@ -15,8 +15,8 @@ import {
   type ListEntriesFilters,
   type ListEntriesSortOptions,
 } from '../../services/analyses.service';
-import type { AnalysisEntry, GuideWord, RiskLevel, ApiError } from '@hazop/types';
-import { GUIDE_WORD_LABELS, GUIDE_WORDS, RISK_LEVEL_LABELS, RISK_LEVELS } from '@hazop/types';
+import type { AnalysisEntry, GuideWord, RiskLevel, RiskLevelFilter, ApiError } from '@hazop/types';
+import { GUIDE_WORD_LABELS, GUIDE_WORDS, RISK_LEVEL_FILTER_LABELS, RISK_LEVEL_FILTER_OPTIONS } from '@hazop/types';
 
 /**
  * Guide word badge colors.
@@ -49,11 +49,11 @@ const GUIDE_WORD_OPTIONS = [
 ];
 
 /**
- * Risk level filter options.
+ * Risk level filter options (includes 'Not Assessed' option).
  */
 const RISK_LEVEL_OPTIONS = [
   { value: '', label: 'All Risk Levels' },
-  ...RISK_LEVELS.map((rl) => ({ value: rl, label: RISK_LEVEL_LABELS[rl] })),
+  ...RISK_LEVEL_FILTER_OPTIONS.map((rl) => ({ value: rl, label: RISK_LEVEL_FILTER_LABELS[rl] })),
 ];
 
 /**
@@ -154,7 +154,7 @@ export function AnalysisEntrySummaryTable({
       filters.guideWord = guideWordFilter as GuideWord;
     }
     if (riskLevelFilter) {
-      filters.riskLevel = riskLevelFilter as RiskLevel;
+      filters.riskLevel = riskLevelFilter as RiskLevelFilter;
     }
 
     const [sortBy, sortOrder] = sortValue.split(':') as [

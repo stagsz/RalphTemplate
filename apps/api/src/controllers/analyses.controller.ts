@@ -41,8 +41,8 @@ import {
   findProjectById,
   getUserProjectRole,
 } from '../services/project.service.js';
-import { ANALYSIS_STATUSES, GUIDE_WORDS, RISK_LEVELS } from '@hazop/types';
-import type { AnalysisStatus, GuideWord, RiskLevel } from '@hazop/types';
+import { ANALYSIS_STATUSES, GUIDE_WORDS, RISK_LEVEL_FILTER_OPTIONS } from '@hazop/types';
+import type { AnalysisStatus, GuideWord, RiskLevelFilter } from '@hazop/types';
 
 /**
  * Validation error for a specific field.
@@ -1704,11 +1704,11 @@ function validateListEntriesQuery(query: ListEntriesQuery): FieldError[] {
     });
   }
 
-  // Validate riskLevel filter
-  if (query.riskLevel !== undefined && !RISK_LEVELS.includes(query.riskLevel as RiskLevel)) {
+  // Validate riskLevel filter (includes 'not_assessed' option)
+  if (query.riskLevel !== undefined && !RISK_LEVEL_FILTER_OPTIONS.includes(query.riskLevel as RiskLevelFilter)) {
     errors.push({
       field: 'riskLevel',
-      message: `riskLevel must be one of: ${RISK_LEVELS.join(', ')}`,
+      message: `riskLevel must be one of: ${RISK_LEVEL_FILTER_OPTIONS.join(', ')}`,
       code: 'INVALID_VALUE',
     });
   }
@@ -1833,7 +1833,7 @@ export async function listEntries(req: Request, res: Response): Promise<void> {
     const search = query.search;
     const nodeId = query.nodeId;
     const guideWord = query.guideWord as GuideWord | undefined;
-    const riskLevel = query.riskLevel as RiskLevel | undefined;
+    const riskLevel = query.riskLevel as RiskLevelFilter | undefined;
 
     // Fetch entries
     const result = await listAnalysisEntries(

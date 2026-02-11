@@ -4,7 +4,7 @@ import type {
   AnalysisEntry,
   AnalysisStatus,
   GuideWord,
-  RiskLevel,
+  RiskLevelFilter,
   ApiResult,
   PaginationMeta,
   CreateHazopsAnalysisPayload,
@@ -130,7 +130,7 @@ export interface ListAnalysesPagination {
 export interface ListEntriesFilters {
   nodeId?: string;
   guideWord?: GuideWord;
-  riskLevel?: RiskLevel;
+  riskLevel?: RiskLevelFilter;
   search?: string;
 }
 

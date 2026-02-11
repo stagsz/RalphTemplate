@@ -6,7 +6,7 @@
  */
 
 import { getPool } from '../config/database.config.js';
-import type { AnalysisStatus, GuideWord, RiskRanking, RiskLevel } from '@hazop/types';
+import type { AnalysisStatus, GuideWord, RiskRanking, RiskLevel, RiskLevelFilter } from '@hazop/types';
 
 // ============================================================================
 // Database Row Types (snake_case matching PostgreSQL schema)
@@ -978,8 +978,8 @@ export interface ListEntriesFilters {
   nodeId?: string;
   /** Filter by guide word */
   guideWord?: GuideWord;
-  /** Filter by risk level */
-  riskLevel?: RiskLevel;
+  /** Filter by risk level (includes 'not_assessed' for entries without risk ranking) */
+  riskLevel?: RiskLevelFilter;
   /** Search query for parameter or deviation */
   search?: string;
 }
@@ -1042,11 +1042,15 @@ export async function listAnalysisEntries(
     paramIndex++;
   }
 
-  // Filter by risk level
+  // Filter by risk level (special handling for 'not_assessed')
   if (filters?.riskLevel) {
-    whereClauses.push(`ae.risk_level = $${paramIndex}`);
-    values.push(filters.riskLevel);
-    paramIndex++;
+    if (filters.riskLevel === 'not_assessed') {
+      whereClauses.push(`ae.risk_level IS NULL`);
+    } else {
+      whereClauses.push(`ae.risk_level = $${paramIndex}`);
+      values.push(filters.riskLevel);
+      paramIndex++;
+    }
   }
 
   // Search by parameter or deviation
