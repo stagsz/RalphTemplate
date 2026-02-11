@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 6 - Risk Assessment
-**Progress**: Phase 6 (Risk Assessment) in progress - 14/16 tasks complete
-**Last Completed**: RISK-14 - Add risk filtering to analysis entry table (dd38e31)
-**Next Task**: RISK-15 - Add unit tests for risk calculation logic
+**Progress**: Phase 6 (Risk Assessment) in progress - 15/16 tasks complete
+**Last Completed**: RISK-15 - Add unit tests for risk calculation logic (5db21bf)
+**Next Task**: RISK-16 - Add API tests for risk endpoints
 
 ---
 
@@ -248,7 +248,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] RISK-14: Add risk filtering to analysis entry table (dd38e31)
 
 ### Risk Testing
-- [ ] RISK-15: Add unit tests for risk calculation logic
+- [x] RISK-15: Add unit tests for risk calculation logic (5db21bf)
 - [ ] RISK-16: Add API tests for risk endpoints
 
 ---
@@ -544,3 +544,4 @@ _No blockers currently._
 | RISK-12: Create interactive 5x5 risk matrix visualization | bce10fe | 2026-02-11 |
 | RISK-13: Create risk dashboard page with charts and metrics | 625c2f6 | 2026-02-11 |
 | RISK-14: Add risk filtering to analysis entry table | dd38e31 | 2026-02-11 |
+| RISK-15: Add unit tests for risk calculation logic | 5db21bf | 2026-02-11 |
