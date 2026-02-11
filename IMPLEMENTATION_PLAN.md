@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 8 - Real-time Collaboration
-**Progress**: Phase 8 in progress - 7/16 tasks complete
-**Last Completed**: COLLAB-07 - Create GET /analyses/:id/collaborate endpoint (8171768)
-**Next Task**: COLLAB-08 - Create POST /analyses/:id/invite endpoint (send invitation)
+**Progress**: Phase 8 in progress - 8/16 tasks complete
+**Last Completed**: COLLAB-08 - Create POST /analyses/:id/invite endpoint (6b0d2e1)
+**Next Task**: COLLAB-09 - Create POST /sessions/:id/join endpoint (join collaboration)
 
 ---
 
@@ -302,7 +302,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 ### Backend API
 - [x] COLLAB-06: Create POST /analyses/:id/collaborate endpoint (start session) (732d1da)
 - [x] COLLAB-07: Create GET /analyses/:id/collaborate endpoint (get active sessions) (8171768)
-- [ ] COLLAB-08: Create POST /analyses/:id/invite endpoint (send invitation)
+- [x] COLLAB-08: Create POST /analyses/:id/invite endpoint (send invitation) (6b0d2e1)
 - [ ] COLLAB-09: Create POST /sessions/:id/join endpoint (join collaboration)
 
 ### Frontend Collaboration
@@ -576,3 +576,4 @@ _No blockers currently._
 | COLLAB-05: Create conflict detection for concurrent edits | 3d3ae3b | 2026-02-11 |
 | COLLAB-06: Create POST /analyses/:id/collaborate endpoint | 732d1da | 2026-02-11 |
 | COLLAB-07: Create GET /analyses/:id/collaborate endpoint | 8171768 | 2026-02-11 |
+| COLLAB-08: Create POST /analyses/:id/invite endpoint | 6b0d2e1 | 2026-02-11 |
