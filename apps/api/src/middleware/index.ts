@@ -33,3 +33,11 @@ export {
   VALID_EXTENSIONS,
   MAX_FILE_SIZE,
 } from './upload.middleware.js';
+
+export {
+  metricsMiddleware,
+  getMetricsRegistry,
+  getMetrics,
+  getMetricsContentType,
+  metrics,
+} from './metrics.middleware.js';

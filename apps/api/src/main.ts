@@ -22,6 +22,7 @@ import reportsRoutes from './routes/reports.routes.js';
 import templatesRoutes from './routes/templates.routes.js';
 import { configurePassport, initializePassport } from './config/passport.config.js';
 import { getWebSocketService } from './services/websocket.service.js';
+import { metricsMiddleware, getMetrics, getMetricsContentType } from './middleware/index.js';
 
 // Load .env from project root (two levels up from this file)
 const __filename = fileURLToPath(import.meta.url);
@@ -42,6 +43,9 @@ app.use(cors({
   credentials: true,
 }));
 
+// Prometheus metrics middleware - must be early in the chain
+app.use(metricsMiddleware);
+
 app.use(express.json());
 
 // Initialize Passport JWT authentication (only if JWT keys are configured)
@@ -53,6 +57,16 @@ if (process.env.JWT_PRIVATE_KEY && process.env.JWT_PUBLIC_KEY) {
 // Health check endpoint
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'hazop-api' });
+});
+
+// Prometheus metrics endpoint
+app.get('/metrics', async (_req, res) => {
+  try {
+    res.set('Content-Type', getMetricsContentType());
+    res.end(await getMetrics());
+  } catch (error) {
+    res.status(500).end(String(error));
+  }
 });
 
 // API info endpoint
