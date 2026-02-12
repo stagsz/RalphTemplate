@@ -9,6 +9,8 @@ import { nodesService } from '../services/nodes.service';
 import { PIDViewer } from '../components/documents/PIDViewer';
 import { NodeOverlay } from '../components/documents/NodeOverlay';
 import { GuideWordSelector, DeviationInputForm, CausesInput, ConsequencesInput, SafeguardsInput, RecommendationsInput, AnalysisProgressTracker, AnalysisEntrySummaryTable } from '../components/analyses';
+import { CollaborationIndicator } from '../components/collaboration';
+import { useWebSocket } from '../hooks';
 import type {
   ApiError,
   HazopsAnalysisWithDetailsAndProgress,
@@ -99,6 +101,51 @@ export function AnalysisWorkspacePage() {
 
   // Trigger for refreshing the summary table when entries are created/updated
   const [summaryRefreshTrigger, setSummaryRefreshTrigger] = useState(0);
+
+  // WebSocket for real-time collaboration
+  const { state: wsState, actions: wsActions } = useWebSocket({
+    onEntryCreated: () => {
+      // Refresh summary table when another user creates an entry
+      setSummaryRefreshTrigger((prev) => prev + 1);
+    },
+    onEntryUpdated: () => {
+      // Refresh summary table when another user updates an entry
+      setSummaryRefreshTrigger((prev) => prev + 1);
+    },
+    onEntryDeleted: () => {
+      // Refresh summary table when another user deletes an entry
+      setSummaryRefreshTrigger((prev) => prev + 1);
+    },
+    onRiskUpdated: () => {
+      // Refresh summary table when another user updates risk
+      setSummaryRefreshTrigger((prev) => prev + 1);
+    },
+  });
+
+  // Join WebSocket room when analysis is loaded
+  useEffect(() => {
+    if (analysisId && wsState.isConnected && wsState.currentRoom !== analysisId) {
+      wsActions.joinRoom(analysisId).catch((err) => {
+        console.error('Failed to join collaboration room:', err);
+      });
+    }
+  }, [analysisId, wsState.isConnected, wsState.currentRoom, wsActions]);
+
+  // Leave room on unmount
+  useEffect(() => {
+    return () => {
+      if (wsState.currentRoom) {
+        wsActions.leaveRoom();
+      }
+    };
+  }, [wsState.currentRoom, wsActions]);
+
+  // Update cursor position when selected node changes
+  useEffect(() => {
+    if (wsState.currentRoom && selectedNodeId) {
+      wsActions.updateCursor({ nodeId: selectedNodeId });
+    }
+  }, [wsState.currentRoom, selectedNodeId, wsActions]);
 
   /**
    * Fetch analysis, document, and nodes data.
@@ -488,8 +535,19 @@ export function AnalysisWorkspacePage() {
               />
             </div>
 
-            {/* Right: User and actions */}
+            {/* Right: Collaboration indicator, user, and actions */}
             <div className="flex items-center gap-4">
+              {/* Collaboration status indicator */}
+              <CollaborationIndicator
+                users={wsState.roomUsers}
+                currentUserId={currentUser?.id}
+                isConnected={wsState.isConnected}
+                maxAvatarsShown={3}
+                size="sm"
+              />
+
+              <div className="w-px h-4 bg-slate-300" />
+
               <Link to="/profile" className="text-sm text-slate-600 hover:text-slate-900">
                 {currentUser?.name}
               </Link>
