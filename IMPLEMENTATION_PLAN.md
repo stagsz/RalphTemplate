@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 9 - Report Generation
-**Progress**: Phase 9 started - 1/21 tasks done
-**Last Completed**: REPORT-01 - Set up RabbitMQ for async report generation queue
-**Next Task**: REPORT-02 - Create Word document generator (docx format)
+**Progress**: Phase 9 in progress - 2/21 tasks done
+**Last Completed**: REPORT-02 - Create Word document generator (docx format)
+**Next Task**: REPORT-03 - Create PDF document generator
 
 ---
 
@@ -322,7 +322,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 
 ### Report Generation Service
 - [x] REPORT-01: Set up RabbitMQ for async report generation queue (cfed696)
-- [ ] REPORT-02: Create Word document generator (docx format)
+- [x] REPORT-02: Create Word document generator (docx format) (8ba7713)
 - [ ] REPORT-03: Create PDF document generator
 - [ ] REPORT-04: Create Excel spreadsheet generator (analysis data tables)
 - [ ] REPORT-05: Create PowerPoint presentation generator
@@ -586,3 +586,4 @@ _No blockers currently._
 | COLLAB-15: Add unit tests for WebSocket event handlers | e1b408e | 2026-02-12 |
 | COLLAB-16: Add E2E tests for collaboration workflow | 65891dc | 2026-02-12 |
 | REPORT-01: Set up RabbitMQ for async report generation queue | cfed696 | 2026-02-12 |
+| REPORT-02: Create Word document generator (docx format) | 8ba7713 | 2026-02-12 |
