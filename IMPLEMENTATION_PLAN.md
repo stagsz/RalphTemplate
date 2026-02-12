@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 11 - Polish & Deployment
-**Progress**: Phase 11 IN PROGRESS - 5/15 tasks done
-**Last Completed**: PERF-05 - Add keyboard shortcuts for common analysis actions
-**Next Task**: OPS-01 - Set up Prometheus metrics collection
+**Progress**: Phase 11 IN PROGRESS - 6/15 tasks done
+**Last Completed**: OPS-01 - Set up Prometheus metrics collection
+**Next Task**: OPS-02 - Configure Grafana dashboards
 
 ---
 
@@ -381,7 +381,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] PERF-05: Add keyboard shortcuts for common analysis actions (a27d5e8)
 
 ### Monitoring & Logging
-- [ ] OPS-01: Set up Prometheus metrics collection
+- [x] OPS-01: Set up Prometheus metrics collection (cfc3ae6)
 - [ ] OPS-02: Configure Grafana dashboards
 - [ ] OPS-03: Set up Winston structured logging
 - [ ] OPS-04: Configure Loki log aggregation
@@ -623,3 +623,4 @@ _No blockers currently._
 | PERF-03: Add toast notifications for success/error feedback | 967d6eb | 2026-02-12 |
 | PERF-04: Implement optimistic updates for analysis entries | 33fbc71 | 2026-02-12 |
 | PERF-05: Add keyboard shortcuts for common analysis actions | a27d5e8 | 2026-02-12 |
+| OPS-01: Set up Prometheus metrics collection | cfc3ae6 | 2026-02-12 |
