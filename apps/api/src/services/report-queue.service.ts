@@ -16,6 +16,9 @@ import type {
   ReportFormat,
   ReportParameters,
 } from '@hazop/types';
+import { createLogger } from '../utils/logger.js';
+
+const log = createLogger({ service: 'report-queue' });
 
 /**
  * Report generation job message structure.
@@ -176,7 +179,7 @@ export class ReportQueueService {
 
         await handler(result);
       } catch (error) {
-        console.error('Error processing report job:', error);
+        log.error('Error processing report job:', { error: error instanceof Error ? error.message : String(error) });
         // Don't requeue malformed messages
         channel.nack(msg, false, false);
       }
@@ -255,7 +258,7 @@ export class ReportQueueService {
         return false;
       }
     } catch (error) {
-      console.error('Error retrying dead letter:', error);
+      log.error('Error retrying dead letter:', { error: error instanceof Error ? error.message : String(error) });
       channel.nack(msg, false, true);
       return false;
     }

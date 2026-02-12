@@ -13,6 +13,9 @@ import {
   emailExistsForOtherUser,
 } from '../services/user.service.js';
 import { getAuthUserId } from '../middleware/auth.middleware.js';
+import { createLogger } from '../utils/logger.js';
+
+const log = createLogger({ service: 'users-controller' });
 
 /**
  * Validation error for a specific field.
@@ -126,7 +129,7 @@ export async function getCurrentProfile(req: Request, res: Response): Promise<vo
       data: { user },
     });
   } catch (error) {
-    console.error('Get profile error:', error);
+    log.error('Get profile error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -212,7 +215,7 @@ export async function updateCurrentProfile(req: Request, res: Response): Promise
       data: { user: updatedUser },
     });
   } catch (error) {
-    console.error('Update profile error:', error);
+    log.error('Update profile error:', { error: error instanceof Error ? error.message : String(error) });
 
     // Handle unique constraint violation (backup for race condition)
     if (error instanceof Error && 'code' in error && (error as { code: string }).code === '23505') {

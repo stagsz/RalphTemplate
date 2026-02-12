@@ -31,6 +31,9 @@ import {
 import { findAnalysisById } from '../services/hazop-analysis.service.js';
 import { findReportByIdWithDetails } from '../services/reports.service.js';
 import { getSignedUrl, getSignedDownloadUrl } from '../services/storage.service.js';
+import { createLogger } from '../utils/logger.js';
+
+const log = createLogger({ service: 'reports-controller' });
 
 // ============================================================================
 // Constants
@@ -480,7 +483,7 @@ export async function createReport(req: Request, res: Response): Promise<void> {
       },
     });
   } catch (error) {
-    console.error('Create report error:', error);
+    log.error('Create report error:', { error: error instanceof Error ? error.message : String(error) });
 
     // Handle foreign key constraint violation
     if (error instanceof Error && 'code' in error) {
@@ -591,7 +594,7 @@ export async function getReportStatus(req: Request, res: Response): Promise<void
         downloadUrl = await getSignedUrl(report.filePath, { expiresIn: 3600 }); // 1 hour expiry
       } catch (urlError) {
         // Log but don't fail - URL generation is not critical
-        console.error('Failed to generate download URL:', urlError);
+        log.warn('Failed to generate download URL', { filePath: report.filePath, error: urlError instanceof Error ? urlError.message : String(urlError) });
       }
     }
 
@@ -625,7 +628,7 @@ export async function getReportStatus(req: Request, res: Response): Promise<void
       },
     });
   } catch (error) {
-    console.error('Get report status error:', error);
+    log.error('Get report status error:', { error: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       success: false,
       error: {
@@ -804,7 +807,7 @@ export async function downloadReport(req: Request, res: Response): Promise<void>
       },
     });
   } catch (error) {
-    console.error('Download report error:', error);
+    log.error('Download report error:', { error: error instanceof Error ? error.message : String(error) });
     res.status(500).json({
       success: false,
       error: {
@@ -1061,7 +1064,7 @@ export async function listReports(req: Request, res: Response): Promise<void> {
       },
     });
   } catch (error) {
-    console.error('List reports error:', error);
+    log.error('List reports error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -1219,7 +1222,7 @@ export async function listTemplates(req: Request, res: Response): Promise<void> 
       },
     });
   } catch (error) {
-    console.error('List templates error:', error);
+    log.error('List templates error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,

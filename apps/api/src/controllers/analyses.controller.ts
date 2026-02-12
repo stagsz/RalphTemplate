@@ -58,6 +58,9 @@ import {
 import { findUserByEmail, findUserById } from '../services/user.service.js';
 import { ANALYSIS_STATUSES, GUIDE_WORDS, RISK_LEVEL_FILTER_OPTIONS } from '@hazop/types';
 import type { AnalysisStatus, GuideWord, RiskLevelFilter } from '@hazop/types';
+import { createLogger } from '../utils/logger.js';
+
+const log = createLogger({ service: 'analyses-controller' });
 
 /**
  * Validation error for a specific field.
@@ -687,7 +690,7 @@ export async function createAnalysis(req: Request, res: Response): Promise<void>
       data: { analysis },
     });
   } catch (error) {
-    console.error('Create analysis error:', error);
+    log.error('Create analysis error:', { error: error instanceof Error ? error.message : String(error) });
 
     // Handle foreign key constraint violation (e.g., lead analyst doesn't exist)
     if (error instanceof Error && 'code' in error) {
@@ -955,7 +958,7 @@ export async function listAnalyses(req: Request, res: Response): Promise<void> {
       },
     });
   } catch (error) {
-    console.error('List analyses error:', error);
+    log.error('List analyses error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -1055,7 +1058,7 @@ export async function getAnalysisById(req: Request, res: Response): Promise<void
       data: { analysis },
     });
   } catch (error) {
-    console.error('Get analysis by ID error:', error);
+    log.error('Get analysis by ID error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -1219,7 +1222,7 @@ export async function updateAnalysis(req: Request, res: Response): Promise<void>
       data: { analysis: updatedAnalysis },
     });
   } catch (error) {
-    console.error('Update analysis error:', error);
+    log.error('Update analysis error:', { error: error instanceof Error ? error.message : String(error) });
 
     // Handle foreign key constraint violation (e.g., lead analyst doesn't exist)
     if (error instanceof Error && 'code' in error) {
@@ -1419,7 +1422,7 @@ export async function completeAnalysis(req: Request, res: Response): Promise<voi
       data: { analysis: completedAnalysis },
     });
   } catch (error) {
-    console.error('Complete analysis error:', error);
+    log.error('Complete analysis error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -1594,7 +1597,7 @@ export async function createAnalysisEntry(req: Request, res: Response): Promise<
       data: { entry },
     });
   } catch (error) {
-    console.error('Create analysis entry error:', error);
+    log.error('Create analysis entry error:', { error: error instanceof Error ? error.message : String(error) });
 
     // Handle constraint violations
     if (error instanceof Error && 'code' in error) {
@@ -1881,7 +1884,7 @@ export async function listEntries(req: Request, res: Response): Promise<void> {
       },
     });
   } catch (error) {
-    console.error('List analysis entries error:', error);
+    log.error('List analysis entries error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -2169,7 +2172,7 @@ export async function updateEntry(req: Request, res: Response): Promise<void> {
       data: { entry: updatedEntry },
     });
   } catch (error) {
-    console.error('Update analysis entry error:', error);
+    log.error('Update analysis entry error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -2315,7 +2318,7 @@ export async function deleteEntry(req: Request, res: Response): Promise<void> {
       },
     });
   } catch (error) {
-    console.error('Delete analysis entry error:', error);
+    log.error('Delete analysis entry error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -2594,7 +2597,7 @@ export async function updateEntryRisk(req: Request, res: Response): Promise<void
       data: { entry: updatedEntry },
     });
   } catch (error) {
-    console.error('Update entry risk error:', error);
+    log.error('Update entry risk error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -2715,7 +2718,7 @@ export async function getRiskSummary(req: Request, res: Response): Promise<void>
       data: riskAggregation,
     });
   } catch (error) {
-    console.error('Get risk summary error:', error);
+    log.error('Get risk summary error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -3282,7 +3285,7 @@ export async function createEntryLOPA(req: Request, res: Response): Promise<void
       data: { lopa },
     });
   } catch (error) {
-    console.error('Create entry LOPA error:', error);
+    log.error('Create entry LOPA error:', { error: error instanceof Error ? error.message : String(error) });
 
     // Handle specific error cases
     if (error instanceof Error) {
@@ -3435,7 +3438,7 @@ export async function getEntryLOPA(req: Request, res: Response): Promise<void> {
       data: { lopa },
     });
   } catch (error) {
-    console.error('Get entry LOPA error:', error);
+    log.error('Get entry LOPA error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -3586,7 +3589,7 @@ export async function getAnalysisCompliance(req: Request, res: Response): Promis
       data: complianceStatus,
     });
   } catch (error) {
-    console.error('Get analysis compliance error:', error);
+    log.error('Get analysis compliance error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -3826,7 +3829,7 @@ export async function startCollaboration(req: Request, res: Response): Promise<v
       },
     });
   } catch (error) {
-    console.error('Start collaboration error:', error);
+    log.error('Start collaboration error:', { error: error instanceof Error ? error.message : String(error) });
 
     // Handle foreign key constraint violation
     if (error instanceof Error && 'code' in error) {
@@ -4049,7 +4052,7 @@ export async function getCollaborationSessions(req: Request, res: Response): Pro
       },
     });
   } catch (error) {
-    console.error('Get collaboration sessions error:', error);
+    log.error('Get collaboration sessions error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -4383,7 +4386,7 @@ export async function inviteToCollaboration(req: Request, res: Response): Promis
       },
     });
   } catch (error) {
-    console.error('Invite to collaboration error:', error);
+    log.error('Invite to collaboration error:', { error: error instanceof Error ? error.message : String(error) });
 
     // Handle foreign key constraint violation
     if (error instanceof Error && 'code' in error) {
@@ -4567,7 +4570,7 @@ export async function joinCollaborationSession(req: Request, res: Response): Pro
       },
     });
   } catch (error) {
-    console.error('Join collaboration session error:', error);
+    log.error('Join collaboration session error:', { error: error instanceof Error ? error.message : String(error) });
 
     // Handle foreign key constraint violation
     if (error instanceof Error && 'code' in error) {

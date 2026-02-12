@@ -41,3 +41,5 @@ export {
   getMetricsContentType,
   metrics,
 } from './metrics.middleware.js';
+
+export { requestLogger, getRequestId } from './request-logger.middleware.js';

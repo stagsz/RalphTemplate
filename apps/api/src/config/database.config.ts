@@ -6,6 +6,9 @@
  */
 
 import pg from 'pg';
+import { createLogger } from '../utils/logger.js';
+
+const log = createLogger({ service: 'database' });
 
 const { Pool } = pg;
 
@@ -61,7 +64,7 @@ export function getPool(): pg.Pool {
 
     // Handle pool errors
     pool.on('error', (err) => {
-      console.error('Unexpected database pool error:', err);
+      log.error('Unexpected database pool error', { error: err.message, stack: err.stack });
     });
   }
 
@@ -89,7 +92,7 @@ export async function testConnection(): Promise<boolean> {
     const result = await p.query('SELECT 1 as connected');
     return result.rows[0]?.connected === 1;
   } catch (error) {
-    console.error('Database connection test failed:', error);
+    log.error('Database connection test failed', { error: error instanceof Error ? error.message : String(error) });
     return false;
   }
 }

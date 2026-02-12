@@ -6,6 +6,9 @@
  */
 
 import * as Minio from 'minio';
+import { createLogger } from '../utils/logger.js';
+
+const log = createLogger({ service: 'minio' });
 
 /**
  * MinIO configuration loaded from environment variables.
@@ -76,10 +79,10 @@ export async function ensureBucket(): Promise<void> {
     const exists = await minioClient.bucketExists(bucketName);
     if (!exists) {
       await minioClient.makeBucket(bucketName);
-      console.log(`MinIO bucket '${bucketName}' created`);
+      log.info('MinIO bucket created', { bucket: bucketName });
     }
   } catch (error) {
-    console.error('Failed to ensure MinIO bucket exists:', error);
+    log.error('Failed to ensure MinIO bucket exists', { bucket: bucketName, error: error instanceof Error ? error.message : String(error) });
     throw error;
   }
 }
@@ -95,7 +98,7 @@ export async function testMinIOConnection(): Promise<boolean> {
     await minioClient.listBuckets();
     return true;
   } catch (error) {
-    console.error('MinIO connection test failed:', error);
+    log.error('MinIO connection test failed', { error: error instanceof Error ? error.message : String(error) });
     return false;
   }
 }

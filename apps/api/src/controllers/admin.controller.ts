@@ -10,6 +10,9 @@
 import type { Request, Response } from 'express';
 import { listAllUsers, updateUserRole, updateUserStatus, findUserById } from '../services/user.service.js';
 import type { UserRole } from '@hazop/types';
+import { createLogger } from '../utils/logger.js';
+
+const log = createLogger({ service: 'admin-controller' });
 
 /**
  * Valid user roles.
@@ -181,7 +184,7 @@ export async function listUsers(req: Request, res: Response): Promise<void> {
       },
     });
   } catch (error) {
-    console.error('List users error:', error);
+    log.error('List users error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -335,7 +338,7 @@ export async function changeUserRole(req: Request, res: Response): Promise<void>
       },
     });
   } catch (error) {
-    console.error('Change user role error:', error);
+    log.error('Change user role error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -471,7 +474,7 @@ export async function changeUserStatus(req: Request, res: Response): Promise<voi
       },
     });
   } catch (error) {
-    console.error('Change user status error:', error);
+    log.error('Change user status error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,

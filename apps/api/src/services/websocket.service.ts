@@ -22,6 +22,9 @@ import type {
   CursorPosition,
   getAnalysisRoomName,
 } from '../types/socket.types.js';
+import { createLogger } from '../utils/logger.js';
+
+const log = createLogger({ service: 'websocket' });
 
 // Re-export room helpers
 export { getAnalysisRoomName, parseAnalysisRoomName } from '../types/socket.types.js';
@@ -109,7 +112,7 @@ export class WebSocketService {
       this.handleConnection(socket);
     });
 
-    console.log('WebSocket server initialized');
+    log.info('WebSocket server initialized');
     return this.io;
   }
 
@@ -159,7 +162,7 @@ export class WebSocketService {
    */
   private handleConnection(socket: TypedSocket): void {
     const user = socket.data.user;
-    console.log(`User connected: ${user.email} (${socket.id})`);
+    log.info('User connected', { email: user.email, socketId: socket.id });
 
     // Handle room join
     socket.on('room:join', async (payload, callback) => {
@@ -237,7 +240,7 @@ export class WebSocketService {
       await collaborationService.joinSession(session.id, user.id);
     } catch (error) {
       // Database persistence failed - log but continue with in-memory room
-      console.error('Failed to persist collaboration session:', error);
+      log.error('Failed to persist collaboration session', { error: error instanceof Error ? error.message : String(error) });
     }
 
     // Create user presence
@@ -257,7 +260,7 @@ export class WebSocketService {
     // Notify other users in the room
     socket.to(roomName).emit('user:joined', presence);
 
-    console.log(`User ${user.email} joined room ${roomName}`);
+    log.info('User joined room', { email: user.email, roomName });
   }
 
   /**
@@ -284,7 +287,7 @@ export class WebSocketService {
       try {
         await collaborationService.leaveSession(sessionId, user.id);
       } catch (error) {
-        console.error('Failed to update session participant:', error);
+        log.error('Failed to update session participant', { sessionId, userId: user.id, error: error instanceof Error ? error.message : String(error) });
       }
     }
 
@@ -303,7 +306,7 @@ export class WebSocketService {
     // Notify other users in the room
     socket.to(roomName).emit('user:left', user.id);
 
-    console.log(`User ${user.email} left room ${roomName}`);
+    log.info('User left room', { email: user.email, roomName });
   }
 
   /**
@@ -337,7 +340,7 @@ export class WebSocketService {
     // Update cursor position in database (fire and forget - don't await)
     if (sessionId) {
       collaborationService.updateParticipantCursor(sessionId, user.id, position).catch((error) => {
-        console.error('Failed to update cursor in database:', error);
+        log.error('Failed to update cursor in database', { sessionId, userId: user.id, error: error instanceof Error ? error.message : String(error) });
       });
     }
 
@@ -360,12 +363,12 @@ export class WebSocketService {
     const analysisId = socket.data.analysisId;
     const sessionId = socket.data.sessionId;
 
-    console.log(`User disconnected: ${user.email} (reason: ${reason})`);
+    log.info('User disconnected', { email: user.email, reason });
 
     // Update database session participant record
     if (sessionId) {
       collaborationService.leaveSession(sessionId, user.id).catch((error) => {
-        console.error('Failed to update session participant on disconnect:', error);
+        log.error('Failed to update session participant on disconnect', { sessionId, userId: user.id, error: error instanceof Error ? error.message : String(error) });
       });
     }
 
@@ -639,7 +642,7 @@ export class WebSocketService {
 
       return true;
     } catch (error) {
-      console.error('Failed to end collaboration session:', error);
+      log.error('Failed to end collaboration session', { analysisId, error: error instanceof Error ? error.message : String(error) });
       return false;
     }
   }
@@ -656,7 +659,7 @@ export class WebSocketService {
       });
       this.io = null;
       this.rooms.clear();
-      console.log('WebSocket server closed');
+      log.info('WebSocket server closed');
     }
   }
 }

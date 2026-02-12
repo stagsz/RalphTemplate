@@ -6,6 +6,9 @@
  */
 
 import amqp from 'amqplib';
+import { createLogger } from '../utils/logger.js';
+
+const log = createLogger({ service: 'rabbitmq' });
 
 /**
  * RabbitMQ configuration loaded from environment variables.
@@ -81,14 +84,14 @@ export async function getConnection(): Promise<amqp.Connection> {
 
     // Handle connection errors
     connection.on('error', (err) => {
-      console.error('RabbitMQ connection error:', err);
+      log.error('RabbitMQ connection error', { error: err.message, stack: err.stack });
       connection = null;
       channel = null;
     });
 
     // Handle connection close
     connection.on('close', () => {
-      console.warn('RabbitMQ connection closed');
+      log.warn('RabbitMQ connection closed');
       connection = null;
       channel = null;
     });
@@ -151,13 +154,13 @@ export async function getChannel(): Promise<amqp.Channel> {
 
   // Handle channel errors
   channel.on('error', (err) => {
-    console.error('RabbitMQ channel error:', err);
+    log.error('RabbitMQ channel error', { error: err.message, stack: err.stack });
     channel = null;
   });
 
   // Handle channel close
   channel.on('close', () => {
-    console.warn('RabbitMQ channel closed');
+    log.warn('RabbitMQ channel closed');
     channel = null;
   });
 
@@ -173,7 +176,7 @@ export async function closeChannel(): Promise<void> {
       await channel.close();
     } catch (error) {
       // Channel may already be closed
-      console.warn('Error closing RabbitMQ channel:', error);
+      log.warn('Error closing RabbitMQ channel', { error: error instanceof Error ? error.message : String(error) });
     }
     channel = null;
   }
@@ -191,7 +194,7 @@ export async function closeConnection(): Promise<void> {
       await connection.close();
     } catch (error) {
       // Connection may already be closed
-      console.warn('Error closing RabbitMQ connection:', error);
+      log.warn('Error closing RabbitMQ connection', { error: error instanceof Error ? error.message : String(error) });
     }
     connection = null;
   }
@@ -209,7 +212,7 @@ export async function testRabbitMQConnection(): Promise<boolean> {
     await testChannel.close();
     return true;
   } catch (error) {
-    console.error('RabbitMQ connection test failed:', error);
+    log.error('RabbitMQ connection test failed', { error: error instanceof Error ? error.message : String(error) });
     return false;
   }
 }

@@ -20,6 +20,9 @@ import { uploadFile, generateStoragePath, deleteFile, getSignedDownloadUrl } fro
 import { getUploadedFileBuffer, getUploadMeta } from '../middleware/upload.middleware.js';
 import { PID_DOCUMENT_STATUSES, EQUIPMENT_TYPES } from '@hazop/types';
 import type { PIDDocumentStatus, EquipmentType } from '@hazop/types';
+import { createLogger } from '../utils/logger.js';
+
+const log = createLogger({ service: 'documents-controller' });
 
 /**
  * Validation error for a specific field.
@@ -244,7 +247,7 @@ export async function listDocuments(req: Request, res: Response): Promise<void> 
       },
     });
   } catch (error) {
-    console.error('List documents error:', error);
+    log.error('List documents error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -388,7 +391,7 @@ export async function uploadDocument(req: Request, res: Response): Promise<void>
       data: { document },
     });
   } catch (error) {
-    console.error('Upload document error:', error);
+    log.error('Upload document error:', { error: error instanceof Error ? error.message : String(error) });
 
     // Handle storage path conflict (shouldn't happen with UUID-based paths, but just in case)
     if (error instanceof Error && 'code' in error) {
@@ -499,7 +502,7 @@ export async function getDocumentById(req: Request, res: Response): Promise<void
       data: { document },
     });
   } catch (error) {
-    console.error('Get document by ID error:', error);
+    log.error('Get document by ID error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -625,7 +628,7 @@ export async function deleteDocumentById(req: Request, res: Response): Promise<v
       await deleteFile(deletedDocument.storagePath);
     } catch (storageError) {
       // Log but don't fail the request - DB record is already deleted
-      console.error('Failed to delete file from storage:', storageError);
+      log.warn('Failed to delete file from storage', { storagePath: deletedDocument.storagePath, error: storageError instanceof Error ? storageError.message : String(storageError) });
     }
 
     res.status(200).json({
@@ -636,7 +639,7 @@ export async function deleteDocumentById(req: Request, res: Response): Promise<v
       },
     });
   } catch (error) {
-    console.error('Delete document by ID error:', error);
+    log.error('Delete document by ID error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -772,7 +775,7 @@ export async function downloadDocument(req: Request, res: Response): Promise<voi
       },
     });
   } catch (error) {
-    console.error('Download document error:', error);
+    log.error('Download document error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -1036,7 +1039,7 @@ export async function createNode(req: Request, res: Response): Promise<void> {
       data: { node },
     });
   } catch (error) {
-    console.error('Create node error:', error);
+    log.error('Create node error:', { error: error instanceof Error ? error.message : String(error) });
 
     // Handle duplicate constraint violation (belt and suspenders)
     if (error instanceof Error && 'code' in error) {
@@ -1276,7 +1279,7 @@ export async function listNodes(req: Request, res: Response): Promise<void> {
       },
     });
   } catch (error) {
-    console.error('List nodes error:', error);
+    log.error('List nodes error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -1593,7 +1596,7 @@ export async function updateNode(req: Request, res: Response): Promise<void> {
       data: { node: updatedNode },
     });
   } catch (error) {
-    console.error('Update node error:', error);
+    log.error('Update node error:', { error: error instanceof Error ? error.message : String(error) });
 
     // Handle duplicate constraint violation (belt and suspenders)
     if (error instanceof Error && 'code' in error) {
@@ -1750,7 +1753,7 @@ export async function deleteNode(req: Request, res: Response): Promise<void> {
       },
     });
   } catch (error) {
-    console.error('Delete node error:', error);
+    log.error('Delete node error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,

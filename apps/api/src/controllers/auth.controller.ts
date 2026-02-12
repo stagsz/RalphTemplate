@@ -20,6 +20,9 @@ import {
   resetPassword as resetPasswordService,
 } from '../services/password-reset.service.js';
 import type { UserRole } from '../services/jwt.service.js';
+import { createLogger } from '../utils/logger.js';
+
+const log = createLogger({ service: 'auth-controller' });
 
 /**
  * Validation error for a specific field.
@@ -262,7 +265,7 @@ export async function register(req: Request, res: Response): Promise<void> {
       },
     });
   } catch (error) {
-    console.error('Registration error:', error);
+    log.error('Registration error:', { error: error instanceof Error ? error.message : String(error) });
 
     // Handle PostgreSQL unique violation (should not happen with emailExists check)
     if (error instanceof Error && 'code' in error && (error as { code: string }).code === '23505') {
@@ -385,7 +388,7 @@ export async function login(req: Request, res: Response): Promise<void> {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
+    log.error('Login error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -460,7 +463,7 @@ export async function refresh(req: Request, res: Response): Promise<void> {
       },
     });
   } catch (error) {
-    console.error('Token refresh error:', error);
+    log.error('Token refresh error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -529,7 +532,7 @@ export async function logout(req: Request, res: Response): Promise<void> {
       },
     });
   } catch (error) {
-    console.error('Logout error:', error);
+    log.error('Logout error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -614,7 +617,7 @@ export async function forgotPassword(req: Request, res: Response): Promise<void>
       });
     }
   } catch (error) {
-    console.error('Forgot password error:', error);
+    log.error('Forgot password error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -700,7 +703,7 @@ export async function resetPassword(req: Request, res: Response): Promise<void> 
       },
     });
   } catch (error) {
-    console.error('Reset password error:', error);
+    log.error('Reset password error:', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,

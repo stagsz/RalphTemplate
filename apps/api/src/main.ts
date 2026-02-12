@@ -22,7 +22,8 @@ import reportsRoutes from './routes/reports.routes.js';
 import templatesRoutes from './routes/templates.routes.js';
 import { configurePassport, initializePassport } from './config/passport.config.js';
 import { getWebSocketService } from './services/websocket.service.js';
-import { metricsMiddleware, getMetrics, getMetricsContentType } from './middleware/index.js';
+import { metricsMiddleware, getMetrics, getMetricsContentType, requestLogger } from './middleware/index.js';
+import log from './utils/logger.js';
 
 // Load .env from project root (two levels up from this file)
 const __filename = fileURLToPath(import.meta.url);
@@ -45,6 +46,9 @@ app.use(cors({
 
 // Prometheus metrics middleware - must be early in the chain
 app.use(metricsMiddleware);
+
+// Request logging middleware
+app.use(requestLogger);
 
 app.use(express.json());
 
@@ -131,11 +135,11 @@ async function startServer() {
   if (process.env.JWT_PRIVATE_KEY && process.env.JWT_PUBLIC_KEY) {
     const wsService = getWebSocketService();
     await wsService.initialize(httpServer);
-    console.log('WebSocket server attached to HTTP server');
+    log.info('WebSocket server attached to HTTP server');
   }
 
   httpServer.listen(port, () => {
-    console.log(`API server running on port ${port}`);
+    log.info('API server started', { port, env: process.env.NODE_ENV || 'development' });
   });
 }
 
@@ -143,7 +147,7 @@ async function startServer() {
 const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
 if (isMainModule) {
   startServer().catch((error) => {
-    console.error('Failed to start server:', error);
+    log.error('Failed to start server', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     process.exit(1);
   });
 }

@@ -25,10 +25,14 @@ import {
   getProjectCreatorId,
   listProjectMembers as listProjectMembersService,
 } from '../services/project.service.js';
+import { findUserById } from '../services/user.service.js';
 import { getProjectRiskDashboard } from '../services/risk-aggregation.service.js';
 import { getProjectComplianceStatus } from '../services/project-compliance.service.js';
 import type { ProjectStatus, ProjectMemberRole, RegulatoryStandardId } from '@hazop/types';
 import { PROJECT_STATUSES, PROJECT_MEMBER_ROLES, REGULATORY_STANDARD_IDS } from '@hazop/types';
+import { createLogger } from '../utils/logger.js';
+
+const log = createLogger({ service: 'projects-controller' });
 
 /**
  * Validation error for a specific field.
@@ -203,7 +207,7 @@ export async function listProjects(req: Request, res: Response): Promise<void> {
       },
     });
   } catch (error) {
-    console.error('List projects error:', error);
+    log.error('List projects error', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -293,8 +297,8 @@ export async function createProject(req: Request, res: Response): Promise<void> 
     const body = req.body as CreateProjectBody;
 
     // Get authenticated user
-    const user = req.user as { id: string; organization: string } | undefined;
-    if (!user?.id) {
+    const authUser = req.user as { id: string } | undefined;
+    if (!authUser?.id) {
       res.status(401).json({
         success: false,
         error: {
@@ -319,6 +323,19 @@ export async function createProject(req: Request, res: Response): Promise<void> 
       return;
     }
 
+    // Fetch user from database to get organization
+    const user = await findUserById(authUser.id);
+    if (!user || !user.isActive) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'User not found or inactive',
+        },
+      });
+      return;
+    }
+
     // Create the project using the user's organization
     const project = await createProjectService(user.id, {
       name: (body.name as string).trim(),
@@ -331,7 +348,7 @@ export async function createProject(req: Request, res: Response): Promise<void> 
       data: { project },
     });
   } catch (error) {
-    console.error('Create project error:', error);
+    log.error('Create project error', { error: error instanceof Error ? error.message : String(error) });
 
     // Handle unique constraint violation (duplicate project name in organization)
     if (error instanceof Error && 'code' in error) {
@@ -464,7 +481,7 @@ export async function getProjectById(req: Request, res: Response): Promise<void>
       },
     });
   } catch (error) {
-    console.error('Get project by ID error:', error);
+    log.error('Get project by ID error', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -696,7 +713,7 @@ export async function updateProject(req: Request, res: Response): Promise<void> 
       },
     });
   } catch (error) {
-    console.error('Update project error:', error);
+    log.error('Update project error', { error: error instanceof Error ? error.message : String(error) });
 
     // Handle unique constraint violation (duplicate project name in organization)
     if (error instanceof Error && 'code' in error) {
@@ -840,7 +857,7 @@ export async function deleteProject(req: Request, res: Response): Promise<void> 
       },
     });
   } catch (error) {
-    console.error('Delete project error:', error);
+    log.error('Delete project error', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -1071,7 +1088,7 @@ export async function addMember(req: Request, res: Response): Promise<void> {
       data: { member },
     });
   } catch (error) {
-    console.error('Add member error:', error);
+    log.error('Add member error', { error: error instanceof Error ? error.message : String(error) });
 
     // Handle unique constraint violation (shouldn't happen due to pre-check, but just in case)
     if (error instanceof Error && 'code' in error) {
@@ -1246,7 +1263,7 @@ export async function removeMember(req: Request, res: Response): Promise<void> {
       message: 'Member removed successfully',
     });
   } catch (error) {
-    console.error('Remove member error:', error);
+    log.error('Remove member error', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -1346,7 +1363,7 @@ export async function listMembers(req: Request, res: Response): Promise<void> {
       data: { members },
     });
   } catch (error) {
-    console.error('List members error:', error);
+    log.error('List members error', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -1457,7 +1474,7 @@ export async function getProjectRiskDashboardController(req: Request, res: Respo
       data: dashboard,
     });
   } catch (error) {
-    console.error('Get project risk dashboard error:', error);
+    log.error('Get project risk dashboard error', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
@@ -1602,7 +1619,7 @@ export async function getProjectComplianceController(req: Request, res: Response
       data: complianceStatus,
     });
   } catch (error) {
-    console.error('Get project compliance error:', error);
+    log.error('Get project compliance error', { error: error instanceof Error ? error.message : String(error) });
 
     res.status(500).json({
       success: false,
