@@ -6,3 +6,5 @@ export { ReportPreview } from './ReportPreview';
 export type { ReportPreviewProps } from './ReportPreview';
 export { ReportsList } from './ReportsList';
 export type { ReportsListProps } from './ReportsList';
+export { TemplateSelector } from './TemplateSelector';
+export type { TemplateSelectorProps } from './TemplateSelector';
