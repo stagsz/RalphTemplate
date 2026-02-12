@@ -9,8 +9,11 @@ import {
   IconLogout,
   IconAlertTriangle,
   IconX,
+  IconSun,
+  IconMoon,
 } from '@tabler/icons-react';
 import { useAuthStore, selectUser } from '../../store/auth.store';
+import { useThemeStore, selectColorScheme } from '../../store/theme.store';
 import { authService } from '../../services/auth.service';
 import { useNavigate } from 'react-router-dom';
 
@@ -103,6 +106,9 @@ export function Sidebar({ onClose, showCloseButton = false }: SidebarProps) {
   const navigate = useNavigate();
   const user = useAuthStore(selectUser);
   const isLoading = useAuthStore((state) => state.isLoading);
+  const colorScheme = useThemeStore(selectColorScheme);
+  const toggleColorScheme = useThemeStore((state) => state.toggleColorScheme);
+  const isDark = colorScheme === 'dark';
 
   /**
    * Handle user logout.
@@ -258,6 +264,20 @@ export function Sidebar({ onClose, showCloseButton = false }: SidebarProps) {
 
       {/* User Menu */}
       <div className="border-t border-slate-700 p-4">
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleColorScheme}
+          className="w-full flex items-center gap-3 px-3 py-2 mb-3 rounded text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDark ? (
+            <IconSun size={20} stroke={1.5} className="text-amber-400" />
+          ) : (
+            <IconMoon size={20} stroke={1.5} className="text-slate-400" />
+          )}
+          <span>{isDark ? 'Light mode' : 'Dark mode'}</span>
+        </button>
+
         <div className="flex items-center gap-3 mb-3">
           <div className="flex items-center justify-center w-9 h-9 bg-slate-700 rounded-full text-sm font-medium">
             {user?.name?.charAt(0).toUpperCase() || 'U'}

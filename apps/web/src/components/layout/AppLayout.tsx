@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { IconMenu2, IconAlertTriangle } from '@tabler/icons-react';
 import { Sidebar } from './Sidebar';
 import { Breadcrumb } from './Breadcrumb';
+import { useThemeStore, selectColorScheme } from '../../store';
 
 /**
  * AppLayout component that wraps authenticated pages with navigation sidebar.
@@ -23,6 +24,8 @@ import { Breadcrumb } from './Breadcrumb';
 export function AppLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
+  const colorScheme = useThemeStore(selectColorScheme);
+  const isDark = colorScheme === 'dark';
 
   /**
    * Close sidebar when route changes (mobile navigation).
@@ -46,7 +49,7 @@ export function AppLayout() {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className={`flex h-screen overflow-hidden bg-slate-50 ${isDark ? 'dark' : ''}`}>
       {/* Mobile/Tablet Header - hidden on desktop */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center h-16 px-4 bg-slate-900 border-b border-slate-700">
         <button
