@@ -327,7 +327,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] REPORT-04: Create Excel spreadsheet generator (analysis data tables) (6d28fad)
 - [x] REPORT-05: Create PowerPoint presentation generator (91fb804)
 - [x] REPORT-06: Create risk matrix image generator (fbdede2)
-- [x] REPORT-07: Create report template management service (COMMIT_HASH)
+- [x] REPORT-07: Create report template management service (5896ba2)
 
 ### Backend API
 - [ ] REPORT-08: Create POST /projects/:id/reports endpoint (request report generation)
@@ -591,4 +591,4 @@ _No blockers currently._
 | REPORT-04: Create Excel spreadsheet generator (analysis data tables) | 6d28fad | 2026-02-12 |
 | REPORT-05: Create PowerPoint presentation generator | 91fb804 | 2026-02-12 |
 | REPORT-06: Create risk matrix image generator | fbdede2 | 2026-02-12 |
-| REPORT-07: Create report template management service | COMMIT_HASH | 2026-02-12 |
+| REPORT-07: Create report template management service | 5896ba2 | 2026-02-12 |
