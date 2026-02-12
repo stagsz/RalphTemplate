@@ -6,6 +6,7 @@ import {
   ProjectSummaryCards,
   RecentAnalysesWidget,
   RiskOverviewWidget,
+  PendingActionsWidget,
 } from '../components/dashboard';
 
 /**
@@ -131,22 +132,8 @@ export function DashboardPage() {
 
         {/* Bottom row: Pending actions + Activity timeline */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Pending actions widget - DASH-05 placeholder */}
-          <section className="bg-white border border-slate-200 rounded">
-            <div className="px-4 py-3 border-b border-slate-200">
-              <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
-                Pending Actions
-              </h3>
-            </div>
-            <div className="p-4">
-              <div className="text-center py-8 text-slate-500">
-                <p className="text-sm">No pending actions.</p>
-                <p className="text-xs text-slate-400 mt-1">
-                  Items requiring your attention will appear here.
-                </p>
-              </div>
-            </div>
-          </section>
+          {/* Pending actions widget */}
+          <PendingActionsWidget />
 
           {/* Activity timeline widget - DASH-06 placeholder */}
           <section className="bg-white border border-slate-200 rounded">
