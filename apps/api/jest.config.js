@@ -12,6 +12,8 @@ export default {
         useESM: true,
         tsconfig: {
           rootDir: '../../',
+          noUnusedLocals: false,
+          noUnusedParameters: false,
         },
       },
     ],
