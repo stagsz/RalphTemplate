@@ -376,7 +376,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 ### Performance & UX
 - [x] PERF-01: Add loading skeletons to all data-fetching components (dfbb20e)
 - [x] PERF-02: Implement error boundaries with fallback UI (5fdd495)
-- [x] PERF-03: Add toast notifications for success/error feedback
+- [x] PERF-03: Add toast notifications for success/error feedback (967d6eb)
 - [ ] PERF-04: Implement optimistic updates for analysis entries
 - [ ] PERF-05: Add keyboard shortcuts for common analysis actions
 
@@ -620,3 +620,4 @@ _No blockers currently._
 | NAV-06: Create notification dropdown for system alerts | 1bae2b2 | 2026-02-12 |
 | PERF-01: Add loading skeletons to all data-fetching components | dfbb20e | 2026-02-12 |
 | PERF-02: Implement error boundaries with fallback UI | 5fdd495 | 2026-02-12 |
+| PERF-03: Add toast notifications for success/error feedback | 967d6eb | 2026-02-12 |
