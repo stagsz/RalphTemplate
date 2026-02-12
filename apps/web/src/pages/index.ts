@@ -16,3 +16,4 @@ export { AnalysisWorkspacePage } from './AnalysisWorkspacePage';
 export { RiskDashboardPage } from './RiskDashboardPage';
 export { ComplianceValidationPage } from './ComplianceValidationPage';
 export { ComplianceDashboardPage } from './ComplianceDashboardPage';
+export { ReportGenerationCenterPage } from './ReportGenerationCenterPage';
