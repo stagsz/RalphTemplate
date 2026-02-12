@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 8 - Real-time Collaboration
-**Progress**: Phase 8 in progress - 14/16 tasks complete
-**Last Completed**: COLLAB-14 - Create conflict resolution modal (2a38312)
-**Next Task**: COLLAB-15 - Add unit tests for WebSocket event handlers
+**Progress**: Phase 8 in progress - 15/16 tasks complete
+**Last Completed**: COLLAB-15 - Add unit tests for WebSocket event handlers (e1b408e)
+**Next Task**: COLLAB-16 - Add E2E tests for collaboration workflow
 
 ---
 
@@ -313,7 +313,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] COLLAB-14: Create conflict resolution modal (2a38312)
 
 ### Collaboration Testing
-- [ ] COLLAB-15: Add unit tests for WebSocket event handlers
+- [x] COLLAB-15: Add unit tests for WebSocket event handlers (e1b408e)
 - [ ] COLLAB-16: Add E2E tests for collaboration workflow
 
 ---
@@ -583,3 +583,4 @@ _No blockers currently._
 | COLLAB-12: Create user presence avatars on analysis workspace | 5355a6d | 2026-02-12 |
 | COLLAB-13: Create real-time entry update animations | 0786151 | 2026-02-12 |
 | COLLAB-14: Create conflict resolution modal | 2a38312 | 2026-02-12 |
+| COLLAB-15: Add unit tests for WebSocket event handlers | e1b408e | 2026-02-12 |
