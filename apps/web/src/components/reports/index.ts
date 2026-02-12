@@ -4,3 +4,5 @@ export { ReportProgressIndicator } from './ReportProgressIndicator';
 export type { ReportProgressIndicatorProps } from './ReportProgressIndicator';
 export { ReportPreview } from './ReportPreview';
 export type { ReportPreviewProps } from './ReportPreview';
+export { ReportsList } from './ReportsList';
+export type { ReportsListProps } from './ReportsList';
