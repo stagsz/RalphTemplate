@@ -11,7 +11,7 @@ import { NodeOverlay } from '../components/documents/NodeOverlay';
 import { GuideWordSelector, DeviationInputForm, CausesInput, ConsequencesInput, SafeguardsInput, RecommendationsInput, AnalysisProgressTracker, AnalysisEntrySummaryTable } from '../components/analyses';
 import { CollaborationIndicator, ConflictResolutionModal } from '../components/collaboration';
 import { ErrorBoundary } from '../components/errors';
-import { useWebSocket, useHighlightAnimation } from '../hooks';
+import { useWebSocket, useHighlightAnimation, useToast } from '../hooks';
 import type { AnimationType } from '../hooks';
 import type {
   ApiError,
@@ -103,6 +103,12 @@ export function AnalysisWorkspacePage() {
 
   // Trigger for refreshing the summary table when entries are created/updated
   const [summaryRefreshTrigger, setSummaryRefreshTrigger] = useState(0);
+
+  // Toast notifications for optimistic update feedback
+  const toast = useToast();
+
+  // Pending states for optimistic updates (track which fields are being saved)
+  const [pendingUpdates, setPendingUpdates] = useState<Set<string>>(new Set());
 
   // Highlight animation for real-time entry updates
   const {
@@ -307,53 +313,77 @@ export function AnalysisWorkspacePage() {
   /**
    * Handle changes to entry causes.
    * Updates the entry on the server when causes change.
+   * Uses optimistic updates with automatic rollback on error.
    */
   const handleCausesChange = useCallback(
     async (causes: string[]) => {
       if (!currentEntry) return;
 
+      const previousCauses = currentEntry.causes || [];
+
       // Optimistically update local state
       setEntryCauses(causes);
+      setPendingUpdates((prev) => new Set(prev).add('causes'));
 
       // Update entry on the server
       const result = await analysesService.updateAnalysisEntry(currentEntry.id, { causes });
+
+      setPendingUpdates((prev) => {
+        const next = new Set(prev);
+        next.delete('causes');
+        return next;
+      });
 
       if (result.success && result.data) {
         // Update current entry with server response
         setCurrentEntry(result.data.entry);
       } else {
         // Revert on error - restore previous causes
-        setEntryCauses(currentEntry.causes || []);
-        console.error('Failed to update causes:', result.error);
+        setEntryCauses(previousCauses);
+        toast.error(result.error || 'Failed to update causes. Changes reverted.', {
+          title: 'Update Failed',
+        });
       }
     },
-    [currentEntry]
+    [currentEntry, toast]
   );
 
   /**
    * Handle changes to entry consequences.
    * Updates the entry on the server when consequences change.
+   * Uses optimistic updates with automatic rollback on error.
    */
   const handleConsequencesChange = useCallback(
     async (consequences: string[]) => {
       if (!currentEntry) return;
 
+      const previousConsequences = currentEntry.consequences || [];
+
       // Optimistically update local state
       setEntryConsequences(consequences);
+      setPendingUpdates((prev) => new Set(prev).add('consequences'));
 
       // Update entry on the server
       const result = await analysesService.updateAnalysisEntry(currentEntry.id, { consequences });
+
+      setPendingUpdates((prev) => {
+        const next = new Set(prev);
+        next.delete('consequences');
+        return next;
+      });
 
       if (result.success && result.data) {
         // Update current entry with server response
         setCurrentEntry(result.data.entry);
       } else {
         // Revert on error - restore previous consequences
-        setEntryConsequences(currentEntry.consequences || []);
-        console.error('Failed to update consequences:', result.error);
+        setEntryConsequences(previousConsequences);
+        toast.error(result.error || 'Failed to update consequences. Changes reverted.', {
+          title: 'Update Failed',
+        });
       }
     },
-    [currentEntry]
+    [currentEntry, toast]
   );
 
   /**
@@ -371,53 +401,77 @@ export function AnalysisWorkspacePage() {
   /**
    * Handle changes to entry safeguards.
    * Updates the entry on the server when safeguards change.
+   * Uses optimistic updates with automatic rollback on error.
    */
   const handleSafeguardsChange = useCallback(
     async (safeguards: string[]) => {
       if (!currentEntry) return;
 
+      const previousSafeguards = currentEntry.safeguards || [];
+
       // Optimistically update local state
       setEntrySafeguards(safeguards);
+      setPendingUpdates((prev) => new Set(prev).add('safeguards'));
 
       // Update entry on the server
       const result = await analysesService.updateAnalysisEntry(currentEntry.id, { safeguards });
+
+      setPendingUpdates((prev) => {
+        const next = new Set(prev);
+        next.delete('safeguards');
+        return next;
+      });
 
       if (result.success && result.data) {
         // Update current entry with server response
         setCurrentEntry(result.data.entry);
       } else {
         // Revert on error - restore previous safeguards
-        setEntrySafeguards(currentEntry.safeguards || []);
-        console.error('Failed to update safeguards:', result.error);
+        setEntrySafeguards(previousSafeguards);
+        toast.error(result.error || 'Failed to update safeguards. Changes reverted.', {
+          title: 'Update Failed',
+        });
       }
     },
-    [currentEntry]
+    [currentEntry, toast]
   );
 
   /**
    * Handle changes to entry recommendations.
    * Updates the entry on the server when recommendations change.
+   * Uses optimistic updates with automatic rollback on error.
    */
   const handleRecommendationsChange = useCallback(
     async (recommendations: string[]) => {
       if (!currentEntry) return;
 
+      const previousRecommendations = currentEntry.recommendations || [];
+
       // Optimistically update local state
       setEntryRecommendations(recommendations);
+      setPendingUpdates((prev) => new Set(prev).add('recommendations'));
 
       // Update entry on the server
       const result = await analysesService.updateAnalysisEntry(currentEntry.id, { recommendations });
+
+      setPendingUpdates((prev) => {
+        const next = new Set(prev);
+        next.delete('recommendations');
+        return next;
+      });
 
       if (result.success && result.data) {
         // Update current entry with server response
         setCurrentEntry(result.data.entry);
       } else {
         // Revert on error - restore previous recommendations
-        setEntryRecommendations(currentEntry.recommendations || []);
-        console.error('Failed to update recommendations:', result.error);
+        setEntryRecommendations(previousRecommendations);
+        toast.error(result.error || 'Failed to update recommendations. Changes reverted.', {
+          title: 'Update Failed',
+        });
       }
     },
-    [currentEntry]
+    [currentEntry, toast]
   );
 
   /**
@@ -785,13 +839,21 @@ export function AnalysisWorkspacePage() {
                 {/* Causes Input - shown after an entry is created */}
                 {currentEntry && selectedGuideWord && (
                   <div className="space-y-4">
-                    {/* Entry Summary */}
+                    {/* Entry Summary with pending indicator */}
                     <div className="bg-green-50 border border-green-200 rounded p-3">
                       <div className="flex items-center justify-between">
-                        <div>
-                          <span className="text-xs font-medium text-green-700 uppercase tracking-wide">
-                            Entry Created
-                          </span>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-green-700 uppercase tracking-wide">
+                              Entry Created
+                            </span>
+                            {pendingUpdates.size > 0 && (
+                              <span className="flex items-center gap-1 text-xs text-blue-600">
+                                <Loader size={12} color="blue" />
+                                Saving...
+                              </span>
+                            )}
+                          </div>
                           <div className="text-sm font-medium text-slate-900 mt-1">
                             {currentEntry.parameter}: {currentEntry.deviation}
                           </div>
@@ -801,6 +863,7 @@ export function AnalysisWorkspacePage() {
                           color="gray"
                           size="xs"
                           onClick={handleClearEntry}
+                          disabled={pendingUpdates.size > 0}
                           styles={{ root: { borderRadius: '4px' } }}
                         >
                           New Entry
