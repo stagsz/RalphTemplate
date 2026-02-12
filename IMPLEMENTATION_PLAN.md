@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 9 - Report Generation
-**Progress**: Phase 9 in progress - 18/21 tasks done
-**Last Completed**: REPORT-18 - Create template selector with preview
-**Next Task**: REPORT-19 - Add unit tests for each report format generator
+**Progress**: Phase 9 in progress - 19/21 tasks done
+**Last Completed**: REPORT-19 - Add unit tests for each report format generator
+**Next Task**: REPORT-20 - Add API tests for report generation endpoints
 
 ---
 
@@ -345,7 +345,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] REPORT-18: Create template selector with preview (0913b58)
 
 ### Report Testing
-- [ ] REPORT-19: Add unit tests for each report format generator
+- [x] REPORT-19: Add unit tests for each report format generator (196ee88)
 - [ ] REPORT-20: Add API tests for report generation endpoints
 - [ ] REPORT-21: Add E2E tests for full report generation workflow
 
@@ -603,3 +603,4 @@ _No blockers currently._
 | REPORT-16: Create report preview component | 32aecd9 | 2026-02-12 |
 | REPORT-17: Create reports list with download links | 244c02f | 2026-02-12 |
 | REPORT-18: Create template selector with preview | 0913b58 | 2026-02-12 |
+| REPORT-19: Add unit tests for each report format generator | 196ee88 | 2026-02-12 |
