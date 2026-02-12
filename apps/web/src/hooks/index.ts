@@ -31,3 +31,15 @@ export {
 
 // Toast notifications
 export { useToast } from './useToast';
+
+// Keyboard shortcuts
+export {
+  useKeyboardShortcuts,
+  formatShortcut,
+  getRegisteredShortcuts,
+  ANALYSIS_SHORTCUTS,
+  type KeyboardModifiers,
+  type KeyboardShortcut,
+  type UseKeyboardShortcutsOptions,
+  type AnalysisShortcutKey,
+} from './useKeyboardShortcuts';

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { Button, Alert, Loader } from '@mantine/core';
 import { useAuthStore, selectUser } from '../store/auth.store';
@@ -11,8 +11,9 @@ import { NodeOverlay } from '../components/documents/NodeOverlay';
 import { GuideWordSelector, DeviationInputForm, CausesInput, ConsequencesInput, SafeguardsInput, RecommendationsInput, AnalysisProgressTracker, AnalysisEntrySummaryTable } from '../components/analyses';
 import { CollaborationIndicator, ConflictResolutionModal } from '../components/collaboration';
 import { ErrorBoundary } from '../components/errors';
-import { useWebSocket, useHighlightAnimation, useToast } from '../hooks';
-import type { AnimationType } from '../hooks';
+import { KeyboardShortcutsHelp } from '../components/KeyboardShortcutsHelp';
+import { useWebSocket, useHighlightAnimation, useToast, useKeyboardShortcuts } from '../hooks';
+import type { AnimationType, KeyboardShortcut } from '../hooks';
 import type {
   ApiError,
   HazopsAnalysisWithDetailsAndProgress,
@@ -22,6 +23,7 @@ import type {
   GuideWord,
 } from '@hazop/types';
 import {
+  GUIDE_WORDS,
   GUIDE_WORD_LABELS,
   ANALYSIS_STATUS_LABELS,
 } from '@hazop/types';
@@ -109,6 +111,9 @@ export function AnalysisWorkspacePage() {
 
   // Pending states for optimistic updates (track which fields are being saved)
   const [pendingUpdates, setPendingUpdates] = useState<Set<string>>(new Set());
+
+  // Keyboard shortcuts help dialog
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
 
   // Highlight animation for real-time entry updates
   const {
@@ -478,6 +483,144 @@ export function AnalysisWorkspacePage() {
    * Get the selected node object.
    */
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) || null;
+
+  /**
+   * Navigate to next/previous node.
+   */
+  const navigateNode = useCallback((direction: 'next' | 'prev') => {
+    if (nodes.length === 0) return;
+
+    const currentIndex = selectedNodeId
+      ? nodes.findIndex((n) => n.id === selectedNodeId)
+      : -1;
+
+    let newIndex: number;
+    if (direction === 'next') {
+      newIndex = currentIndex < nodes.length - 1 ? currentIndex + 1 : 0;
+    } else {
+      newIndex = currentIndex > 0 ? currentIndex - 1 : nodes.length - 1;
+    }
+
+    const newNode = nodes[newIndex];
+    if (newNode) {
+      setSelectedNodeId(newNode.id);
+      setSelectedGuideWord(null);
+      setCurrentEntry(null);
+      setEntryCauses([]);
+      setEntryConsequences([]);
+      setEntrySafeguards([]);
+      setEntryRecommendations([]);
+    }
+  }, [nodes, selectedNodeId]);
+
+  /**
+   * Keyboard shortcuts for the analysis workspace.
+   */
+  const keyboardShortcuts = useMemo<KeyboardShortcut[]>(() => [
+    // Guide word selection (1-7 keys)
+    ...GUIDE_WORDS.map((guideWord, index) => ({
+      key: String(index + 1),
+      handler: () => {
+        if (selectedNode && analysis?.status === 'draft') {
+          setSelectedGuideWord(guideWord);
+          // Clear current entry when switching guide words via keyboard
+          setCurrentEntry(null);
+          setEntryCauses([]);
+          setEntryConsequences([]);
+          setEntrySafeguards([]);
+          setEntryRecommendations([]);
+        }
+      },
+      description: `Select ${GUIDE_WORD_LABELS[guideWord]} guide word`,
+      enabled: !!selectedNode && analysis?.status === 'draft',
+    })),
+
+    // Toggle Entry/Summary view (Ctrl+T)
+    {
+      key: 't',
+      modifiers: { ctrl: true },
+      handler: () => {
+        setRightPaneView((prev) => prev === 'entry' ? 'summary' : 'entry');
+      },
+      description: 'Toggle Entry/Summary view',
+      preventDefault: true,
+    },
+
+    // Clear selection / Cancel (Escape)
+    {
+      key: 'Escape',
+      handler: () => {
+        if (currentEntry) {
+          // If editing an entry, clear it first
+          handleClearEntry();
+        } else if (selectedGuideWord) {
+          // If guide word selected, clear it
+          setSelectedGuideWord(null);
+        } else if (selectedNodeId) {
+          // If node selected, clear it
+          setSelectedNodeId(null);
+        }
+      },
+      description: 'Clear selection / Cancel',
+    },
+
+    // New entry (Ctrl+N)
+    {
+      key: 'n',
+      modifiers: { ctrl: true },
+      handler: () => {
+        if (selectedNode && analysis?.status === 'draft') {
+          handleClearEntry();
+        }
+      },
+      description: 'Start new entry',
+      preventDefault: true,
+      enabled: !!selectedNode && !!currentEntry && analysis?.status === 'draft',
+    },
+
+    // Navigate to next node (Alt+Down)
+    {
+      key: 'ArrowDown',
+      modifiers: { alt: true },
+      handler: () => navigateNode('next'),
+      description: 'Select next node',
+      preventDefault: true,
+      enabled: nodes.length > 0,
+    },
+
+    // Navigate to previous node (Alt+Up)
+    {
+      key: 'ArrowUp',
+      modifiers: { alt: true },
+      handler: () => navigateNode('prev'),
+      description: 'Select previous node',
+      preventDefault: true,
+      enabled: nodes.length > 0,
+    },
+
+    // Show keyboard shortcuts help (?)
+    {
+      key: '?',
+      handler: () => setShowKeyboardHelp(true),
+      description: 'Show keyboard shortcuts',
+    },
+  ], [
+    selectedNode,
+    selectedNodeId,
+    selectedGuideWord,
+    currentEntry,
+    analysis?.status,
+    nodes.length,
+    handleClearEntry,
+    navigateNode,
+  ]);
+
+  // Register keyboard shortcuts
+  useKeyboardShortcuts({
+    shortcuts: keyboardShortcuts,
+    enabled: !isLoading && !error,
+    registerGlobally: true,
+  });
 
   // Loading state
   if (isLoading) {
@@ -943,6 +1086,12 @@ export function AnalysisWorkspacePage() {
           wsActions.clearConflict();
         }}
       />
+
+      {/* Keyboard Shortcuts Help Modal */}
+      <KeyboardShortcutsHelp
+        isOpen={showKeyboardHelp}
+        onClose={() => setShowKeyboardHelp(false)}
+      />
     </div>
   );
 }
@@ -1325,7 +1474,7 @@ function PIDViewerWithOverlay({
         {/* Help hint */}
         {!isLoading && !error && imageUrl && (
           <div className="absolute bottom-3 left-3 text-xs text-slate-400 bg-white/80 px-2 py-1 rounded">
-            Scroll to zoom • Drag to pan • Click node to select
+            Scroll to zoom • Drag to pan • Click node to select • Press <kbd className="px-1 bg-slate-200 rounded text-slate-500">?</kbd> for shortcuts
           </div>
         )}
       </div>
