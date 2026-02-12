@@ -7,6 +7,7 @@
 
 import type { Request, Response } from 'express';
 import type { ReportFormat, ReportParameters, REPORT_FORMATS } from '@hazop/types';
+import { REPORT_FORMAT_MIME_TYPES, REPORT_FORMAT_EXTENSIONS } from '@hazop/types';
 import {
   createReport as createReportService,
   getProjectIdForAnalysis,
@@ -26,7 +27,7 @@ import {
 } from '../services/project.service.js';
 import { findAnalysisById } from '../services/hazop-analysis.service.js';
 import { findReportByIdWithDetails } from '../services/reports.service.js';
-import { getSignedUrl } from '../services/storage.service.js';
+import { getSignedUrl, getSignedDownloadUrl } from '../services/storage.service.js';
 
 // ============================================================================
 // Constants
@@ -622,6 +623,185 @@ export async function getReportStatus(req: Request, res: Response): Promise<void
     });
   } catch (error) {
     console.error('Get report status error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+/**
+ * GET /reports/:id/download
+ * Download a generated report.
+ *
+ * Returns a signed URL for downloading the report file. The report must
+ * have completed generation (status = 'completed') to be downloadable.
+ *
+ * Path parameters:
+ * - id: string (required) - Report UUID
+ *
+ * Query parameters:
+ * - expiresIn: number (optional) - URL expiration time in seconds (1-604800, default: 3600)
+ *
+ * Returns:
+ * - 200: Download URL with metadata
+ * - 400: Invalid report ID or expiresIn
+ * - 401: Not authenticated
+ * - 403: Not authorized to access this report
+ * - 404: Report not found
+ * - 409: Report not ready for download (not completed)
+ * - 500: Internal server error
+ */
+export async function downloadReport(req: Request, res: Response): Promise<void> {
+  try {
+    const { id: reportId } = req.params;
+    const expiresInParam = req.query.expiresIn as string | undefined;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate report ID format
+    if (!UUID_REGEX.test(reportId)) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid report ID format',
+          errors: [
+            {
+              field: 'id',
+              message: 'Report ID must be a valid UUID',
+              code: 'INVALID_FORMAT',
+            },
+          ],
+        },
+      });
+      return;
+    }
+
+    // Validate expiresIn if provided
+    let expiresIn: number | undefined;
+    if (expiresInParam !== undefined) {
+      expiresIn = parseInt(expiresInParam, 10);
+      if (isNaN(expiresIn) || expiresIn < 1 || expiresIn > 604800) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Invalid expiresIn parameter',
+            errors: [
+              {
+                field: 'expiresIn',
+                message: 'expiresIn must be a number between 1 and 604800 seconds',
+                code: 'INVALID_VALUE',
+              },
+            ],
+          },
+        });
+        return;
+      }
+    }
+
+    // Fetch report with details (includes project ID for authorization)
+    const report = await findReportByIdWithDetails(reportId);
+    if (!report) {
+      res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Report not found',
+        },
+      });
+      return;
+    }
+
+    // Check if user has access to the project that owns this report
+    const hasAccess = await userHasProjectAccess(userId, report.projectId);
+    if (!hasAccess) {
+      res.status(403).json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'You do not have access to this report',
+        },
+      });
+      return;
+    }
+
+    // Check if report is ready for download
+    if (report.status !== 'completed') {
+      const statusMessages: Record<string, string> = {
+        pending: 'Report is still pending generation',
+        generating: 'Report is currently being generated',
+        failed: 'Report generation failed',
+      };
+      res.status(409).json({
+        success: false,
+        error: {
+          code: 'REPORT_NOT_READY',
+          message: statusMessages[report.status] || 'Report is not ready for download',
+          status: report.status,
+          errorMessage: report.status === 'failed' ? report.errorMessage : undefined,
+        },
+      });
+      return;
+    }
+
+    // Verify file path exists
+    if (!report.filePath) {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Report file path is missing',
+        },
+      });
+      return;
+    }
+
+    // Build the filename for download
+    const extension = REPORT_FORMAT_EXTENSIONS[report.format] || '';
+    const baseFilename = report.name.replace(/[/\\?%*:|"<>]/g, '_'); // Sanitize filename
+    const downloadFilename = baseFilename.endsWith(extension)
+      ? baseFilename
+      : `${baseFilename}${extension}`;
+
+    // Generate signed download URL
+    const downloadUrl = await getSignedDownloadUrl(
+      report.filePath,
+      downloadFilename,
+      expiresIn
+    );
+
+    // Get MIME type for the format
+    const mimeType = REPORT_FORMAT_MIME_TYPES[report.format] || 'application/octet-stream';
+
+    res.status(200).json({
+      success: true,
+      data: {
+        downloadUrl,
+        filename: downloadFilename,
+        mimeType,
+        fileSize: report.fileSize,
+        format: report.format,
+        expiresIn: expiresIn ?? 3600,
+      },
+    });
+  } catch (error) {
+    console.error('Download report error:', error);
     res.status(500).json({
       success: false,
       error: {
