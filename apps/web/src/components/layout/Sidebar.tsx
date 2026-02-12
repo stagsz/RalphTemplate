@@ -5,8 +5,6 @@ import {
   IconShieldCheck,
   IconFileReport,
   IconUsers,
-  IconUser,
-  IconLogout,
   IconAlertTriangle,
   IconX,
   IconSun,
@@ -14,8 +12,7 @@ import {
 } from '@tabler/icons-react';
 import { useAuthStore, selectUser } from '../../store/auth.store';
 import { useThemeStore, selectColorScheme } from '../../store/theme.store';
-import { authService } from '../../services/auth.service';
-import { useNavigate } from 'react-router-dom';
+import { UserMenuDropdown } from './UserMenuDropdown';
 
 /**
  * Sidebar props for responsive behavior.
@@ -103,20 +100,10 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
  */
 export function Sidebar({ onClose, showCloseButton = false }: SidebarProps) {
   const location = useLocation();
-  const navigate = useNavigate();
   const user = useAuthStore(selectUser);
-  const isLoading = useAuthStore((state) => state.isLoading);
   const colorScheme = useThemeStore(selectColorScheme);
   const toggleColorScheme = useThemeStore((state) => state.toggleColorScheme);
   const isDark = colorScheme === 'dark';
-
-  /**
-   * Handle user logout.
-   */
-  const handleLogout = async () => {
-    await authService.logout();
-    navigate('/login');
-  };
 
   /**
    * Check if a route is active.
@@ -137,16 +124,6 @@ export function Sidebar({ onClose, showCloseButton = false }: SidebarProps) {
       if (!item.minRole) return true;
       return hasMinRole(user.role, item.minRole);
     });
-  };
-
-  /**
-   * Format user role for display.
-   */
-  const formatRole = (role: string): string => {
-    return role
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
   };
 
   const visibleMainItems = filterByRole(MAIN_NAV_ITEMS);
@@ -278,36 +255,8 @@ export function Sidebar({ onClose, showCloseButton = false }: SidebarProps) {
           <span>{isDark ? 'Light mode' : 'Dark mode'}</span>
         </button>
 
-        <div className="flex items-center gap-3 mb-3">
-          <div className="flex items-center justify-center w-9 h-9 bg-slate-700 rounded-full text-sm font-medium">
-            {user?.name?.charAt(0).toUpperCase() || 'U'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-white truncate">{user?.name}</div>
-            <div className="text-xs text-slate-400 truncate">{user && formatRole(user.role)}</div>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <NavLink
-            to="/profile"
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded text-xs transition-colors ${
-              location.pathname === '/profile'
-                ? 'bg-slate-700 text-white'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-            }`}
-          >
-            <IconUser size={16} stroke={1.5} />
-            <span>Profile</span>
-          </NavLink>
-          <button
-            onClick={handleLogout}
-            disabled={isLoading}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded text-xs text-slate-400 hover:bg-slate-800 hover:text-white transition-colors disabled:opacity-50"
-          >
-            <IconLogout size={16} stroke={1.5} />
-            <span>Sign out</span>
-          </button>
-        </div>
+        {/* User dropdown menu */}
+        <UserMenuDropdown />
       </div>
     </aside>
   );

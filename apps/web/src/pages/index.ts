@@ -9,6 +9,7 @@ export { ResetPasswordPage } from './ResetPasswordPage';
 export { DashboardPage } from './DashboardPage';
 export { UnauthorizedPage } from './UnauthorizedPage';
 export { ProfilePage } from './ProfilePage';
+export { SettingsPage } from './SettingsPage';
 export { AdminPage } from './AdminPage';
 export { ProjectsPage } from './ProjectsPage';
 export { ProjectDetailPage } from './ProjectDetailPage';

@@ -7,6 +7,7 @@ import {
   DashboardPage,
   UnauthorizedPage,
   ProfilePage,
+  SettingsPage,
   AdminPage,
   ProjectsPage,
   ProjectDetailPage,
@@ -87,6 +88,9 @@ function App() {
 
           {/* Profile page - accessible to all authenticated users */}
           <Route path="/profile" element={<ProfilePage />} />
+
+          {/* Settings page - accessible to all authenticated users */}
+          <Route path="/settings" element={<SettingsPage />} />
 
           {/* Unauthorized page - accessible to all authenticated users */}
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
