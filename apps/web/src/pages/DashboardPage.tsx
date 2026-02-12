@@ -1,7 +1,6 @@
 import { Button } from '@mantine/core';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore, selectUser } from '../store/auth.store';
-import { authService } from '../services/auth.service';
 import {
   ProjectSummaryCards,
   RecentAnalysesWidget,
@@ -28,12 +27,6 @@ import {
 export function DashboardPage() {
   const navigate = useNavigate();
   const user = useAuthStore(selectUser);
-  const isLoading = useAuthStore((state) => state.isLoading);
-
-  const handleLogout = async () => {
-    await authService.logout();
-    navigate('/login');
-  };
 
   /**
    * Format date for display.
@@ -49,37 +42,6 @@ export function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div>
-              <h1 className="text-lg font-semibold text-slate-900">HazOp Assistant</h1>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <Link to="/profile" className="text-sm text-slate-600 hover:text-slate-900">
-                {user?.name} ({user?.role.replace('_', ' ')})
-              </Link>
-              <Button
-                variant="subtle"
-                color="gray"
-                size="sm"
-                onClick={handleLogout}
-                loading={isLoading}
-                styles={{
-                  root: {
-                    borderRadius: '4px',
-                  },
-                }}
-              >
-                Sign out
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page header */}
@@ -177,3 +139,4 @@ export function DashboardPage() {
     </div>
   );
 }
+

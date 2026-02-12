@@ -17,6 +17,7 @@ import {
   ReportGenerationCenterPage,
 } from './pages';
 import { ProtectedRoute, PublicRoute } from './components/auth';
+import { AppLayout } from './components/layout';
 
 /**
  * Main application component with routing.
@@ -73,103 +74,48 @@ function App() {
           }
         />
 
-        {/* Protected routes - require authentication */}
+        {/* Protected routes with sidebar layout */}
         <Route
-          path="/"
           element={
             <ProtectedRoute>
-              <DashboardPage />
+              <AppLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          {/* Dashboard - main landing page */}
+          <Route path="/" element={<DashboardPage />} />
 
-        {/* Profile page - accessible to all authenticated users */}
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Profile page - accessible to all authenticated users */}
+          <Route path="/profile" element={<ProfilePage />} />
 
-        {/* Unauthorized page - accessible to all authenticated users */}
-        <Route
-          path="/unauthorized"
-          element={
-            <ProtectedRoute>
-              <UnauthorizedPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Unauthorized page - accessible to all authenticated users */}
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-        {/* Projects routes - accessible to all authenticated users */}
-        <Route
-          path="/projects"
-          element={
-            <ProtectedRoute>
-              <ProjectsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/projects/:projectId"
-          element={
-            <ProtectedRoute>
-              <ProjectDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/projects/:projectId/analyses/:analysisId"
-          element={
-            <ProtectedRoute>
-              <AnalysisWorkspacePage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/projects/:projectId/risk-dashboard"
-          element={
-            <ProtectedRoute>
-              <RiskDashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/projects/:projectId/compliance"
-          element={
-            <ProtectedRoute>
-              <ComplianceValidationPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/projects/:projectId/compliance-dashboard"
-          element={
-            <ProtectedRoute>
-              <ComplianceDashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/projects/:projectId/reports"
-          element={
-            <ProtectedRoute>
-              <ReportGenerationCenterPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Projects routes - accessible to all authenticated users */}
+          <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+          <Route
+            path="/projects/:projectId/analyses/:analysisId"
+            element={<AnalysisWorkspacePage />}
+          />
+          <Route path="/projects/:projectId/risk-dashboard" element={<RiskDashboardPage />} />
+          <Route path="/projects/:projectId/compliance" element={<ComplianceValidationPage />} />
+          <Route
+            path="/projects/:projectId/compliance-dashboard"
+            element={<ComplianceDashboardPage />}
+          />
+          <Route path="/projects/:projectId/reports" element={<ReportGenerationCenterPage />} />
 
-        {/* Admin routes - require administrator role */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute minRole="administrator">
-              <AdminPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Admin routes - require administrator role */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute minRole="administrator">
+                <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
 
         {/* Catch-all: redirect unknown routes to dashboard (auth guard handles login redirect) */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button, TextInput, Select, Table, Alert, Pagination, Modal, Textarea } from '@mantine/core';
 import { useAuthStore, selectUser } from '../store/auth.store';
-import { authService } from '../services/auth.service';
 import {
   projectsService,
   type ListProjectsFilters,
@@ -80,7 +79,6 @@ const SORT_OPTIONS = [
 export function ProjectsPage() {
   const navigate = useNavigate();
   const currentUser = useAuthStore(selectUser);
-  const isLoading = useAuthStore((state) => state.isLoading);
 
   // Project list state
   const [projects, setProjects] = useState<ProjectListItem[]>([]);
@@ -158,14 +156,6 @@ export function ProjectsPage() {
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
-
-  /**
-   * Handle logout.
-   */
-  const handleLogout = async () => {
-    await authService.logout();
-    navigate('/login');
-  };
 
   /**
    * Format date for display.
@@ -254,42 +244,6 @@ export function ProjectsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div>
-              <Link to="/" className="text-lg font-semibold text-slate-900 hover:text-slate-700">
-                HazOp Assistant
-              </Link>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <Link
-                to="/profile"
-                className="text-sm text-slate-600 hover:text-slate-900"
-              >
-                {currentUser?.name} ({currentUser?.role.replace('_', ' ')})
-              </Link>
-              <Button
-                variant="subtle"
-                color="gray"
-                size="sm"
-                onClick={handleLogout}
-                loading={isLoading}
-                styles={{
-                  root: {
-                    borderRadius: '4px',
-                  },
-                }}
-              >
-                Sign out
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}

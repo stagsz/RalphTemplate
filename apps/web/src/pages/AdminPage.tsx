@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button, TextInput, Select, Table, Alert, Pagination, Modal } from '@mantine/core';
 import { useAuthStore, selectUser } from '../store/auth.store';
-import { authService } from '../services/auth.service';
 import {
   adminService,
   type ListUsersFilters,
@@ -75,9 +74,7 @@ const ROLE_EDITOR_OPTIONS = [
  * Role editing is handled by a separate modal (ADMIN-05).
  */
 export function AdminPage() {
-  const navigate = useNavigate();
   const currentUser = useAuthStore(selectUser);
-  const isLoading = useAuthStore((state) => state.isLoading);
 
   // User list state
   const [users, setUsers] = useState<User[]>([]);
@@ -160,14 +157,6 @@ export function AdminPage() {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
-
-  /**
-   * Handle logout.
-   */
-  const handleLogout = async () => {
-    await authService.logout();
-    navigate('/login');
-  };
 
   /**
    * Toggle user active status.
@@ -260,42 +249,6 @@ export function AdminPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div>
-              <Link to="/" className="text-lg font-semibold text-slate-900 hover:text-slate-700">
-                HazOp Assistant
-              </Link>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <Link
-                to="/profile"
-                className="text-sm text-slate-600 hover:text-slate-900"
-              >
-                {currentUser?.name} ({currentUser?.role.replace('_', ' ')})
-              </Link>
-              <Button
-                variant="subtle"
-                color="gray"
-                size="sm"
-                onClick={handleLogout}
-                loading={isLoading}
-                styles={{
-                  root: {
-                    borderRadius: '4px',
-                  },
-                }}
-              >
-                Sign out
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}

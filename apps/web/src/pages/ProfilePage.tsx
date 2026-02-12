@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { TextInput, Button, Alert } from '@mantine/core';
 import { useAuthStore, selectUser } from '../store/auth.store';
 import { userService } from '../services/user.service';
-import { authService } from '../services/auth.service';
 
 /**
  * Profile page component for viewing and editing user profile.
@@ -16,7 +15,6 @@ import { authService } from '../services/auth.service';
  * - Link back to dashboard
  */
 export function ProfilePage() {
-  const navigate = useNavigate();
   const user = useAuthStore(selectUser);
   const { isLoading, error } = useAuthStore();
 
@@ -40,11 +38,6 @@ export function ProfilePage() {
       setOrganization(user.organization);
     }
   }, [user]);
-
-  const handleLogout = async () => {
-    await authService.logout();
-    navigate('/login');
-  };
 
   /**
    * Validate form inputs before submission.
@@ -138,39 +131,6 @@ export function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div>
-              <Link to="/" className="text-lg font-semibold text-slate-900 hover:text-slate-700">
-                HazOp Assistant
-              </Link>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-600">
-                {user?.name} ({user?.role.replace('_', ' ')})
-              </span>
-              <Button
-                variant="subtle"
-                color="gray"
-                size="sm"
-                onClick={handleLogout}
-                loading={isLoading}
-                styles={{
-                  root: {
-                    borderRadius: '4px',
-                  },
-                }}
-              >
-                Sign out
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main content */}
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
