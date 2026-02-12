@@ -1,11 +1,13 @@
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
+import { Breadcrumb } from './Breadcrumb';
 
 /**
  * AppLayout component that wraps authenticated pages with navigation sidebar.
  *
  * Features:
  * - Fixed sidebar on the left (w-64 / 256px)
+ * - Breadcrumb navigation below header area
  * - Main content area fills remaining space
  * - Responsive scrolling in main content
  * - Clean separation between navigation and content
@@ -24,10 +26,16 @@ export function AppLayout() {
       {/* Sidebar */}
       <Sidebar />
 
-      {/* Main content area */}
-      <main className="flex-1 overflow-y-auto">
-        <Outlet />
-      </main>
+      {/* Main content area with breadcrumb */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Breadcrumb navigation */}
+        <Breadcrumb />
+
+        {/* Page content */}
+        <main className="flex-1 overflow-y-auto">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
