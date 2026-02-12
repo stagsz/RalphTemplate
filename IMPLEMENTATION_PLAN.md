@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 10 - Dashboard & Navigation
-**Progress**: Phase 10 in progress - 10/12 tasks done
-**Last Completed**: NAV-04 - Create dark mode toggle with theme persistence
-**Next Task**: NAV-05 - Create user menu dropdown (profile, settings, logout)
+**Progress**: Phase 10 in progress - 11/12 tasks done
+**Last Completed**: NAV-05 - Create user menu dropdown with profile, settings, logout
+**Next Task**: NAV-06 - Create notification dropdown for system alerts
 
 ---
 
@@ -366,7 +366,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] NAV-02: Create breadcrumb navigation component (12064bf)
 - [x] NAV-03: Create responsive layout (desktop primary, tablet support) (d0b6f7f)
 - [x] NAV-04: Create dark mode toggle with theme persistence (d1e2691)
-- [ ] NAV-05: Create user menu dropdown (profile, settings, logout)
+- [x] NAV-05: Create user menu dropdown (profile, settings, logout) (1efdc7f)
 - [ ] NAV-06: Create notification dropdown for system alerts
 
 ---
@@ -616,3 +616,4 @@ _No blockers currently._
 | NAV-02: Create breadcrumb navigation component | 12064bf | 2026-02-12 |
 | NAV-03: Create responsive layout (desktop primary, tablet support) | d0b6f7f | 2026-02-12 |
 | NAV-04: Create dark mode toggle with theme persistence | d1e2691 | 2026-02-12 |
+| NAV-05: Create user menu dropdown (profile, settings, logout) | 1efdc7f | 2026-02-12 |
