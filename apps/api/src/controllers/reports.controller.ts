@@ -22,6 +22,7 @@ import {
 import {
   templateIsActive,
   templateSupportsFormat,
+  listTemplates as listTemplatesService,
 } from '../services/report-template.service.js';
 import {
   userHasProjectAccess,
@@ -1061,6 +1062,164 @@ export async function listReports(req: Request, res: Response): Promise<void> {
     });
   } catch (error) {
     console.error('List reports error:', error);
+
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred',
+      },
+    });
+  }
+}
+
+// ============================================================================
+// List Report Templates
+// ============================================================================
+
+/**
+ * Query parameters for listing templates.
+ */
+interface ListTemplatesQuery {
+  page?: string;
+  limit?: string;
+  format?: string;
+  isActive?: string;
+}
+
+/**
+ * Validate list templates query parameters.
+ * Returns an array of field errors if validation fails.
+ */
+function validateListTemplatesQuery(query: ListTemplatesQuery): FieldError[] {
+  const errors: FieldError[] = [];
+
+  // Validate page
+  if (query.page !== undefined) {
+    const page = parseInt(query.page, 10);
+    if (isNaN(page) || page < 1) {
+      errors.push({
+        field: 'page',
+        message: 'Page must be a positive integer',
+        code: 'INVALID_VALUE',
+      });
+    }
+  }
+
+  // Validate limit
+  if (query.limit !== undefined) {
+    const limit = parseInt(query.limit, 10);
+    if (isNaN(limit) || limit < 1 || limit > 100) {
+      errors.push({
+        field: 'limit',
+        message: 'Limit must be between 1 and 100',
+        code: 'INVALID_VALUE',
+      });
+    }
+  }
+
+  // Validate format filter
+  if (query.format !== undefined && !VALID_FORMATS.includes(query.format as ReportFormat)) {
+    errors.push({
+      field: 'format',
+      message: `format must be one of: ${VALID_FORMATS.join(', ')}`,
+      code: 'INVALID_VALUE',
+    });
+  }
+
+  // Validate isActive filter (must be 'true' or 'false')
+  if (query.isActive !== undefined && query.isActive !== 'true' && query.isActive !== 'false') {
+    errors.push({
+      field: 'isActive',
+      message: 'isActive must be "true" or "false"',
+      code: 'INVALID_VALUE',
+    });
+  }
+
+  return errors;
+}
+
+/**
+ * GET /templates
+ * List available report templates with optional filtering and pagination.
+ * Any authenticated user can view available templates.
+ *
+ * Query parameters:
+ * - page: number (1-based, default 1)
+ * - limit: number (default 20, max 100)
+ * - format: ReportFormat (filter by supported format)
+ * - isActive: 'true' | 'false' (filter by active status, default shows all)
+ *
+ * Returns:
+ * - 200: Paginated list of templates with creator details
+ * - 400: Validation error
+ * - 401: Not authenticated
+ * - 500: Internal server error
+ */
+export async function listTemplates(req: Request, res: Response): Promise<void> {
+  try {
+    const query = req.query as ListTemplatesQuery;
+
+    // Get authenticated user ID
+    const userId = (req.user as { id: string } | undefined)?.id;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        error: {
+          code: 'AUTHENTICATION_ERROR',
+          message: 'Authentication required',
+        },
+      });
+      return;
+    }
+
+    // Validate query parameters
+    const validationErrors = validateListTemplatesQuery(query);
+    if (validationErrors.length > 0) {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid query parameters',
+          errors: validationErrors,
+        },
+      });
+      return;
+    }
+
+    // Parse query parameters
+    const page = query.page ? parseInt(query.page, 10) : undefined;
+    const limit = query.limit ? parseInt(query.limit, 10) : undefined;
+    const format = query.format as ReportFormat | undefined;
+    const isActive = query.isActive !== undefined ? query.isActive === 'true' : undefined;
+
+    // Fetch templates
+    const result = await listTemplatesService({
+      page,
+      limit,
+      format,
+      isActive,
+    });
+
+    // Calculate pagination metadata
+    const currentPage = page ?? 1;
+    const currentLimit = limit ?? 20;
+    const totalPages = Math.ceil(result.total / currentLimit);
+
+    res.status(200).json({
+      success: true,
+      data: result.templates,
+      meta: {
+        page: currentPage,
+        limit: currentLimit,
+        total: result.total,
+        totalPages,
+        hasNextPage: currentPage < totalPages,
+        hasPrevPage: currentPage > 1,
+      },
+    });
+  } catch (error) {
+    console.error('List templates error:', error);
 
     res.status(500).json({
       success: false,
