@@ -534,7 +534,16 @@ export function useWebSocket(handlers: WebSocketEventHandlers = {}): {
    */
   const joinRoom = useCallback(async (analysisId: string): Promise<void> => {
     const socket = socketRef.current;
-    if (!socket?.connected) {
+    if (!socket) {
+      throw new Error('WebSocket not initialized');
+    }
+
+    // Wait a bit for connection if status says connected but socket not yet
+    if (!socket.connected && status === 'connected') {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    if (!socket.connected) {
       throw new Error('Not connected to WebSocket server');
     }
 
@@ -557,7 +566,7 @@ export function useWebSocket(handlers: WebSocketEventHandlers = {}): {
         }
       });
     });
-  }, [currentRoom]);
+  }, [currentRoom, status]);
 
   /**
    * Leave the current analysis room.
@@ -599,14 +608,16 @@ export function useWebSocket(handlers: WebSocketEventHandlers = {}): {
     if (isAuthenticated && status === 'disconnected') {
       connect();
     }
-  }, [isAuthenticated, status, connect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, status]);
 
   // Disconnect on logout
   useEffect(() => {
     if (!isAuthenticated && socketRef.current) {
       disconnect();
     }
-  }, [isAuthenticated, disconnect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   // Cleanup on unmount
   useEffect(() => {

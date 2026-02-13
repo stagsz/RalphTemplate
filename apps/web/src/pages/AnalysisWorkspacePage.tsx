@@ -157,7 +157,8 @@ export function AnalysisWorkspacePage() {
         console.error('Failed to join collaboration room:', err);
       });
     }
-  }, [analysisId, wsState.isConnected, wsState.currentRoom, wsActions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analysisId, wsState.isConnected, wsState.currentRoom]);
 
   // Leave room on unmount
   useEffect(() => {
@@ -166,7 +167,8 @@ export function AnalysisWorkspacePage() {
         wsActions.leaveRoom();
       }
     };
-  }, [wsState.currentRoom, wsActions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wsState.currentRoom]);
 
   // Update cursor position when selected node changes
   useEffect(() => {
