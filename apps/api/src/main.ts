@@ -23,6 +23,7 @@ import templatesRoutes from './routes/templates.routes.js';
 import { configurePassport, initializePassport } from './config/passport.config.js';
 import { getWebSocketService } from './services/websocket.service.js';
 import { metricsMiddleware, getMetrics, getMetricsContentType, requestLogger } from './middleware/index.js';
+import { performHealthCheck, checkReadiness, checkLiveness } from './services/health.service.js';
 import log from './utils/logger.js';
 
 // Load .env from project root (two levels up from this file)
@@ -58,9 +59,61 @@ if (process.env.JWT_PRIVATE_KEY && process.env.JWT_PUBLIC_KEY) {
   app.use(initializePassport());
 }
 
-// Health check endpoint
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'hazop-api' });
+// Health check endpoints
+
+/**
+ * Comprehensive health check - checks all service dependencies.
+ * Returns 200 if healthy/degraded, 503 if unhealthy.
+ */
+app.get('/health', async (_req, res) => {
+  try {
+    const health = await performHealthCheck();
+    const statusCode = health.status === 'unhealthy' ? 503 : 200;
+    res.status(statusCode).json(health);
+  } catch (error) {
+    log.error('Health check failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    res.status(503).json({
+      status: 'unhealthy',
+      version: process.env.npm_package_version || '0.0.1',
+      timestamp: new Date().toISOString(),
+      services: [],
+      uptime: 0,
+    });
+  }
+});
+
+/**
+ * Readiness probe - can the service accept traffic?
+ * Used by Kubernetes/Docker to determine if service should receive traffic.
+ * Returns 200 if ready, 503 if not ready.
+ */
+app.get('/health/ready', async (_req, res) => {
+  try {
+    const readiness = await checkReadiness();
+    const statusCode = readiness.ready ? 200 : 503;
+    res.status(statusCode).json(readiness);
+  } catch (error) {
+    log.error('Readiness check failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    res.status(503).json({
+      ready: false,
+      status: 'unhealthy',
+      checks: [],
+    });
+  }
+});
+
+/**
+ * Liveness probe - is the service alive?
+ * Used by Kubernetes/Docker to determine if service should be restarted.
+ * Returns 200 if alive.
+ */
+app.get('/health/live', (_req, res) => {
+  const liveness = checkLiveness();
+  res.status(200).json(liveness);
 });
 
 // Prometheus metrics endpoint
