@@ -438,7 +438,7 @@ export async function findAnalysisById(id: string): Promise<HazopAnalysisWithDet
   const result = await pool.query<HazopAnalysisRowWithDetails>(
     `SELECT
        ha.*,
-       pd.name AS document_name,
+       pd.filename AS document_name,
        la.name AS lead_analyst_name,
        la.email AS lead_analyst_email,
        cb.name AS created_by_name
@@ -568,7 +568,7 @@ export async function listProjectAnalyses(
   const analysesResult = await pool.query<HazopAnalysisRowWithDetails>(
     `SELECT
        ha.*,
-       pd.name AS document_name,
+       pd.filename AS document_name,
        la.name AS lead_analyst_name,
        la.email AS lead_analyst_email,
        cb.name AS created_by_name
