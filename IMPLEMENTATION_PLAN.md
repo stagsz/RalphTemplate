@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 11 - Polish & Deployment
-**Progress**: Phase 11 IN PROGRESS - 9/15 tasks done
-**Last Completed**: OPS-04 - Configure Loki log aggregation
-**Next Task**: DEPLOY-01 - Create production Docker Compose configuration
+**Progress**: Phase 11 IN PROGRESS - 10/15 tasks done
+**Last Completed**: DEPLOY-01 - Create production Docker Compose configuration
+**Next Task**: DEPLOY-02 - Create Nginx reverse proxy configuration
 
 ---
 
@@ -387,7 +387,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] OPS-04: Configure Loki log aggregation (6fdd3a1)
 
 ### Docker & Deployment
-- [ ] DEPLOY-01: Create production Docker Compose configuration
+- [x] DEPLOY-01: Create production Docker Compose configuration (e6407d1)
 - [ ] DEPLOY-02: Create Nginx reverse proxy configuration
 - [ ] DEPLOY-03: Configure production environment variables
 - [ ] DEPLOY-04: Set up GitHub Actions CI/CD pipeline
@@ -627,3 +627,4 @@ _No blockers currently._
 | OPS-02: Configure Grafana dashboards | 868dbaa | 2026-02-12 |
 | OPS-03: Set up Winston structured logging | 3083251 | 2026-02-12 |
 | OPS-04: Configure Loki log aggregation | 6fdd3a1 | 2026-02-13 |
+| DEPLOY-01: Create production Docker Compose configuration | e6407d1 | 2026-02-13 |
