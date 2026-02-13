@@ -45,6 +45,11 @@ tmp/
 .env
 .env.local
 .env.*.local
+.env.production
+
+# Production secrets
+secrets/
+*.pem
 
 # IDE
 .idea/
