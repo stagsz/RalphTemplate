@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 11 - Polish & Deployment
-**Progress**: Phase 11 IN PROGRESS - 14/15 tasks done
-**Last Completed**: DEPLOY-05 - Create database migration scripts for production
-**Next Task**: DEPLOY-06 - Add health check endpoints for all services
+**Progress**: Phase 11 IN PROGRESS - 15/15 deployment tasks done
+**Last Completed**: DEPLOY-06 - Add health check endpoints for all services
+**Next Task**: DOCS-01 - Create API documentation with OpenAPI/Swagger
 
 ---
 
@@ -392,7 +392,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] DEPLOY-03: Configure production environment variables (4bf90bc)
 - [x] DEPLOY-04: Set up GitHub Actions CI/CD pipeline (b85fc5b)
 - [x] DEPLOY-05: Create database migration scripts for production (f05caf5)
-- [ ] DEPLOY-06: Add health check endpoints for all services
+- [x] DEPLOY-06: Add health check endpoints for all services (ed2b886)
 
 ### Documentation
 - [ ] DOCS-01: Create API documentation with OpenAPI/Swagger
@@ -632,3 +632,4 @@ _No blockers currently._
 | DEPLOY-03: Configure production environment variables | 4bf90bc | 2026-02-13 |
 | DEPLOY-04: Set up GitHub Actions CI/CD pipeline | b85fc5b | 2026-02-13 |
 | DEPLOY-05: Create database migration scripts for production | f05caf5 | 2026-02-13 |
+| DEPLOY-06: Add health check endpoints for all services | ed2b886 | 2026-02-13 |
