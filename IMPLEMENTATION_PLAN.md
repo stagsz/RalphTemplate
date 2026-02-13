@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 11 - Polish & Deployment
-**Progress**: Phase 11 IN PROGRESS - 10/15 tasks done
-**Last Completed**: DEPLOY-01 - Create production Docker Compose configuration
-**Next Task**: DEPLOY-02 - Create Nginx reverse proxy configuration
+**Progress**: Phase 11 IN PROGRESS - 11/15 tasks done
+**Last Completed**: DEPLOY-02 - Create Nginx reverse proxy configuration
+**Next Task**: DEPLOY-03 - Configure production environment variables
 
 ---
 
@@ -388,7 +388,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 
 ### Docker & Deployment
 - [x] DEPLOY-01: Create production Docker Compose configuration (e6407d1)
-- [ ] DEPLOY-02: Create Nginx reverse proxy configuration
+- [x] DEPLOY-02: Create Nginx reverse proxy configuration (970e923)
 - [ ] DEPLOY-03: Configure production environment variables
 - [ ] DEPLOY-04: Set up GitHub Actions CI/CD pipeline
 - [ ] DEPLOY-05: Create database migration scripts for production
@@ -628,3 +628,4 @@ _No blockers currently._
 | OPS-03: Set up Winston structured logging | 3083251 | 2026-02-12 |
 | OPS-04: Configure Loki log aggregation | 6fdd3a1 | 2026-02-13 |
 | DEPLOY-01: Create production Docker Compose configuration | e6407d1 | 2026-02-13 |
+| DEPLOY-02: Create Nginx reverse proxy configuration | 970e923 | 2026-02-13 |
