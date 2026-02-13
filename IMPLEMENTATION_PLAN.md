@@ -5,9 +5,9 @@
 ## Current Status
 
 **Phase**: 11 - Polish & Deployment
-**Progress**: Phase 11 IN PROGRESS - 15/15 deployment tasks done
-**Last Completed**: DEPLOY-06 - Add health check endpoints for all services
-**Next Task**: DOCS-01 - Create API documentation with OpenAPI/Swagger
+**Progress**: Phase 11 IN PROGRESS - Documentation tasks in progress (1/4 done)
+**Last Completed**: DOCS-01 - Create API documentation with OpenAPI/Swagger
+**Next Task**: DOCS-02 - Update README with setup and deployment instructions
 
 ---
 
@@ -395,7 +395,7 @@ This is a **greenfield project** - no existing implementation. The HazOp Assista
 - [x] DEPLOY-06: Add health check endpoints for all services (ed2b886)
 
 ### Documentation
-- [ ] DOCS-01: Create API documentation with OpenAPI/Swagger
+- [x] DOCS-01: Create API documentation with OpenAPI/Swagger (af1c367)
 - [ ] DOCS-02: Update README with setup and deployment instructions
 - [ ] DOCS-03: Create environment variable documentation
 - [ ] DOCS-04: Create user guide for HazOps analysis workflow
@@ -633,3 +633,4 @@ _No blockers currently._
 | DEPLOY-04: Set up GitHub Actions CI/CD pipeline | b85fc5b | 2026-02-13 |
 | DEPLOY-05: Create database migration scripts for production | f05caf5 | 2026-02-13 |
 | DEPLOY-06: Add health check endpoints for all services | ed2b886 | 2026-02-13 |
+| DOCS-01: Create API documentation with OpenAPI/Swagger | af1c367 | 2026-02-13 |
