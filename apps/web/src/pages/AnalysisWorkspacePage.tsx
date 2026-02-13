@@ -210,7 +210,7 @@ export function AnalysisWorkspacePage() {
     setPidDocument(documentResult.data.document);
 
     // Fetch nodes for the document
-    const nodesResult = await nodesService.listNodes(analysisData.documentId, {}, {}, { limit: 1000 });
+    const nodesResult = await nodesService.listNodes(analysisData.documentId, {}, {}, { limit: 100 });
     if (nodesResult.success && nodesResult.data) {
       setNodes(nodesResult.data.data);
     }
