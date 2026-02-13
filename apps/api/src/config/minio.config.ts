@@ -69,7 +69,7 @@ export function getBucketName(): string {
 
 /**
  * Ensure the configured bucket exists.
- * Creates the bucket if it doesn't exist.
+ * Creates the bucket if it doesn't exist and configures CORS for browser access.
  */
 export async function ensureBucket(): Promise<void> {
   const minioClient = getMinIOClient();
@@ -81,6 +81,23 @@ export async function ensureBucket(): Promise<void> {
       await minioClient.makeBucket(bucketName);
       log.info('MinIO bucket created', { bucket: bucketName });
     }
+
+    // Configure CORS to allow browser access to signed URLs
+    // This is necessary for the P&ID viewer to load images
+    const corsConfig = {
+      CORSRules: [
+        {
+          AllowedOrigins: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+          AllowedMethods: ['GET', 'HEAD'],
+          AllowedHeaders: ['*'],
+          ExposeHeaders: ['ETag', 'Content-Length', 'Content-Type'],
+          MaxAgeSeconds: 3600,
+        },
+      ],
+    };
+
+    await minioClient.setBucketCors(bucketName, corsConfig);
+    log.info('MinIO bucket CORS configured', { bucket: bucketName });
   } catch (error) {
     log.error('Failed to ensure MinIO bucket exists', { bucket: bucketName, error: error instanceof Error ? error.message : String(error) });
     throw error;
