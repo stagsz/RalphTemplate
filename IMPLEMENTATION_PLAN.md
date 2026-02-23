@@ -5,11 +5,11 @@
 ## Current Status
 
 **Phase**: 1 - Foundation
-**Progress**: 11 / 100 tasks
-**Last Completed**: API-03
+**Progress**: 12 / 100 tasks
+**Last Completed**: UI-01
 **Last Reviewed**: 2026-02-23
 **Blockers**: None
-**Code state**: Docker Compose configured. `.env.example` provides template for all environment variables. Backend and frontend Dockerfiles ready. Nginx reverse proxy configured with API proxy, WebSocket upgrade for voice, and SPA fallback. GitHub Actions CI workflow added with backend (pytest+ruff+mypy) and frontend (vitest+eslint+typecheck) jobs. Backend scaffolded: FastAPI app with CORS, health endpoint, pyproject.toml for tooling, conftest.py with test client fixture, httpx added for TestClient. CI backend gate now activates (pyproject.toml exists). SQLAlchemy engine + sessionmaker configured in db.py with get_db FastAPI dependency. Alembic initialized with env.py reading DATABASE_URL from environment, migration template ready, versions directory created. Alembic directory excluded from mypy/ruff. Base declarative model class created with UUID primary key, created_at, updated_at columns. Alembic target_metadata wired to Base.metadata. Ready for AUTH-01 (User model) and UI-01 (frontend scaffold).
+**Code state**: Docker Compose configured. `.env.example` provides template for all environment variables. Backend and frontend Dockerfiles ready. Nginx reverse proxy configured with API proxy, WebSocket upgrade for voice, and SPA fallback. GitHub Actions CI workflow added with backend (pytest+ruff+mypy) and frontend (vitest+eslint+typecheck) jobs. Backend scaffolded: FastAPI app with CORS, health endpoint, pyproject.toml for tooling, conftest.py with test client fixture, httpx added for TestClient. CI backend gate now activates (pyproject.toml exists). SQLAlchemy engine + sessionmaker configured in db.py with get_db FastAPI dependency. Alembic initialized with env.py reading DATABASE_URL from environment, migration template ready, versions directory created. Alembic directory excluded from mypy/ruff. Base declarative model class created with UUID primary key, created_at, updated_at columns. Alembic target_metadata wired to Base.metadata. Frontend scaffolded: React 18 + Vite 6 + TypeScript 5.7, Tailwind CSS v4 via @tailwindcss/vite plugin, ESLint flat config, Vitest with jsdom + @testing-library/react, @/ path alias configured. CI frontend gate now activates (package.json exists). Ready for UI-02 (app shell) and AUTH-01 (User model).
 
 ---
 
@@ -58,7 +58,7 @@
 
 ### 1.3 Frontend Scaffold (F001)
 
-- [ ] UI-01: Scaffold React + Vite + TypeScript frontend — `npm create vite@latest frontend -- --template react-ts`. Add Tailwind CSS v4. Configure path aliases (`@/`). Add `.eslintrc.cjs` and `tsconfig.json`. Verify `npm run dev` starts.
+- [x] UI-01: Scaffold React + Vite + TypeScript frontend — `npm create vite@latest frontend -- --template react-ts`. Add Tailwind CSS v4. Configure path aliases (`@/`). Add `.eslintrc.cjs` and `tsconfig.json`. Verify `npm run dev` starts. *(3e9dbf9)*
 - [ ] UI-02: Create app shell layout — `App.tsx` with sidebar navigation (collapsible), top bar, and main content area using Tailwind. Add React Router v6 with routes: `/`, `/dashboard/:id`, `/editor`, `/upload`. Create placeholder page components.
 - [ ] UI-03: Add API client service — `frontend/src/services/api.ts` with axios instance, base URL from `VITE_API_URL`, request/response interceptors for JWT token, error handling.
 
@@ -345,3 +345,4 @@ CLEANUP-01 → SETUP-01 → SETUP-02..07 (parallel)
 | API-01 | 635b434 | 2026-02-23 |
 | API-02 | a088785 | 2026-02-23 |
 | API-03 | 9576126 | 2026-02-23 |
+| UI-01 | 3e9dbf9 | 2026-02-23 |
