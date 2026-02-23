@@ -334,4 +334,4 @@ CLEANUP-01 → SETUP-01 → SETUP-02..07 (parallel)
 
 | Task | Commit | Date |
 |------|--------|------|
-| CLEANUP-01 | (pending) | 2026-02-23 |
+| CLEANUP-01 | c8de093 + 783b7a9 | 2026-02-23 |
