@@ -1,11 +1,11 @@
 #!/bin/bash
-# Ralph Template - Interactive Project Setup (Bash version)
+# find.bi - Interactive Project Setup (Bash version)
 # Walks you through setting up a new project from this template
 
 set -e
 
 echo "================================================================"
-echo "          Ralph Template - New Project Setup                    "
+echo "               find.bi - New Project Setup                      "
 echo "================================================================"
 echo ""
 echo "This wizard will help you configure a new project."
@@ -266,8 +266,8 @@ echo "|-------|------------|" >> CLAUDE.md
 echo "[✓] Updated CLAUDE.md"
 
 # Rename workspace file
-if [ -f "RalphTemplate.code-workspace" ]; then
-    mv "RalphTemplate.code-workspace" "$projectName.code-workspace"
+if [ -f "find.bi.code-workspace" ]; then
+    mv "find.bi.code-workspace" "$projectName.code-workspace"
     echo "[✓] Renamed workspace to $projectName.code-workspace"
 fi
 
