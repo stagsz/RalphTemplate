@@ -1,4 +1,4 @@
-# Ralph Build Template
+# find.bi
 
 Autonomous AI-driven development using the Ralph workflow.
 Based on [Geoff Huntley's Ralph methodology](https://ghuntley.com/ralph/).
@@ -8,7 +8,7 @@ Based on [Geoff Huntley's Ralph methodology](https://ghuntley.com/ralph/).
 **Windows (PowerShell):**
 ```powershell
 # 1. Copy template to new project folder
-cp -r C:\Users\staff\RalphTemplate C:\Users\staff\MyProject
+cp -r C:\Users\staff\find.bi C:\Users\staff\MyProject
 cd C:\Users\staff\MyProject
 
 # 2. Run interactive setup wizard (asks questions step-by-step)
@@ -26,7 +26,7 @@ cd C:\Users\staff\MyProject
 **Mac/Linux (Bash):**
 ```bash
 # 1. Copy template
-cp -r ~/RalphTemplate ~/MyProject
+cp -r ~/find.bi ~/MyProject
 cd ~/MyProject
 
 # 2. Run setup wizard

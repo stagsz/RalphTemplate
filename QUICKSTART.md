@@ -1,4 +1,4 @@
-# Ralph Template - Quick Start
+# find.bi - Quick Start
 
 ## Visual Workflow
 
@@ -47,7 +47,7 @@
 ### Step 1: Copy This Template
 
 ```powershell
-cp -r C:\Users\staff\RalphTemplate C:\Users\staff\MyNewProject
+cp -r C:\Users\staff\find.bi C:\Users\staff\MyNewProject
 cd C:\Users\staff\MyNewProject
 ```
 

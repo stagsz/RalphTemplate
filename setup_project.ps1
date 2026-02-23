@@ -1,10 +1,10 @@
-# Ralph Template - Interactive Project Setup
+# find.bi - Interactive Project Setup
 # Walks you through setting up a new project from this template
 
 $ErrorActionPreference = "Stop"
 
 Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host "          Ralph Template - New Project Setup                    " -ForegroundColor Cyan
+Write-Host "               find.bi - New Project Setup                      " -ForegroundColor Cyan
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "This wizard will help you configure a new project." -ForegroundColor Gray
@@ -261,15 +261,15 @@ cd frontend && npm run typecheck && npm run lint && npm test"
 
 ### Commit Format
 
-``````
+```
 <type>(<scope>): <description> (<TASK-ID>)
 
 Types: feat, fix, test, refactor, docs, chore
-``````
+```
 
 ### When Blocked
 
-1. Document blocker in IMPLEMENTATION_PLAN.md under ``## Blockers``
+1. Document blocker in IMPLEMENTATION_PLAN.md under `## Blockers`
 2. Stop and report
 3. Do NOT skip to another task
 4. Wait for user decision
@@ -301,11 +301,11 @@ $claudeMd | Out-File -FilePath "CLAUDE.md" -Encoding UTF8
 Write-Host "[✓] Updated CLAUDE.md" -ForegroundColor Green
 
 # Update workspace file name
-if (Test-Path "RalphTemplate.code-workspace") {
-    $workspaceContent = Get-Content "RalphTemplate.code-workspace" -Raw
+if (Test-Path "find.bi.code-workspace") {
+    $workspaceContent = Get-Content "find.bi.code-workspace" -Raw
     $newWorkspaceName = "$projectName.code-workspace"
     $workspaceContent | Out-File -FilePath $newWorkspaceName -Encoding UTF8
-    Remove-Item "RalphTemplate.code-workspace"
+    Remove-Item "find.bi.code-workspace"
     Write-Host "[✓] Renamed workspace to $newWorkspaceName" -ForegroundColor Green
 }
 
