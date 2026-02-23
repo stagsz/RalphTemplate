@@ -14,8 +14,9 @@ database_url = os.environ.get("DATABASE_URL")
 if database_url:
     config.set_main_option("sqlalchemy.url", database_url)
 
-# target_metadata is set when models are defined (see API-03)
-target_metadata = None
+from models.base import Base
+
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
