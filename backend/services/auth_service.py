@@ -9,7 +9,9 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from models.user import User
+from models.workspace import Workspace
 
+DUCKDB_PATH = os.environ.get("DUCKDB_PATH", "/data/workspaces")
 JWT_SECRET = os.environ.get("JWT_SECRET", "change-me-to-a-random-secret")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRY_MINUTES = int(os.environ.get("JWT_EXPIRY_MINUTES", "60"))
@@ -61,7 +63,10 @@ def register_user(
     display_name: str,
     db: Session,
 ) -> User:
-    """Register a new user. Raises ValueError if email already taken."""
+    """Register a new user with a default workspace.
+
+    Raises ValueError if email already taken.
+    """
     existing = db.query(User).filter(User.email == email).first()
     if existing is not None:
         raise ValueError("Email already registered")
@@ -71,6 +76,14 @@ def register_user(
         display_name=display_name,
     )
     db.add(user)
+    db.flush()  # assigns user.id without committing
+
+    workspace = Workspace(
+        name="Default Workspace",
+        owner_id=user.id,
+        duckdb_path=f"{DUCKDB_PATH}/{user.id}/default.db",
+    )
+    db.add(workspace)
     db.commit()
     db.refresh(user)
     return user

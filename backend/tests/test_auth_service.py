@@ -10,6 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from models.base import Base
+from models.workspace import Workspace
 from services.auth_service import (
     authenticate_user,
     create_access_token,
@@ -141,6 +142,25 @@ def test_register_user_duplicate_email(db: Session) -> None:
     register_user("dupe@example.com", "pass1", "User One", db)
     with pytest.raises(ValueError, match="Email already registered"):
         register_user("dupe@example.com", "pass2", "User Two", db)
+
+
+def test_register_user_creates_default_workspace(db: Session) -> None:
+    user = register_user("ws@example.com", "pass", "WS User", db)
+    workspaces = (
+        db.query(Workspace).filter(Workspace.owner_id == user.id).all()
+    )
+    assert len(workspaces) == 1
+    ws = workspaces[0]
+    assert ws.name == "Default Workspace"
+    assert str(user.id) in ws.duckdb_path
+    assert ws.duckdb_path.endswith("/default.db")
+
+
+def test_register_user_workspace_owner_matches_user(db: Session) -> None:
+    user = register_user("owner@example.com", "pass", "Owner", db)
+    ws = db.query(Workspace).filter(Workspace.owner_id == user.id).first()
+    assert ws is not None
+    assert ws.owner_id == user.id
 
 
 # --- authenticate_user ---
