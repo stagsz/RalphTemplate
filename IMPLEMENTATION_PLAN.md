@@ -5,11 +5,11 @@
 ## Current Status
 
 **Phase**: 1 - Foundation
-**Progress**: 4 / 100 tasks
-**Last Completed**: SETUP-03
+**Progress**: 5 / 100 tasks
+**Last Completed**: SETUP-04
 **Last Reviewed**: 2026-02-23
 **Blockers**: None
-**Code state**: Docker Compose configured. `.env.example` provides template for all environment variables. Ready for SETUP-04 (Dockerfile.backend), SETUP-05 (Dockerfile.frontend), SETUP-06 (nginx.conf), SETUP-07 (CI), and parallel scaffolding tasks (API-01, UI-01).
+**Code state**: Docker Compose configured. `.env.example` provides template for all environment variables. Backend Dockerfile ready. `backend/requirements.txt` added with core dependencies. Ready for SETUP-05 (Dockerfile.frontend), SETUP-06 (nginx.conf), SETUP-07 (CI), and parallel scaffolding tasks (API-01, UI-01).
 
 ---
 
@@ -45,7 +45,7 @@
 - [x] SETUP-01: Create directory structure — `frontend/`, `backend/`, `docker/`, `.github/workflows/`, `scripts/`. Add placeholder READMEs in each.
 - [x] SETUP-02: Create `docker-compose.yml` for find.bi — PostgreSQL 15 (ralph/ralph) only. Create `docker-compose.dev.yml` adding FastAPI + React dev containers with hot reload and volume mounts.
 - [x] SETUP-03: Create `.env.example` for find.bi — DATABASE_URL, JWT_SECRET, DUCKDB_PATH, ANTHROPIC_API_KEY, OPENAI_API_KEY, VITE_API_URL. Clean environment file with no HazOp references. *(e65a7f1)*
-- [ ] SETUP-04: Create `docker/Dockerfile.backend` — Python 3.12 slim, install dependencies from requirements.txt, uvicorn entrypoint on port 8000.
+- [x] SETUP-04: Create `docker/Dockerfile.backend` — Python 3.12 slim, install dependencies from requirements.txt, uvicorn entrypoint on port 8000. *(08c08aa)*
 - [ ] SETUP-05: Create `docker/Dockerfile.frontend` — Node 20 alpine, npm install, Vite build, serve with nginx. Multi-stage build.
 - [ ] SETUP-06: Create `docker/nginx.conf` — Reverse proxy: `/api` to backend:8000, `/` to frontend static files. WebSocket upgrade support for voice.
 - [ ] SETUP-07: Create `.github/workflows/ci.yml` — On push/PR: run backend pytest + ruff + mypy, run frontend vitest + eslint + typecheck.
@@ -338,3 +338,4 @@ CLEANUP-01 → SETUP-01 → SETUP-02..07 (parallel)
 | SETUP-01 | c3757d8 | 2026-02-23 |
 | SETUP-02 | 8f7a2c0 | 2026-02-23 |
 | SETUP-03 | e65a7f1 | 2026-02-23 |
+| SETUP-04 | 08c08aa | 2026-02-23 |
