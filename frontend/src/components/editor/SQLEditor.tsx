@@ -2,6 +2,8 @@ import { useRef, useCallback } from "react";
 import Editor, { type OnMount } from "@monaco-editor/react";
 import type { editor, IDisposable, Position } from "monaco-editor";
 import type { editor as editorApi } from "monaco-editor";
+import type { QueryHistoryEntry } from "@/hooks/useQueryHistory";
+import QueryHistory from "@/components/editor/QueryHistory";
 
 const SQL_KEYWORDS = [
   "SELECT",
@@ -97,6 +99,9 @@ interface SQLEditorProps {
   onRun: () => void;
   className?: string;
   readOnly?: boolean;
+  historyEntries?: QueryHistoryEntry[];
+  onHistorySelect?: (sql: string) => void;
+  onHistoryClear?: () => void;
 }
 
 function SQLEditor({
@@ -105,6 +110,9 @@ function SQLEditor({
   onRun,
   className,
   readOnly = false,
+  historyEntries,
+  onHistorySelect,
+  onHistoryClear,
 }: SQLEditorProps) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const completionDisposableRef = useRef<IDisposable | null>(null);
@@ -170,7 +178,16 @@ function SQLEditor({
   return (
     <div className={className} data-testid="sql-editor">
       <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-3 py-1.5">
-        <span className="text-xs font-medium text-gray-500">SQL</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-gray-500">SQL</span>
+          {historyEntries && onHistorySelect && onHistoryClear && (
+            <QueryHistory
+              entries={historyEntries}
+              onSelect={onHistorySelect}
+              onClear={onHistoryClear}
+            />
+          )}
+        </div>
         <button
           type="button"
           onClick={onRun}

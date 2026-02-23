@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import api from "@/services/api";
 import { useDuckDB } from "@/hooks/useDuckDB";
 import type { QueryResult as QueryResultData } from "@/hooks/useDuckDB";
+import { useQueryHistory } from "@/hooks/useQueryHistory";
 import SQLEditor from "@/components/editor/SQLEditor";
 import SchemaExplorer from "@/components/editor/SchemaExplorer";
 import QueryResult from "@/components/editor/QueryResult";
@@ -15,6 +16,7 @@ const DEFAULT_EDITOR_FRACTION = 0.4;
 
 function EditorPage() {
   const { query, isReady } = useDuckDB();
+  const { entries: historyEntries, addEntry: addHistoryEntry, clearHistory } = useQueryHistory();
 
   // Workspace
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
@@ -54,6 +56,7 @@ function EditorPage() {
     if (!trimmed) return;
     if (!isReady) return;
 
+    addHistoryEntry(trimmed);
     setQueryLoading(true);
     setQueryError(null);
     try {
@@ -65,7 +68,12 @@ function EditorPage() {
     } finally {
       setQueryLoading(false);
     }
-  }, [query, sql, isReady]);
+  }, [query, sql, isReady, addHistoryEntry]);
+
+  // Load query from history into editor
+  const handleHistorySelect = useCallback((selectedSql: string) => {
+    setSql(selectedSql);
+  }, []);
 
   // Insert column name into SQL editor
   const handleColumnClick = useCallback(
@@ -173,6 +181,9 @@ function EditorPage() {
             value={sql}
             onChange={setSql}
             onRun={handleRun}
+            historyEntries={historyEntries}
+            onHistorySelect={handleHistorySelect}
+            onHistoryClear={clearHistory}
             className="flex flex-col h-full"
           />
         </div>
