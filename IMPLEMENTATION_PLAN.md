@@ -5,11 +5,11 @@
 ## Current Status
 
 **Phase**: 1 - Foundation
-**Progress**: 8 / 100 tasks
-**Last Completed**: SETUP-07
+**Progress**: 9 / 100 tasks
+**Last Completed**: API-01
 **Last Reviewed**: 2026-02-23
 **Blockers**: None
-**Code state**: Docker Compose configured. `.env.example` provides template for all environment variables. Backend and frontend Dockerfiles ready. `backend/requirements.txt` added with core dependencies. Nginx reverse proxy configured with API proxy, WebSocket upgrade for voice, and SPA fallback. GitHub Actions CI workflow added with backend (pytest+ruff+mypy) and frontend (vitest+eslint+typecheck) jobs. Both jobs gracefully skip when their stack isn't scaffolded yet. Project setup (F001 infra) complete. Ready for parallel scaffolding: API-01 (backend) and UI-01 (frontend).
+**Code state**: Docker Compose configured. `.env.example` provides template for all environment variables. Backend and frontend Dockerfiles ready. Nginx reverse proxy configured with API proxy, WebSocket upgrade for voice, and SPA fallback. GitHub Actions CI workflow added with backend (pytest+ruff+mypy) and frontend (vitest+eslint+typecheck) jobs. Backend scaffolded: FastAPI app with CORS, health endpoint, pyproject.toml for tooling, conftest.py with test client fixture, httpx added for TestClient. CI backend gate now activates (pyproject.toml exists). Ready for API-02 (SQLAlchemy+Alembic) and UI-01 (frontend scaffold).
 
 ---
 
@@ -52,7 +52,7 @@
 
 ### 1.2 Backend Scaffold (F001)
 
-- [ ] API-01: Scaffold FastAPI backend — `backend/main.py` with CORS, health endpoint (`GET /api/health`). Add `requirements.txt` with fastapi, uvicorn, sqlalchemy, alembic, psycopg2-binary, python-jose, bcrypt, python-multipart. Add `backend/pyproject.toml` with ruff and mypy config. Add `backend/conftest.py` with test client fixture.
+- [x] API-01: Scaffold FastAPI backend — `backend/main.py` with CORS, health endpoint (`GET /api/health`). Add `requirements.txt` with fastapi, uvicorn, sqlalchemy, alembic, psycopg2-binary, python-jose, bcrypt, python-multipart. Add `backend/pyproject.toml` with ruff and mypy config. Add `backend/conftest.py` with test client fixture. *(635b434)*
 - [ ] API-02: Configure SQLAlchemy + Alembic — `backend/db.py` with async engine and session. `backend/alembic.ini` and `backend/alembic/env.py`. Verify connection to PostgreSQL in Docker.
 - [ ] API-03: Create base model classes — `backend/models/base.py` with Base declarative class, id (UUID), created_at, updated_at columns. Add `backend/models/__init__.py`.
 
@@ -342,3 +342,4 @@ CLEANUP-01 → SETUP-01 → SETUP-02..07 (parallel)
 | SETUP-05 | a00b4f0 | 2026-02-23 |
 | SETUP-06 | 7baa760 | 2026-02-23 |
 | SETUP-07 | 357fe2a | 2026-02-23 |
+| API-01 | 635b434 | 2026-02-23 |
