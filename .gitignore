@@ -1,12 +1,29 @@
-# Python
+# Ralph Automation Scripts (template files - not needed for CRM runtime)
+loop.ps1
+evaluate_loop.ps1
+setup_project.ps1
+check_prompt_injection.ps1
+PROMPT_*.md
+AGENTS.md
+EXPERIMENT_BLOG.md
+
+# Ralph logs and reports
+ralph_log_*.txt
+ralph_log_*.md
+evaluation_protocol_*.md
+prompt_injection_report.md
+*.log
+logs/
+
+# Development containers
+.devcontainer/
+
+# Python (if any Python scripts exist)
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-build/
-dist/
-*.egg-info/
 .venv/
 venv/
 ENV/
@@ -16,15 +33,23 @@ node_modules/
 npm-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+package-lock.json
 
 # Build outputs
-frontend/dist/
-backend/dist/
+dist/
+.nx/
+.cache/
+tmp/
 
 # Environment
 .env
 .env.local
 .env.*.local
+.env.production
+
+# Production secrets
+secrets/
+*.pem
 
 # IDE
 .idea/
@@ -44,25 +69,15 @@ htmlcov/
 .mypy_cache/
 coverage/
 
-# Logs
-*.log
-logs/
-ralph_log_*.txt
-
-# Evaluation reports
-evaluation_protocol_*.md
-prompt_injection_report.md
-
 # Database
 *.db
 *.sqlite3
 
-# Uploads (local dev)
+# Uploads
 uploads/
 temp/
 
-# Large files
+# Large model files (if any)
 *.pt
 *.pth
 *.onnx
-!models/.gitkeep

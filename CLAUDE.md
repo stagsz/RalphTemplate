@@ -81,7 +81,7 @@ cd backend && ruff check .               # lint
 
 ### Docker (full stack)
 ```bash
-docker compose up -d          # start all services (PostgreSQL, Redis)
+docker compose up -d          # start all services (PostgreSQL)
 docker compose down           # stop
 docker compose logs -f        # follow logs
 ```
@@ -123,8 +123,8 @@ find.bi/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── charts/          # Apache ECharts wrappers (Bar, Line, Area, Scatter, Pie, KPI, Table)
-│   │   ├── explore/         # Observable Plot components for AI-generated exploratory charts
-│   │   ├── geo/             # Deck.gl layers (Scatterplot, Hexagon, Arc, Heatmap, GeoJson)
+│   │   │   ├── explore/         # Observable Plot components for AI-generated exploratory charts
+│   │   │   ├── geo/             # Deck.gl layers (Scatterplot, Hexagon, Arc, Heatmap, GeoJson)
 │   │   │   ├── dashboard/       # Grid builder, card, filter components
 │   │   │   ├── editor/          # Monaco SQL editor, schema explorer
 │   │   │   ├── voice/           # Push-to-talk, wake word, transcript
